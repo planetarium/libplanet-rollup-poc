@@ -1,0 +1,5 @@
+wallet:
+  private_key: '0x{hex}'
+  chain: 'mothership'
+9c:
+  rpc: 'https://{9c-rpc-url}/graphql'
