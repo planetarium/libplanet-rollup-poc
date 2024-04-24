@@ -9,4 +9,9 @@ export class AppController {
   async sendTransaction(): Promise<`0x${string}`> {
     return this.wallet.sendTransaction('0xdeadbeef');
   }
+
+  @Get('deposit')
+  async depositETH(): Promise<`0x${string}`> {
+    return this.wallet.depositETH(10000);
+  }
 }

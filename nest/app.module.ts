@@ -4,7 +4,7 @@ import { WalletManager } from './wallet.client';
 import { ConfigModule } from '@nestjs/config';
 import configuration from './config/configuration';
 import { NCModule } from './9c/nc.module';
-import { RollupCronService } from './rollup.cron';
+import { PublicClientManager } from './public.client';
 
 @Module({
   imports: [
@@ -15,6 +15,6 @@ import { RollupCronService } from './rollup.cron';
     NCModule,
   ],
   controllers: [AppController],
-  providers: [WalletManager, RollupCronService],
+  providers: [WalletManager, PublicClientManager],
 })
 export class AppModule {}

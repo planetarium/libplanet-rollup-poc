@@ -20,20 +20,22 @@ export class NCRpcService {
     `);
 
     const result: BlockStruct[] = [];
-    res.nodeStatus.topmostBlocks.forEach((block) => {
-      result.push({
-        index: block.index,
-        hash: block.hash,
-        miner: block.miner,
-      });
-    });
+    res.nodeStatus.topmostBlocks.forEach(
+      (block: { index: number; hash: string; miner: string }) => {
+        result.push({
+          index: block.index,
+          hash: block.hash,
+          miner: block.miner,
+        });
+      },
+    );
 
     return result;
   }
 }
 
 export type BlockStruct = {
-  index: 'number';
-  hash: 'string';
-  miner: 'string';
+  index: number;
+  hash: string;
+  miner: string;
 };

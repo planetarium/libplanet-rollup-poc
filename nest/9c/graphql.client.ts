@@ -5,7 +5,7 @@ import { GraphQLClient } from 'graphql-request';
 @Injectable()
 export class GraphQLClientService {
   constructor(private readonly configure: ConfigService) {
-    this.client = new GraphQLClient(configure.get('9c.rpc'));
+    this.client = new GraphQLClient(configure.get('9c.rpc', { infer: true })!);
   }
 
   private client: GraphQLClient;

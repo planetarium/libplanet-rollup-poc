@@ -56,3 +56,9 @@ pids
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 config/nest.yaml
+config/bridge.env
+
+bridge/artifacts
+bridge/cache
+bridge/ignition/deployments
+bridge/typechain-types
