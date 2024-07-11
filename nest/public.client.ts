@@ -24,7 +24,7 @@ export class PublicClientManager {
 
   public GetTxParserContract() {
     return getContract({
-      address: '0xaefA629c63141288E56cfAc1De0B63115DD5726F',
+      address: '0xC329B9f692B721b3a4bec4972f9bBb57187E3823',
       abi: txParserAbi,
       client: this.GetClient(),
     });

@@ -76,11 +76,11 @@ export class WalletManager {
 
   async gethParseTx(serializedPayload: `0x${string}`): Promise<`0x${string}`> {
     const txParserContract = getContract({
-      address: `0xaefA629c63141288E56cfAc1De0B63115DD5726F`,
+      address: `0xC329B9f692B721b3a4bec4972f9bBb57187E3823`,
       abi: txParserAbi,
       client: this.GethGetClient(),
     });
-    return txParserContract.write.parseTransaction([serializedPayload], {});
+    return txParserContract.write.parseTransactionFromSerializedPayload([serializedPayload], {});
   }
 
   private GethGetClient() {
