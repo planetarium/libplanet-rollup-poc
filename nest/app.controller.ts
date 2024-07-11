@@ -14,4 +14,9 @@ export class AppController {
   async depositETH(): Promise<`0x${string}`> {
     return this.wallet.depositETH(10000);
   }
+
+  @Get('deposit/geth')
+  async gethDepositETH(): Promise<`0x${string}`> {
+    return this.wallet.gethDepositETH(10000);
+  }
 }

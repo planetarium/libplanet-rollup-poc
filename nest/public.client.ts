@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Chain, createPublicClient, getContract, http } from 'viem';
-import { mothership, opSepolia } from './chains';
+import { mothership, opSepolia, geth } from './chains';
 import { ConfigService } from '@nestjs/config';
 import { abi as portalAbi } from './abi/LibplanetPortal';
 
@@ -37,6 +37,8 @@ export class PublicClientManager {
         return mothership;
       case 'opSepolia':
         return opSepolia;
+      case 'geth':
+        return geth;
       default:
         throw new Error('Invalid chain');
     }

@@ -67,3 +67,18 @@ export const opSepolia = defineChain({
   },
   testnet: true,
 });
+
+export const geth = defineChain({
+  id: 12345,
+  name: 'Geth',
+  nativeCurrency: {
+    decimals: 18,
+    name: 'Geth Ether',
+    symbol: 'ETH',
+  },
+  rpcUrls: {
+    default: {
+      http: [process.env.GETH_RPC_URL ?? 'http://localhost:8000'],
+    },
+  },
+});

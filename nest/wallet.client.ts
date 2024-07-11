@@ -1,9 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { createWalletClient, http, Chain, getContract } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
-import { opSepolia, mothership } from './chains';
+import { mothership, opSepolia, geth } from './chains';
 import { ConfigService } from '@nestjs/config';
 import { abi as bridgeAbi } from './abi/LibplanetBridge';
+import { exportPrivateKeyFromKeyStore } from './key.utils';
 
 @Injectable()
 export class WalletManager {
@@ -47,12 +48,53 @@ export class WalletManager {
     });
   }
 
+  async gethSendTransaction(payload: `0x${string}`): Promise<`0x${string}`> {
+    return this.GethGetClient().sendTransaction({
+      to: this.GethGetClient().account.address,
+      data: payload,
+    });
+  }
+
+  async gethDepositETH(amount: number): Promise<`0x${string}`> {
+    const bridgeContract = getContract({
+      address: `0x0C22fa4e64ec155453941ae2c946A259a8700Fdd`,
+      abi: bridgeAbi,
+      client: this.GethGetClient(),
+    });
+    return bridgeContract.write.depositETH(
+      [
+        `0xCE70F2e49927D431234BFc8D439412eef3a6276b`,
+        `0x30Ba69479c1869a5EF3A612e4888EF84122Ceaba`,
+        BigInt(amount),
+      ],
+      {
+        value: BigInt(amount),
+      },
+    );
+  }
+
+  private GethGetClient() {
+    const account = privateKeyToAccount(
+      exportPrivateKeyFromKeyStore(
+        this.configure.get('wallet.keystore_path_from_home', ''),
+        this.configure.get('wallet.keystore_password', ''),
+      ),
+    );
+    return createWalletClient({
+      chain: this.GetChain(this.configure.get('wallet.chain', 'geth')),
+      account: account,
+      transport: http(),
+    });
+  }
+
   private GetChain(chain: string): Chain {
     switch (chain) {
       case 'mothership':
         return mothership;
       case 'opSepolia':
         return opSepolia;
+      case 'geth':
+        return geth;
       default:
         throw new Error('Invalid chain');
     }
