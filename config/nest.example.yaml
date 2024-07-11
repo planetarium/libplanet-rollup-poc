@@ -1,7 +1,8 @@
 wallet:
   private_key: '0x{hex}'
-  keystore_path_from_home: '{path}'
-  keystore_password: '{password}'
+  keystore:
+    path: '{path}'
+    password: '{password}'
   chain: 'mothership'
 9c:
   rpc: 'https://{9c-rpc-url}/graphql'
