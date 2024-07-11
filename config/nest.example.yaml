@@ -6,4 +6,4 @@ wallet:
   chain: 'mothership'
 9c:
   rpc: 'https://{9c-rpc-url}/graphql'
-  rpc_explorer: 'https://{9c-rpc-url}/graphql/explorer'
+  explorer: 'https://{9c-rpc-url}/graphql/explorer'
