@@ -9,4 +9,9 @@ export class NCController {
   async getBlocks() {
     return this.RPCService.getBlocks();
   }
+
+  @Get('transactions')
+  async getTransactions() {
+    return this.RPCService.getTransactions();
+  }
 }

@@ -4,6 +4,7 @@ import { privateKeyToAccount } from 'viem/accounts';
 import { mothership, opSepolia, geth } from './chains';
 import { ConfigService } from '@nestjs/config';
 import { abi as bridgeAbi } from './abi/LibplanetBridge';
+import { abi as txParserAbi } from './abi/TransactionParser';
 import { exportPrivateKeyFromKeyStore } from './key.utils';
 
 @Injectable()
@@ -71,6 +72,15 @@ export class WalletManager {
         value: BigInt(amount),
       },
     );
+  }
+
+  async gethParseTx(serializedPayload: `0x${string}`): Promise<`0x${string}`> {
+    const txParserContract = getContract({
+      address: `0xaefA629c63141288E56cfAc1De0B63115DD5726F`,
+      abi: txParserAbi,
+      client: this.GethGetClient(),
+    });
+    return txParserContract.write.parseTransaction([serializedPayload], {});
   }
 
   private GethGetClient() {
