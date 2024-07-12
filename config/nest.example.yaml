@@ -7,3 +7,7 @@ wallet:
 9c:
   rpc: 'https://{9c-rpc-url}/graphql'
   explorer: 'https://{9c-rpc-url}/graphql/explorer'
+local_contract_address:
+  libplanet_portal: '0x{hex}'
+  libplanet_bridge: '0x{hex}'
+  transaction_parser: '0x{hex}'

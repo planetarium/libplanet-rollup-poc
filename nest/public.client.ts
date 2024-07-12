@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Chain, createPublicClient, getContract, http } from 'viem';
-import { mothership, opSepolia, geth } from './chains';
+import { Chain, createPublicClient, getContract, http, ChainContract } from 'viem';
+import { mothership, opSepolia, localhost } from './chains';
 import { ConfigService } from '@nestjs/config';
 import { abi as portalAbi } from './abi/LibplanetPortal';
 import { abi as txParserAbi } from './abi/TransactionParser';
@@ -14,26 +14,29 @@ export class PublicClientManager {
 
   private readonly logger = new Logger(PublicClientManager.name);
 
+  private readonly chain = this.GetChain(this.configure.get('wallet.chain', 'localhost'));
+  private readonly client = this.GetClient();
+
   public GetPortalContract() {
     return getContract({
-      address: '0x30Ba69479c1869a5EF3A612e4888EF84122Ceaba',
+      address: (this.chain.contracts?.libplanetPortal as ChainContract).address,
       abi: portalAbi,
-      client: this.GetClient(),
+      client: this.client,
     });
   }
 
   public GetTxParserContract() {
     return getContract({
-      address: '0xC329B9f692B721b3a4bec4972f9bBb57187E3823',
+      address: (this.chain.contracts?.transactionParser as ChainContract).address,
       abi: txParserAbi,
-      client: this.GetClient(),
+      client: this.client,
     });
   }
 
   private Register() {
-    const contract = this.GetPortalContract();
+    const portalContract = this.GetPortalContract();
     const txParserContract = this.GetTxParserContract();
-    contract.watchEvent.DepositETH({
+    portalContract.watchEvent.DepositETH({
       onLogs: (logs) => {
         for (const log of logs) {
           this.logger.debug(`Received deposit event: ${log}`);
@@ -56,8 +59,8 @@ export class PublicClientManager {
         return mothership;
       case 'opSepolia':
         return opSepolia;
-      case 'geth':
-        return geth;
+      case 'localhost':
+        return localhost(this.configure);
       default:
         throw new Error('Invalid chain');
     }
@@ -65,7 +68,7 @@ export class PublicClientManager {
 
   private GetClient() {
     return createPublicClient({
-      chain: this.GetChain(this.configure.get('wallet.chain', 'mothership')),
+      chain: this.chain,
       transport: http(),
     });
   }

@@ -1,24 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.24;
 
-struct Transaction {
-    bytes signature;
-    Action[] actions;
-    bytes32 genesisHash;
-    int64 gasLimit;
-    FungibleAssetValue maxGasPrice;
-    int64 nonce;
-    bytes publicKey;
-    address signer;
-    uint256 timestamp;
-    address[] updatedAddresses;
-}
-
-struct Action {
-    string typeId;
-    bytes value;
-}
-
 struct FungibleAssetValue {
     Currency currency;
     uint256 rawValue;

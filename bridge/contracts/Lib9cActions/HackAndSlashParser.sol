@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.24;
 
-import { Transaction, RuneSlotInfo } from "../LibplanetCommonStructs.sol";
+import { RuneSlotInfo } from "../utils/LibplanetCommonStructs.sol";
+import "../TransactionParser.sol";
 
-contract HackAndSlashParser {
+contract HackAndSlashParser is TransactionParser {
     struct HackAndSlash {
         bytes16 id;
         bytes16[] costumes;
@@ -20,20 +21,15 @@ contract HackAndSlashParser {
 
     event HackAndSlashParsed(HackAndSlash hackAndSlash);
 
-    function transactionDeserializer(bytes memory input) public view returns (bool ok, bytes memory out) {
-        address _addr = 0x0000000000000000000000000000000000000101;
-        return _addr.staticcall(input);
-    }
-
     function parseHackAndSlash(bytes memory input) public returns (HackAndSlash memory){
-        (HackAndSlash memory t) = abi.decode(input, (HackAndSlash));
-        emit HackAndSlashParsed(t);
-        return t;
+        (HackAndSlash memory h) = abi.decode(input, (HackAndSlash));
+        emit HackAndSlashParsed(h);
+        return h;
     }
 
     function parseHackAndSlashFromSerializedPayload(bytes memory input) public returns (HackAndSlash memory){
-        (bool ok, bytes memory out) = transactionDeserializer(input);
-        require(ok, "HackAndSlash deserialization failed");
-        return parseHackAndSlash(out);
+        (Transaction memory t) = parseTransactionFromSerializedPayload(input);
+        require(t.actions.length > 0, "Action is empty");
+        return parseHackAndSlash(t.actions[0].value);
     }
 }

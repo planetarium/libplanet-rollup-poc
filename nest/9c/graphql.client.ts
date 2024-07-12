@@ -6,7 +6,7 @@ import { GraphQLClient } from 'graphql-request';
 export class GraphQLClientService {
   constructor(private readonly configure: ConfigService) {
     this.client = new GraphQLClient(configure.get('9c.rpc', { infer: true })!);
-    this.explorerClient = new GraphQLClient(configure.get('9c.rpc_explorer', { infer: true })!);
+    this.explorerClient = new GraphQLClient(configure.get('9c.explorer', { infer: true })!);
   }
 
   private client: GraphQLClient;

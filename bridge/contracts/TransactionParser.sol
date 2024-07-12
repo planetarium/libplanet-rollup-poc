@@ -1,12 +1,30 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.24;
 
-import { Transaction } from "./LibplanetCommonStructs.sol";
+import { FungibleAssetValue } from "./utils/LibplanetCommonStructs.sol";
 
 contract TransactionParser {
+    struct Transaction {
+        bytes signature;
+        Action[] actions;
+        bytes32 genesisHash;
+        int64 gasLimit;
+        FungibleAssetValue maxGasPrice;
+        int64 nonce;
+        bytes publicKey;
+        address signer;
+        uint256 timestamp;
+        address[] updatedAddresses;
+    }
+
+    struct Action {
+        string typeId;
+        bytes value;
+    }
+
     event TransactionParsed(Transaction transaction);
 
-    function transactionDeserializer(bytes memory input) public view returns (bool ok, bytes memory out) {
+    function transactionDeserializer(bytes memory input) private view returns (bool ok, bytes memory out) {
         address _addr = 0x0000000000000000000000000000000000000101;
         return _addr.staticcall(input);
     }

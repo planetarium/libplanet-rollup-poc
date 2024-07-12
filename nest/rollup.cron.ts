@@ -44,7 +44,7 @@ export class RollupCronService {
     this.logger.debug(`Got ${transactions.length} transactions`);
     var serializedPayload = transactions[0].serializedPayload;
     var sp = Buffer.from(serializedPayload, 'utf-8').toString('hex');
-    const txId = this.wallet.gethParseTx('0x'.concat(sp) as `0x${string}`);
+    const txId = this.wallet.parseTx('0x'.concat(sp) as `0x${string}`);
     this.logger.debug(`Sent transaction ${txId}`);
   }
 }
