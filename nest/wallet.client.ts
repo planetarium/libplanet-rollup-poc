@@ -5,6 +5,7 @@ import { mothership, opSepolia, localhost } from './chains';
 import { ConfigService } from '@nestjs/config';
 import { abi as bridgeAbi } from './abi/LibplanetBridge';
 import { abi as txParserAbi } from './abi/TransactionParser';
+import { abi as hasParserAbi } from './abi/HackAndSlashParser';
 import { exportPrivateKeyFromKeyStore } from './key.utils';
 
 @Injectable()
@@ -45,9 +46,18 @@ export class WalletManager {
     const txParserContract = getContract({
       address: (this.chain.contracts?.transactionParser as ChainContract).address,
       abi: txParserAbi,
-      client: this.GetClient(),
+      client: this.client,
     });
     return txParserContract.write.parseTransactionFromSerializedPayload([serializedPayload], {});
+  }
+
+  async parseHackAndSlash(serializedPayload: `0x${string}`): Promise<`0x${string}`> {
+    const hasParserContract = getContract({
+      address: (this.chain.contracts?.hackAndSlashParser as ChainContract).address,
+      abi: hasParserAbi,
+      client: this.client,
+    });
+    return hasParserContract.write.parseHackAndSlashFromSerializedPayload([serializedPayload], {});
   }
 
   private GetChain(chain: string): Chain {

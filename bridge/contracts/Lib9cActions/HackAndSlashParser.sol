@@ -22,9 +22,9 @@ contract HackAndSlashParser is TransactionParser {
     event HackAndSlashParsed(HackAndSlash hackAndSlash);
 
     function parseHackAndSlash(bytes memory input) public returns (HackAndSlash memory){
-        (HackAndSlash memory h) = abi.decode(input, (HackAndSlash));
-        emit HackAndSlashParsed(h);
-        return h;
+        (HackAndSlash memory output) = abi.decode(input, (HackAndSlash));
+        emit HackAndSlashParsed(output);
+        return output;
     }
 
     function parseHackAndSlashFromSerializedPayload(bytes memory input) public returns (HackAndSlash memory){

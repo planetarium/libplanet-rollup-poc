@@ -4,7 +4,7 @@ import { mothership, opSepolia, localhost } from './chains';
 import { ConfigService } from '@nestjs/config';
 import { abi as portalAbi } from './abi/LibplanetPortal';
 import { abi as txParserAbi } from './abi/TransactionParser';
-import { json } from 'stream/consumers';
+import { abi as hasParserAbi } from './abi/HackAndSlashParser';
 
 @Injectable()
 export class PublicClientManager {
@@ -33,9 +33,18 @@ export class PublicClientManager {
     });
   }
 
+  public GetHasParserContract() {
+    return getContract({
+      address: (this.chain.contracts?.hackAndSlashParser as ChainContract).address,
+      abi: hasParserAbi,
+      client: this.client,
+    });
+  }
+
   private Register() {
     const portalContract = this.GetPortalContract();
     const txParserContract = this.GetTxParserContract();
+    const hasParserContract = this.GetHasParserContract();
     portalContract.watchEvent.DepositETH({
       onLogs: (logs) => {
         for (const log of logs) {
@@ -48,6 +57,14 @@ export class PublicClientManager {
         for (const log of logs) {
           this.logger.debug(`Received parsed tx event: ${log}`);
           this.logger.debug(log.args.transaction);
+        }
+      },
+    });
+    hasParserContract.watchEvent.HackAndSlashParsed({
+      onLogs: (logs) => {
+        for (const log of logs) {
+          this.logger.debug(`Received parsed has event: ${log}`);
+          this.logger.debug(log.args.hackAndSlash);
         }
       },
     });
