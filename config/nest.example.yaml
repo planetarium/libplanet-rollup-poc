@@ -11,3 +11,4 @@ local_contract_address:
   libplanet_portal: '0x{hex}'
   libplanet_bridge: '0x{hex}'
   transaction_parser: '0x{hex}'
+  
