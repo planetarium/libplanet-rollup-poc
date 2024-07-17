@@ -23,7 +23,7 @@ contract TransactionParser {
     }
 
     event TransactionParsed(Transaction transaction);
-
+    
     function transactionDeserializer(bytes memory input) private view returns (bool ok, bytes memory out) {
         address _addr = 0x0000000000000000000000000000000000000101;
         return _addr.staticcall(input);

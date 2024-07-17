@@ -5,6 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import { abi as portalAbi } from './abi/LibplanetPortal';
 import { abi as txParserAbi } from './abi/TransactionParser';
 import { abi as hasParserAbi } from './abi/HackAndSlashParser';
+import { abi as txProcessorAbi } from './abi/LibplanetTransactionProcessor';
 
 @Injectable()
 export class PublicClientManager {
@@ -33,6 +34,14 @@ export class PublicClientManager {
     });
   }
 
+  public GetTxProcessorContract() {
+    return getContract({
+      address: (this.chain.contracts?.libplanetTransactionProcessor as ChainContract).address,
+      abi: txProcessorAbi,
+      client: this.client,
+    });
+  }
+
   public GetHasParserContract() {
     return getContract({
       address: (this.chain.contracts?.hackAndSlashParser as ChainContract).address,
@@ -44,6 +53,7 @@ export class PublicClientManager {
   private Register() {
     const portalContract = this.GetPortalContract();
     const txParserContract = this.GetTxParserContract();
+    const txProcessorContract = this.GetTxProcessorContract();
     const hasParserContract = this.GetHasParserContract();
     portalContract.watchEvent.DepositETH({
       onLogs: (logs) => {
@@ -56,10 +66,24 @@ export class PublicClientManager {
       onLogs: (logs) => {
         for (const log of logs) {
           this.logger.debug(`Received parsed tx event: ${log}`);
-          this.logger.debug(log.args.transaction);
         }
       },
     });
+    txProcessorContract.watchEvent.TransactionProcessed({},
+    {
+      onLogs: (logs) => {
+        for (const log of logs) {
+          this.logger.debug(`Received processed tx event: ${log}`);
+        }
+      },
+    });
+    txProcessorContract.watchEvent.TransactionData({
+      onLogs: (logs) => {
+        for (const log of logs) {
+          this.logger.debug(`Received processed tx data: ${log.data}`);
+        }
+      },
+    })
     hasParserContract.watchEvent.HackAndSlashParsed({
       onLogs: (logs) => {
         for (const log of logs) {

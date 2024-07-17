@@ -42,9 +42,11 @@ export class RollupCronService {
     this.logger.debug('Running cron...');
     const transactions = await this.nc_rpc.getTransactions();
     this.logger.debug(`Got ${transactions.length} transactions`);
-    var serializedPayload = transactions[0].serializedPayload;
-    var sp = Buffer.from(serializedPayload, 'utf-8').toString('hex');
-    const txId = this.wallet.parseTx('0x'.concat(sp) as `0x${string}`);
+    const serializedPayloads = transactions.map((tx) => {
+      var sp = Buffer.from(tx.serializedPayload, 'utf-8').toString('hex');
+      return `0x${sp}` as `0x${string}`;
+    });
+    const txId = this.wallet.parseTxs(0n, serializedPayloads);
     this.logger.debug(`Sent transaction ${txId}`);
   }
 }
