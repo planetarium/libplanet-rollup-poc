@@ -27,7 +27,7 @@
     "@nestjs/platform-express": "^10.0.0",
     "@nestjs/schedule": "^4.0.2",
     "@planetarium/bencodex": "^0.2.2",
-    "@types/keythereum": "^1.2.4",
+    "@types/keythereum": "^1.2.5",
     "graphql": "^16.8.1",
     "graphql-request": "^6.1.0",
     "js-yaml": "^4.1.0",
