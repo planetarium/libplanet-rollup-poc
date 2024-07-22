@@ -11,12 +11,15 @@ contract LibplanetTransactionProcessor is TransactionParser {
     }
 
     event TransactionProcessed(uint256 indexed blockIndex, Status status);
-    event TransactionData(bytes data);
+    event TransactionParsedIndex(uint256 indexed blockIndex, uint transactionIndex);
 
     function processTransaction(uint256 blockIndex, bytes[] memory input) public {
         emit TransactionProcessed(blockIndex, Status.Processing);
-        (bytes memory data) = abi.decode(input[0], (bytes));
-        emit TransactionData(data);
+        for(uint i = 0; i < input.length; i++) {
+            parseTransactionFromSerializedPayload(input[i]);
+            emit TransactionParsedIndex(blockIndex, i);
+        }
+        
         emit TransactionProcessed(blockIndex, Status.Processed);
     }
 }

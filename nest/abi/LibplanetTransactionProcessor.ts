@@ -3,19 +3,6 @@ export const abi = [
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
-        "internalType": "bytes",
-        "name": "data",
-        "type": "bytes"
-      }
-    ],
-    "name": "TransactionData",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
         "components": [
           {
             "internalType": "bytes",
@@ -131,6 +118,25 @@ export const abi = [
       }
     ],
     "name": "TransactionParsed",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "blockIndex",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "transactionIndex",
+        "type": "uint256"
+      }
+    ],
+    "name": "TransactionParsedIndex",
     "type": "event"
   },
   {

@@ -33,11 +33,12 @@ export class NCRpcService {
     return result;
   }
 
-  async getTransactions(): Promise<TransactionStruct[]> {
+  async getTransactions(): Promise<BlockWithTransactionsStruct> {
     const res = await this.graphqlClient.explorerQuery(gql`
       query	{
         blockQuery {
           blocks(desc: true, limit: 1) {
+            index
             transactions {
               serializedPayload
             }
@@ -46,10 +47,13 @@ export class NCRpcService {
       }
     `);
 
-    const result: TransactionStruct[] = [];
+    const result: BlockWithTransactionsStruct = {
+      index: res.blockQuery.blocks[0].index,
+      transactions: []
+    };
     res.blockQuery.blocks[0].transactions.forEach(
       (transaction: { serializedPayload: string }) => {
-        result.push({
+        result.transactions.push({
           serializedPayload: transaction.serializedPayload,
         });
       },
@@ -63,6 +67,11 @@ export type BlockStruct = {
   index: number;
   hash: string;
   miner: string;
+};
+
+export type BlockWithTransactionsStruct = {
+  index: number;
+  transactions: TransactionStruct[];
 };
 
 export type TransactionStruct = {

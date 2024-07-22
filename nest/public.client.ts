@@ -58,14 +58,15 @@ export class PublicClientManager {
     portalContract.watchEvent.DepositETH({
       onLogs: (logs) => {
         for (const log of logs) {
-          this.logger.debug(`Received deposit event: ${log}`);
+          this.logger.debug(`Received DepositETH event: ${log}`);
         }
       },
     });
-    txParserContract.watchEvent.TransactionParsed({
+    
+    txProcessorContract.watchEvent.TransactionParsed({
       onLogs: (logs) => {
         for (const log of logs) {
-          this.logger.debug(`Received parsed tx event: ${log}`);
+          this.logger.debug(`Received TransactionParsed event: ${log.args.transaction}`);
         }
       },
     });
@@ -73,21 +74,23 @@ export class PublicClientManager {
     {
       onLogs: (logs) => {
         for (const log of logs) {
-          this.logger.debug(`Received processed tx event: ${log}`);
+          this.logger.debug(`Received TransactionProcessed event: ${log}`);
+          this.logger.debug(log.args);
         }
       },
     });
-    txProcessorContract.watchEvent.TransactionData({
+    txProcessorContract.watchEvent.TransactionParsedIndex({}, {
       onLogs: (logs) => {
         for (const log of logs) {
-          this.logger.debug(`Received processed tx data: ${log.data}`);
+          this.logger.debug(`Received TransactionParsedIndex event: ${log}`);
+          this.logger.debug(log.args);
         }
       },
-    })
+    });
     hasParserContract.watchEvent.HackAndSlashParsed({
       onLogs: (logs) => {
         for (const log of logs) {
-          this.logger.debug(`Received parsed has event: ${log}`);
+          this.logger.debug(`Received HackAndSlashParsed event: ${log}`);
           this.logger.debug(log.args.hackAndSlash);
         }
       },

@@ -40,13 +40,14 @@ export class RollupCronService {
   @Cron(CronExpression.EVERY_10_SECONDS)
   async testTxDesrializerCron() {
     this.logger.debug('Running cron...');
-    const transactions = await this.nc_rpc.getTransactions();
-    this.logger.debug(`Got ${transactions.length} transactions`);
-    const serializedPayloads = transactions.map((tx) => {
+    const result = await this.nc_rpc.getTransactions();
+    this.logger.debug(`Got ${result.transactions.length} transactions`);
+    const serializedPayloads = result.transactions.map((tx) => {
       var sp = Buffer.from(tx.serializedPayload, 'utf-8').toString('hex');
       return `0x${sp}` as `0x${string}`;
     });
-    const txId = this.wallet.parseTxs(0n, serializedPayloads);
+    const blockIndex = BigInt(result.index);
+    const txId = this.wallet.parseTxs(blockIndex, serializedPayloads);
     this.logger.debug(`Sent transaction ${txId}`);
   }
 }
