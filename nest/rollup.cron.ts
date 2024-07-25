@@ -40,18 +40,18 @@ export class RollupCronService {
   @Cron("*/3 * * * * *")
   async sendSimpleTxCron() {
     this.logger.debug('Running send cron...');
-    const result = await this.nc_rpc.sendSimpleTransactionToLocalNetwork("Hello, world!");
+    const result = await this.nc_rpc.sendSimpleTransactionToLocalNetwork((Math.random() * 100).toString());
     this.logger.debug(`Sent string: ${result}`);
   }
 
   @Cron(CronExpression.EVERY_10_SECONDS)
-  async getTxResultsCron() {
+  async verifyTxProofsCron() {
     this.logger.debug('Running get cron...');
-    const result = await this.nc_rpc.getTxResultsFromLocalNetwork(30);
-    for (const tx of result) {
-      await this.wallet.storeTxResult(tx);
-    }
+    const result = await this.nc_rpc.getTxWorldProofsFromLocalNetwork(3);
     this.logger.debug(`Got ${result.length} transaction results`);
+    for (const proof of result) {
+      await this.wallet.verifyTxProof(proof);
+    }
   }
 
   // @Cron(CronExpression.EVERY_10_SECONDS)

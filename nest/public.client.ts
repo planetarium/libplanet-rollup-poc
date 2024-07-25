@@ -7,6 +7,7 @@ import { abi as txParserAbi } from './abi/TransactionParser';
 import { abi as hasParserAbi } from './abi/HackAndSlashParser';
 import { abi as txProcessorAbi } from './abi/LibplanetTransactionProcessor';
 import { abi as txResultStoreAbi } from './abi/LibplanetTransactionResultsStore';
+import { abi as proofVerifierAbi } from './abi/LibplanetProofVerifier';
 
 @Injectable()
 export class PublicClientManager {
@@ -59,12 +60,22 @@ export class PublicClientManager {
     });
   }
 
+  public GetProofVerifierContract() {
+    return getContract({
+      address: (this.chain.contracts?.libplanetProofVerifier as ChainContract).address,
+      abi: proofVerifierAbi,
+      client: this.client,
+    });
+  }
+
   private Register() {
     const portalContract = this.GetPortalContract();
     const txParserContract = this.GetTxParserContract();
     const txProcessorContract = this.GetTxProcessorContract();
     const hasParserContract = this.GetHasParserContract();
     const txResultStoreContract = this.GetTxResultStoreContract();
+    const proofVerifierContract = this.GetProofVerifierContract();
+
     portalContract.watchEvent.DepositETH({
       onLogs: (logs) => {
         for (const log of logs) {
@@ -111,6 +122,14 @@ export class PublicClientManager {
           this.logger.debug(log.args);
         }
       }
+    });
+    proofVerifierContract.watchEvent.ProofVerified({
+      onLogs: (logs) => {
+        for (const log of logs) {
+          this.logger.debug(`Received ProofVerified event: ${log}`);
+          this.logger.debug(log.args);
+        }
+      },
     });
   }
 

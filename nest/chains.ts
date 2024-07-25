@@ -104,6 +104,9 @@ export const localhost = (configure: ConfigService) => {
       libplanetTransactionResultsStore: {
         address: configure.get('local_contract_address.libplanet_transaction_results_store'),
       },
+      libplanetProofVerifier: {
+        address: configure.get('local_contract_address.libplanet_proof_verifier'),
+      },
       transactionParser: {
         address: configure.get('local_contract_address.transaction_parser'),
       },

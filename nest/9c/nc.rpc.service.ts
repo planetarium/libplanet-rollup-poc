@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { GraphQLClientService } from './graphql.client';
 import { gql } from 'graphql-request';
-import { TransactionResult } from './nc.transactionResult.model';
+import { BlockStruct, BlockWithTransactionsStruct, TransactionResult, TransactionWorldProof } from './nc.respose.models';
 
 @Injectable()
 export class NCRpcService {
@@ -114,19 +114,48 @@ export class NCRpcService {
 
     return txResultList;
   }
+
+  async getTxWorldProofsFromLocalNetwork(limit: number): Promise<TransactionWorldProof[]> {
+    const txIdsRes = await this.graphqlClient.localExplorerQuery(gql`
+      query {
+        transactionQuery {
+          transactions (limit: ${limit}, desc: true) {
+            id
+          }
+        }
+      }
+    `);
+    
+    const txWorldProofList: TransactionWorldProof[] = [];
+    for (const tx of txIdsRes.transactionQuery.transactions) {
+      const txWorldProofRes = await this.graphqlClient.localExplorerQuery(gql`
+        query {
+          transactionQuery {
+            transactionWorldProof(
+              txId: "${tx.id}",
+            ) {
+              stateRootHash
+              proof {
+                hex
+              }
+              key
+              value {
+                hex
+              }
+            }
+          }
+        }
+      `);
+
+      txWorldProofList.push({
+        txId: tx.id,
+        stateRootHash: txWorldProofRes.transactionQuery.transactionWorldProof.stateRootHash,
+        proof: txWorldProofRes.transactionQuery.transactionWorldProof.proof.hex,
+        key: txWorldProofRes.transactionQuery.transactionWorldProof.key,
+        value: txWorldProofRes.transactionQuery.transactionWorldProof.value.hex,
+      });
+    }
+
+    return txWorldProofList;
+  }
 }
-
-export type BlockStruct = {
-  index: number;
-  hash: string;
-  miner: string;
-};
-
-export type BlockWithTransactionsStruct = {
-  index: number;
-  transactions: TransactionStruct[];
-};
-
-export type TransactionStruct = {
-  serializedPayload: string;
-};

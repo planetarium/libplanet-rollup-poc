@@ -14,6 +14,8 @@ local_contract_address:
   libplanet_portal: '0x{hex}'
   libplanet_bridge: '0x{hex}'
   libplanet_transaction_processor: '0x{hex}'
+  libplanet_transaction_results_store: '0x{hex}'
+  libplanet_proof_verifier: '0x{hex}'
   transaction_parser: '0x{hex}'
   aura_summon_parser: '0x{hex}'
   claim_items_parser: '0x{hex}'

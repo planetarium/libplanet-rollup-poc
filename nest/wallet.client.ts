@@ -8,8 +8,9 @@ import { abi as txParserAbi } from './abi/TransactionParser';
 import { abi as hasParserAbi } from './abi/HackAndSlashParser';
 import { abi as txProcessorAbi } from './abi/LibplanetTransactionProcessor';
 import { abi as txResultStoreAbi } from './abi/LibplanetTransactionResultsStore';
+import { abi as proofVerifierAbi } from './abi/LibplanetProofVerifier';
 import { exportPrivateKeyFromKeyStore } from './key.utils';
-import { TransactionResult, TxStatus } from './9c/nc.transactionResult.model';
+import { TransactionResult, TxStatus, TransactionStruct, TransactionWorldProof } from './9c/nc.respose.models';
 
 @Injectable()
 export class WalletManager {
@@ -87,6 +88,21 @@ export class WalletManager {
         inputState: '0x'.concat(txResult.inputState) as `0x${string}`,
         outputState: '0x'.concat(txResult.outputState) as `0x${string}`,
       }
+    ], {});
+  }
+
+  async verifyTxProof(txWorldProof: TransactionWorldProof): Promise<`0x${string}`> {
+    const proofVerifierContract = getContract({
+      address: (this.chain.contracts?.libplanetProofVerifier as ChainContract).address,
+      abi: proofVerifierAbi,
+      client: this.client,
+    });
+    return proofVerifierContract.write.verifyProof([
+      '0x'.concat(txWorldProof.txId) as `0x${string}`,
+      '0x'.concat(txWorldProof.stateRootHash) as `0x${string}`,
+      '0x'.concat(txWorldProof.proof) as `0x${string}`,
+      '0x'.concat(txWorldProof.key) as `0x${string}`,
+      '0x'.concat(txWorldProof.value) as `0x${string}`,
     ], {});
   }
 
