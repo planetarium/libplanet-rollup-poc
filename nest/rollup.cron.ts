@@ -37,17 +37,34 @@ export class RollupCronService {
   //   this.logger.debug(`Sent transaction ${txId}`);
   // }
 
-  @Cron(CronExpression.EVERY_10_SECONDS)
-  async testTxDesrializerCron() {
-    this.logger.debug('Running cron...');
-    const result = await this.nc_rpc.getTransactions();
-    this.logger.debug(`Got ${result.transactions.length} transactions`);
-    const serializedPayloads = result.transactions.map((tx) => {
-      var sp = Buffer.from(tx.serializedPayload, 'utf-8').toString('hex');
-      return `0x${sp}` as `0x${string}`;
-    });
-    const blockIndex = BigInt(result.index);
-    const txId = this.wallet.parseTxs(blockIndex, serializedPayloads);
-    this.logger.debug(`Sent transaction ${txId}`);
+  @Cron("*/3 * * * * *")
+  async sendSimpleTxCron() {
+    this.logger.debug('Running send cron...');
+    const result = await this.nc_rpc.sendSimpleTransactionToLocalNetwork("Hello, world!");
+    this.logger.debug(`Sent string: ${result}`);
   }
+
+  @Cron(CronExpression.EVERY_10_SECONDS)
+  async getTxResultsCron() {
+    this.logger.debug('Running get cron...');
+    const result = await this.nc_rpc.getTxResultsFromLocalNetwork(30);
+    for (const tx of result) {
+      await this.wallet.storeTxResult(tx);
+    }
+    this.logger.debug(`Got ${result.length} transaction results`);
+  }
+
+  // @Cron(CronExpression.EVERY_10_SECONDS)
+  // async testTxDesrializerCron() {
+  //   this.logger.debug('Running cron...');
+  //   const result = await this.nc_rpc.getTransactions();
+  //   this.logger.debug(`Got ${result.transactions.length} transactions`);
+  //   const serializedPayloads = result.transactions.map((tx) => {
+  //     var sp = Buffer.from(tx.serializedPayload, 'utf-8').toString('hex');
+  //     return `0x${sp}` as `0x${string}`;
+  //   });
+  //   const blockIndex = BigInt(result.index);
+  //   const txId = this.wallet.parseTxs(blockIndex, serializedPayloads);
+  //   this.logger.debug(`Sent transaction ${txId}`);
+  // }
 }

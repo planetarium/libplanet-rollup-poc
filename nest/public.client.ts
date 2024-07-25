@@ -6,6 +6,7 @@ import { abi as portalAbi } from './abi/LibplanetPortal';
 import { abi as txParserAbi } from './abi/TransactionParser';
 import { abi as hasParserAbi } from './abi/HackAndSlashParser';
 import { abi as txProcessorAbi } from './abi/LibplanetTransactionProcessor';
+import { abi as txResultStoreAbi } from './abi/LibplanetTransactionResultsStore';
 
 @Injectable()
 export class PublicClientManager {
@@ -50,11 +51,20 @@ export class PublicClientManager {
     });
   }
 
+  public GetTxResultStoreContract() {
+    return getContract({
+      address: (this.chain.contracts?.libplanetTransactionResultsStore as ChainContract).address,
+      abi: txResultStoreAbi,
+      client: this.client,
+    });
+  }
+
   private Register() {
     const portalContract = this.GetPortalContract();
     const txParserContract = this.GetTxParserContract();
     const txProcessorContract = this.GetTxProcessorContract();
     const hasParserContract = this.GetHasParserContract();
+    const txResultStoreContract = this.GetTxResultStoreContract();
     portalContract.watchEvent.DepositETH({
       onLogs: (logs) => {
         for (const log of logs) {
@@ -62,7 +72,6 @@ export class PublicClientManager {
         }
       },
     });
-    
     txProcessorContract.watchEvent.TransactionParsed({
       onLogs: (logs) => {
         for (const log of logs) {
@@ -94,6 +103,14 @@ export class PublicClientManager {
           this.logger.debug(log.args.hackAndSlash);
         }
       },
+    });
+    txResultStoreContract.watchEvent.TxResultStored({}, {
+      onLogs: (logs) => {
+        for (const log of logs) {
+          this.logger.debug(`Received TxResultStored event: ${log}`);
+          this.logger.debug(log.args);
+        }
+      }
     });
   }
 

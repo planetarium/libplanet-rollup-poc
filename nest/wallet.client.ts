@@ -7,7 +7,9 @@ import { abi as bridgeAbi } from './abi/LibplanetBridge';
 import { abi as txParserAbi } from './abi/TransactionParser';
 import { abi as hasParserAbi } from './abi/HackAndSlashParser';
 import { abi as txProcessorAbi } from './abi/LibplanetTransactionProcessor';
+import { abi as txResultStoreAbi } from './abi/LibplanetTransactionResultsStore';
 import { exportPrivateKeyFromKeyStore } from './key.utils';
+import { TransactionResult, TxStatus } from './9c/nc.transactionResult.model';
 
 @Injectable()
 export class WalletManager {
@@ -68,6 +70,24 @@ export class WalletManager {
       client: this.client,
     });
     return hasParserContract.write.parseHackAndSlashFromSerializedPayload([serializedPayload], {});
+  }
+
+  async storeTxResult(txResult: TransactionResult): Promise<`0x${string}`> {
+    const txResultStoreContract = getContract({
+      address: (this.chain.contracts?.libplanetTransactionResultsStore as ChainContract).address,
+      abi: txResultStoreAbi,
+      client: this.client,
+    });
+    return txResultStoreContract.write.storeTxResult([
+      txResult.blockIndex,
+      '0x'.concat(txResult.txId) as `0x${string}`,
+      {
+        txStatus: TxStatus[txResult.txStatus as keyof typeof TxStatus],
+        blockHash: '0x'.concat(txResult.blockHash) as `0x${string}`,
+        inputState: '0x'.concat(txResult.inputState) as `0x${string}`,
+        outputState: '0x'.concat(txResult.outputState) as `0x${string}`,
+      }
+    ], {});
   }
 
   private GetChain(chain: string): Chain {

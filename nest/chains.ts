@@ -101,6 +101,9 @@ export const localhost = (configure: ConfigService) => {
       libplanetTransactionProcessor: {
         address: configure.get('local_contract_address.libplanet_transaction_processor'),
       },
+      libplanetTransactionResultsStore: {
+        address: configure.get('local_contract_address.libplanet_transaction_results_store'),
+      },
       transactionParser: {
         address: configure.get('local_contract_address.transaction_parser'),
       },

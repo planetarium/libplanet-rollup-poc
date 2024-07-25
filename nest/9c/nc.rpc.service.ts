@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { GraphQLClientService } from './graphql.client';
 import { gql } from 'graphql-request';
+import { TransactionResult } from './nc.transactionResult.model';
 
 @Injectable()
 export class NCRpcService {
@@ -60,6 +61,58 @@ export class NCRpcService {
     );
 
     return result;
+  }
+
+  async sendSimpleTransactionToLocalNetwork(simpleString: string): Promise<string> {
+    const res = await this.graphqlClient.localExplorerQuery(gql`
+      mutation {
+        transactionMutation {
+          simpleStringStage(simpleString: "${simpleString}")
+        }
+      }
+    `);
+
+    return res.transactionMutation.simpleStringStage;
+  }
+
+  async getTxResultsFromLocalNetwork(limit: number): Promise<TransactionResult[]> {
+    const txIdsRes = await this.graphqlClient.localExplorerQuery(gql`
+      query {
+        transactionQuery {
+          transactions (limit: ${limit}, desc: true) {
+            id
+          }
+        }
+      }
+    `);
+    
+    const txResultList: TransactionResult[] = [];
+    for (const tx of txIdsRes.transactionQuery.transactions) {
+      const txResultsRes = await this.graphqlClient.localExplorerQuery(gql`
+        query {
+          transactionQuery {
+            transactionResult(txId: "${tx.id}") {
+              txStatus
+              blockIndex
+              blockHash
+              inputState
+              outputState
+            }
+          }
+        }
+      `);
+
+      txResultList.push({
+        txId: tx.id,
+        txStatus: txResultsRes.transactionQuery.transactionResult.txStatus,
+        blockIndex: BigInt(txResultsRes.transactionQuery.transactionResult.blockIndex),
+        blockHash: txResultsRes.transactionQuery.transactionResult.blockHash,
+        inputState: txResultsRes.transactionQuery.transactionResult.inputState,
+        outputState: txResultsRes.transactionQuery.transactionResult.outputState,
+      });
+    }
+
+    return txResultList;
   }
 }
 
