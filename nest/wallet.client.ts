@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { createWalletClient, http, Chain, getContract, ChainContract } from 'viem';
+import { createWalletClient, http, Chain, getContract, ChainContract, Address } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { mothership, opSepolia, localhost } from './chains';
 import { ConfigService } from '@nestjs/config';
@@ -9,12 +9,15 @@ import { abi as hasParserAbi } from './abi/HackAndSlashParser';
 import { abi as txProcessorAbi } from './abi/LibplanetTransactionProcessor';
 import { abi as txResultStoreAbi } from './abi/LibplanetTransactionResultsStore';
 import { abi as proofVerifierAbi } from './abi/LibplanetProofVerifier';
-import { exportPrivateKeyFromKeyStore } from './key.utils';
+import { KeyManager } from './key.utils';
 import { TransactionResult, TxStatus, TransactionStruct, TransactionWorldProof } from './9c/nc.respose.models';
 
 @Injectable()
 export class WalletManager {
-  constructor(private configure: ConfigService) {}
+  constructor(
+    private configure: ConfigService,
+    private keyManager: KeyManager,
+  ) {}
 
   private readonly logger = new Logger(WalletManager.name);
 
@@ -28,7 +31,7 @@ export class WalletManager {
     });
   }
 
-  async depositETH(amount: number): Promise<`0x${string}`> {
+  async depositETH(recipient: Address, amount: bigint): Promise<`0x${string}`> {
     const bridgeContract = getContract({
       address: (this.chain.contracts?.libplanetBridge as ChainContract).address,
       abi: bridgeAbi,
@@ -37,11 +40,11 @@ export class WalletManager {
     return bridgeContract.write.depositETH(
       [
         this.client.account.address,
-        (this.chain.contracts?.libplanetPortal as ChainContract).address,
-        BigInt(amount),
+        recipient,
+        amount,
       ],
       {
-        value: BigInt(amount),
+        value: amount,
       },
     );
   }
@@ -122,10 +125,7 @@ export class WalletManager {
   private GetClient() {
     const account = privateKeyToAccount(
       this.chain.name === 'localhost' ?
-      exportPrivateKeyFromKeyStore(
-        this.configure.get('wallet.keystore.path', ''),
-        this.configure.get('wallet.keystore.password', ''),
-      ) :
+      this.keyManager.getPrivateKeyFromKeyStore() :
       this.configure.get('wallet.private_key') as `0x${string}`,
     );
     return createWalletClient({

@@ -2,10 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { GraphQLClientService } from './graphql.client';
 import { gql } from 'graphql-request';
 import { BlockStruct, BlockWithTransactionsStruct, TransactionResult, TransactionWorldProof } from './nc.respose.models';
+import { Address } from 'viem';
+import { KeyManager } from 'nest/key.utils';
 
 @Injectable()
 export class NCRpcService {
-  constructor(private readonly graphqlClient: GraphQLClientService) {}
+  constructor(
+    private readonly graphqlClient: GraphQLClientService,
+    private readonly keyManager: KeyManager,
+  ) {}
 
   async getBlocks(): Promise<BlockStruct[]> {
     const res = await this.graphqlClient.query(gql`
@@ -157,5 +162,29 @@ export class NCRpcService {
     }
 
     return txWorldProofList;
+  }
+
+  async mintWethToLocalNetwork(recipient: Address, amount: bigint): Promise<boolean> {
+    const res = await this.graphqlClient.localExplorerQuery(gql`
+      mutation {
+        transactionMutation {
+          mintWETH(
+            privateKey: "${this.toHex(this.keyManager.getPrivateKeyFromKeyStore())}",
+            recipient: "${this.toHex(recipient)}",
+            amount: ${amount}
+          )
+        }
+      }
+    `);
+
+    if(res.transactionMutation.mintWETH === "success") {
+      return true;
+    }
+
+    return false;
+  }
+
+  toHex(address: `0x${string}`): string {
+    return address.slice(2);
   }
 }

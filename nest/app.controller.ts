@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body } from '@nestjs/common';
 import { WalletManager } from './wallet.client';
 import { ParseTransactionDto } from './dto/parse-transaction.dto';
 import { VerifyProofDto } from './dto/verify-proof.dto';
+import { DepositEthDto } from './dto/deposit-eth.dto';
 
 @Controller()
 export class AppController {
@@ -12,9 +13,9 @@ export class AppController {
     return this.wallet.sendTransaction('0xdeadbeef');
   }
 
-  @Get('deposit')
-  async depositETH(): Promise<`0x${string}`> {
-    return this.wallet.depositETH(10000);
+  @Post('deposit')
+  async depositETH(@Body() depositEth: DepositEthDto): Promise<`0x${string}`> {
+    return this.wallet.depositETH(depositEth.recipient, depositEth.amount);
   }
 
   @Post('parse/tx')

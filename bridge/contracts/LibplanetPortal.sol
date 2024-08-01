@@ -11,6 +11,7 @@ contract LibplanetPortal {
         address to,
         uint256 amount
     ) public payable {
+        //Doesn't it need to check msg.value?
         emit DepositETH(from, to, amount);
     }
 

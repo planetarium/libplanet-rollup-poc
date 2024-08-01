@@ -8,10 +8,14 @@ import { abi as hasParserAbi } from './abi/HackAndSlashParser';
 import { abi as txProcessorAbi } from './abi/LibplanetTransactionProcessor';
 import { abi as txResultStoreAbi } from './abi/LibplanetTransactionResultsStore';
 import { abi as proofVerifierAbi } from './abi/LibplanetProofVerifier';
+import { NCRpcService } from './9c/nc.rpc.service';
 
 @Injectable()
 export class PublicClientManager {
-  constructor(private readonly configure: ConfigService) {
+  constructor(
+    private readonly configure: ConfigService,
+    private readonly nc_rpc: NCRpcService,
+  ) {
     this.Register();
   }
 
@@ -77,9 +81,20 @@ export class PublicClientManager {
     const proofVerifierContract = this.GetProofVerifierContract();
 
     portalContract.watchEvent.DepositETH({
-      onLogs: (logs) => {
+      onLogs: async (logs) => {
         for (const log of logs) {
           this.logger.debug(`Received DepositETH event: ${log}`);
+          this.logger.debug(log.args);
+          const fromBalance = await this.client.getBalance({
+            address: log.args.from!,
+          });
+          this.logger.debug(`From balance: ${fromBalance}`);
+          var recipient = log.args.to!;
+          var amount = log.args.amount!; 
+          var ok = await this.nc_rpc.mintWethToLocalNetwork(recipient, amount);
+          if(ok) {
+            this.logger.debug(`Minted WETH to ${recipient} with ${amount}`);
+          }
         }
       },
     });
