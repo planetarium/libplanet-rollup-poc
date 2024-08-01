@@ -4,6 +4,7 @@ pragma solidity ^0.8.24;
 contract LibplanetPortal {
 
     event DepositETH(address from, address to, uint256 amount);
+    event WithdrawNCG(address from, address to, uint256 amount);
     event WithdrawETH(address from, address to, uint256 amount);
 
     function depositETH(
@@ -13,6 +14,13 @@ contract LibplanetPortal {
     ) public payable {
         //Doesn't it need to check msg.value?
         emit DepositETH(from, to, amount);
+    }
+
+    function withdrawNCG(
+        address to,
+        uint256 amount
+    ) public {
+        emit WithdrawNCG(msg.sender, to, amount);
     }
 
     function withdrawETH(

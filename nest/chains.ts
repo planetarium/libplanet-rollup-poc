@@ -113,6 +113,9 @@ export const localhost = (configure: ConfigService) => {
       hackAndSlashParser: {
         address: configure.get('local_contract_address.hack_and_slash_parser'),
       },
+      wncgToken: {
+        address: configure.get('local_contract_address.wncg_token'),
+      },
     },
   });
 }
