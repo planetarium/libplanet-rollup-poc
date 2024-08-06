@@ -21,6 +21,6 @@
     "noImplicitAny": true,
     "alwaysStrict": true,
     "forceConsistentCasingInFileNames": false,
-    "noFallthroughCasesInSwitch": false
+    "noFallthroughCasesInSwitch": false,
   }
 }
