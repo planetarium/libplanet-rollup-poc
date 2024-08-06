@@ -25,6 +25,28 @@ export class PublicClientManager {
   private readonly chain = this.GetChain(this.configure.get('wallet.chain', 'localhost'));
   private readonly client = this.GetClient();
 
+  public async GetLatestOutputRoots() {
+    var toBlockIndex = await this.client.getBlockNumber();
+    var fromBlockIndex = toBlockIndex > 100n ? toBlockIndex - 100n : 0n as bigint;
+
+    while(toBlockIndex > 0n) {
+      const logs = await this.client.getContractEvents({
+        address: (this.chain.contracts?.libplanetOutputOracle as ChainContract).address,
+        abi: outputOracleAbi,
+        eventName: 'OutputProposed',
+        fromBlock: fromBlockIndex as bigint,
+        toBlock: toBlockIndex as bigint,
+      });
+
+      if(logs.length > 0) {
+        return logs[logs.length - 1].args;
+      }
+
+      toBlockIndex = fromBlockIndex;
+      fromBlockIndex = toBlockIndex > 100n ? toBlockIndex - 100n : 0n;
+    }
+  }
+
   public GetPortalContract() {
     return getContract({
       address: (this.chain.contracts?.libplanetPortal as ChainContract).address,

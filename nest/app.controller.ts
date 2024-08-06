@@ -1,14 +1,17 @@
-import { Controller, Get, Post, Body } from '@nestjs/common';
+import { Controller, Get, Post, Body, Query } from '@nestjs/common';
 import { WalletManager } from './wallet.client';
 import { ParseTransactionDto } from './dto/parse-transaction.dto';
 import { VerifyProofDto } from './dto/verify-proof.dto';
 import { DepositEthDto } from './dto/deposit-eth.dto';
 import { NCRpcService } from './9c/nc.rpc.service';
+import { PublicClientManager } from './public.client';
+import { OutputRootProposal } from './9c/nc.respose.models';
 
 @Controller()
 export class AppController {
   constructor(
     private readonly wallet: WalletManager,
+    private readonly publicClient: PublicClientManager,
     private readonly nc_rpc: NCRpcService
   ) {}
 
@@ -50,5 +53,12 @@ export class AppController {
   async proposeOutputRoot(): Promise<`0x${string}`> {
     var outputRoot = await this.nc_rpc.getOutputRootProposalFromLocalNetwork();
     return this.wallet.proposeOutputRoot(outputRoot);
+  }
+
+  @Get('prove/withdrawal')
+  async proveWithdrawal(@Query('txId') txId: string): Promise<string> {
+    var blockIndex = await this.nc_rpc.getBlockIndexWithTxIdFromLocalNetwork(txId); // from l2
+    var latestOutputRoot = await this.publicClient.GetLatestOutputRoots(); // from l1
+    return "test";
   }
 }

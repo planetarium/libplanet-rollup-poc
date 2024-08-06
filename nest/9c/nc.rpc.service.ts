@@ -224,6 +224,22 @@ export class NCRpcService {
     };
   }
 
+  async getBlockIndexWithTxIdFromLocalNetwork(txId: string): Promise<bigint> {
+    const res = await this.graphqlClient.localExplorerQuery(gql`
+      query {
+        transactionQuery {
+          transactionResult(
+            txId: "${txId}"
+          ) {
+            blockIndex
+          }
+        }
+      }
+    `);
+
+    return BigInt(res.transactionQuery.transactionResult.blockIndex);
+  }
+
   toHex(address: `0x${string}`): string {
     return address.slice(2);
   }
