@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { createWalletClient, http, Chain, getContract, ChainContract, Address } from 'viem';
+import { createWalletClient, http, Chain, getContract, ChainContract, Address, sha256 } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { mothership, opSepolia, localhost } from './chains';
 import { ConfigService } from '@nestjs/config';
@@ -9,8 +9,9 @@ import { abi as hasParserAbi } from './abi/HackAndSlashParser';
 import { abi as txProcessorAbi } from './abi/LibplanetTransactionProcessor';
 import { abi as txResultStoreAbi } from './abi/LibplanetTransactionResultsStore';
 import { abi as proofVerifierAbi } from './abi/LibplanetProofVerifier';
+import { abi as outputOracleAbi } from './abi/LibplanetOutputOracle';
 import { KeyManager } from './key.utils';
-import { TransactionResult, TxStatus, TransactionStruct, TransactionWorldProof } from './9c/nc.respose.models';
+import { TransactionResult, TxStatus, TransactionStruct, TransactionWorldProof, OutputRootProposal } from './9c/nc.respose.models';
 
 @Injectable()
 export class WalletManager {
@@ -107,6 +108,23 @@ export class WalletManager {
       '0x'.concat(txWorldProof.key) as `0x${string}`,
       '0x'.concat(txWorldProof.value) as `0x${string}`,
     ], {});
+  }
+
+  async proposeOutputRoot(outputRootProposal: OutputRootProposal): Promise<`0x${string}`> {
+    const outputOracleContract = getContract({
+      address: (this.chain.contracts?.libplanetOutputOracle as ChainContract).address,
+      abi: outputOracleAbi,
+      client: this.client,
+    });
+    var stateRootHash = Uint8Array.from(Buffer.from(outputRootProposal.stateRootHash, 'hex'));
+    var storageRootHash = Uint8Array.from(Buffer.from(outputRootProposal.storageRootHash, 'hex'));
+    var outputRoot = sha256(stateRootHash || storageRootHash);
+    var blockIndex = BigInt(outputRootProposal.blockIndex);
+
+    return outputOracleContract.write.proposeL2Output([
+      outputRoot,
+      blockIndex,
+    ])
   }
 
   private GetChain(chain: string): Chain {

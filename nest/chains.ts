@@ -98,6 +98,9 @@ export const localhost = (configure: ConfigService) => {
       libplanetBridge: {
         address: configure.get('local_contract_address.libplanet_bridge'),
       },
+      libplanetOutputOracle: {
+        address: configure.get('local_contract_address.libplanet_output_oracle'),
+      },
       libplanetTransactionProcessor: {
         address: configure.get('local_contract_address.libplanet_transaction_processor'),
       },

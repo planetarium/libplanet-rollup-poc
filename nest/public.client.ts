@@ -8,6 +8,7 @@ import { abi as hasParserAbi } from './abi/HackAndSlashParser';
 import { abi as txProcessorAbi } from './abi/LibplanetTransactionProcessor';
 import { abi as txResultStoreAbi } from './abi/LibplanetTransactionResultsStore';
 import { abi as proofVerifierAbi } from './abi/LibplanetProofVerifier';
+import { abi as outputOracleAbi } from './abi/LibplanetOutputOracle';
 import { NCRpcService } from './9c/nc.rpc.service';
 
 @Injectable()
@@ -72,6 +73,14 @@ export class PublicClientManager {
     });
   }
 
+  public GetOutputOracleContract() {
+    return getContract({
+      address: (this.chain.contracts?.libplanetOutputOracle as ChainContract).address,
+      abi: outputOracleAbi,
+      client: this.client,
+    });
+  }
+
   private Register() {
     const portalContract = this.GetPortalContract();
     const txParserContract = this.GetTxParserContract();
@@ -79,6 +88,7 @@ export class PublicClientManager {
     const hasParserContract = this.GetHasParserContract();
     const txResultStoreContract = this.GetTxResultStoreContract();
     const proofVerifierContract = this.GetProofVerifierContract();
+    const outputOracleContract = this.GetOutputOracleContract();
 
     portalContract.watchEvent.DepositETH({
       onLogs: async (logs) => {
@@ -142,6 +152,14 @@ export class PublicClientManager {
       onLogs: (logs) => {
         for (const log of logs) {
           this.logger.debug(`Received ProofVerified event: ${log}`);
+          this.logger.debug(log.args);
+        }
+      },
+    });
+    outputOracleContract.watchEvent.OutputProposed({}, {
+      onLogs: (logs) => {
+        for (const log of logs) {
+          this.logger.debug(`Received OutputProposed event: ${log}`);
           this.logger.debug(log.args);
         }
       },

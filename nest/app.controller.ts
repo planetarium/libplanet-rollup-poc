@@ -3,10 +3,14 @@ import { WalletManager } from './wallet.client';
 import { ParseTransactionDto } from './dto/parse-transaction.dto';
 import { VerifyProofDto } from './dto/verify-proof.dto';
 import { DepositEthDto } from './dto/deposit-eth.dto';
+import { NCRpcService } from './9c/nc.rpc.service';
 
 @Controller()
 export class AppController {
-  constructor(private readonly wallet: WalletManager) {}
+  constructor(
+    private readonly wallet: WalletManager,
+    private readonly nc_rpc: NCRpcService
+  ) {}
 
   @Get('send')
   async sendTransaction(): Promise<`0x${string}`> {
@@ -40,5 +44,11 @@ export class AppController {
       verifyProofDto.value
     );
     return this.wallet.verifyTxProof(verifyProof.toTransactionWorldProof());
+  }
+
+  @Get('propose/outputroot')
+  async proposeOutputRoot(): Promise<`0x${string}`> {
+    var outputRoot = await this.nc_rpc.getOutputRootProposalFromLocalNetwork();
+    return this.wallet.proposeOutputRoot(outputRoot);
   }
 }
