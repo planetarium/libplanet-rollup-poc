@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { GraphQLClientService } from './graphql.client';
 import { gql } from 'graphql-request';
-import { BlockStruct, BlockWithTransactionsStruct, TransactionResult, TransactionWorldProof } from './nc.respose.models';
+import { BlockStruct, BlockWithTransactionsStruct, OutputRootProposal, TransactionResult, TransactionWorldProof } from './nc.respose.models';
 import { Address } from 'viem';
 import { KeyManager } from 'nest/key.utils';
 
@@ -182,6 +182,30 @@ export class NCRpcService {
     }
 
     return false;
+  }
+
+  async getOutputRootProposalFromLocalNetwork(): Promise<OutputRootProposal> {
+    const res = await this.graphqlClient.localExplorerQuery(gql`
+      query {
+        stateQuery {
+          outputRoot {
+            blockIndex
+            stateRootHash
+            storageRootHash
+          }
+        }
+      }
+    `);
+
+    if (res === null || res.stateQuery === null || res.stateQuery.outputRoot === null) {
+      throw new Error('Failed to get output root proposal');
+    }
+
+    return {
+      blockIndex: BigInt(res.stateQuery.outputRoot.blockIndex),
+      stateRootHash: res.stateQuery.outputRoot.stateRootHash,
+      storageRootHash: res.stateQuery.outputRoot.storageRootHash,
+    };
   }
 
   toHex(address: `0x${string}`): string {

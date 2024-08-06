@@ -37,3 +37,9 @@ export type BlockWithTransactionsStruct = {
 export type TransactionStruct = {
     serializedPayload: string;
 };
+
+export type OutputRootProposal = {
+    blockIndex: bigint;
+    stateRootHash: string;
+    storageRootHash: string;
+}
