@@ -18,7 +18,7 @@ import { NCRpcService } from './9c/nc.rpc.service';
     NCModule,
   ],
   controllers: [AppController],
-  //providers: [WalletManager, PublicClientManager, RollupCronService, KeyManager],
-  providers: [WalletManager, PublicClientManager, KeyManager],
+  providers: [WalletManager, PublicClientManager, RollupCronService, KeyManager],
+  //providers: [WalletManager, PublicClientManager, KeyManager],
 })
 export class AppModule {}

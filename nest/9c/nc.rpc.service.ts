@@ -184,6 +184,22 @@ export class NCRpcService {
     return false;
   }
 
+  async withdrawEthToLocalNetwork(privateKey: `0x${string}`, recipient: Address, amount: bigint): Promise<string> {
+    const res = await this.graphqlClient.localExplorerQuery(gql`
+      mutation {
+        transactionMutation {
+          withdrawETH(
+            privateKey: "${this.toHex(privateKey)}",
+            recipient: "${this.toHex(recipient)}",
+            amount: ${amount}
+          )
+        }
+      }
+    `);
+
+    return res.transactionMutation.withdrawETH;
+  }
+
   async getOutputRootProposalFromLocalNetwork(): Promise<OutputRootProposal> {
     const res = await this.graphqlClient.localExplorerQuery(gql`
       query {
