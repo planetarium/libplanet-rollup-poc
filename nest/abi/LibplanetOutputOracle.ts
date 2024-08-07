@@ -55,6 +55,42 @@ export const abi = [
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_index",
+        "type": "uint256"
+      }
+    ],
+    "name": "getL2Output",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "bytes32",
+            "name": "outputRoot",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "uint256",
+            "name": "l2BlockNumber",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "l1Timestamp",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct Types.OutputProposal",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "latestBlockNumber",
     "outputs": [

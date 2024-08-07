@@ -1,14 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.24;
 
+import { Types } from "./utils/LibplanetTypes.sol";
 contract LibplanetOutputOracle {
-    struct OutputProposal {
-        bytes32 outputRoot;
-        uint256 l2BlockNumber;
-        uint256 l1Timestamp;
-    }
-
-    OutputProposal[] internal l2Outputs;
+    Types.OutputProposal[] internal l2Outputs;
 
     address public immutable PROPOSER;
     
@@ -35,7 +30,12 @@ contract LibplanetOutputOracle {
 
         emit OutputProposed(_outputRoot, nextOutputIndex(), _l2BlockNumber, block.timestamp);
 
-        l2Outputs.push(OutputProposal(_outputRoot, _l2BlockNumber, block.timestamp));
+        l2Outputs.push(Types.OutputProposal(_outputRoot, _l2BlockNumber, block.timestamp));
+    }
+
+    function getL2Output(uint256 _index) external view returns (Types.OutputProposal memory) {
+        require(_index < l2Outputs.length, "Invalid index");
+        return l2Outputs[_index];
     }
 
     function latestBlockNumber() public view returns (uint256) {
