@@ -200,11 +200,13 @@ export class NCRpcService {
     return res.transactionMutation.withdrawETH;
   }
 
-  async getOutputRootProposalFromLocalNetwork(): Promise<OutputRootProposal> {
+  async getOutputRootProposalFromLocalNetwork(index?: bigint | undefined): Promise<OutputRootProposal> {
+    const arg = index === undefined ? '' : `(index: ${index})`;
+
     const res = await this.graphqlClient.localExplorerQuery(gql`
       query {
         stateQuery {
-          outputRoot {
+          outputRoot ${arg} {
             blockIndex
             stateRootHash
             storageRootHash
@@ -238,6 +240,31 @@ export class NCRpcService {
     `);
 
     return BigInt(res.transactionQuery.transactionResult.blockIndex);
+  }
+
+  async getWithdrawalProofFromLocalNetwork(storageRootHash: string, txId: string): Promise<{withdrawalInfo: string, proof: string}> {
+    const res = await this.graphqlClient.localExplorerQuery(gql`
+      query {
+        stateQuery {
+          withdrawalProof(
+            storageRootHash: "${storageRootHash}",
+            txId: "${txId}"
+          ) {
+            withdrawalInfo {
+              hex
+            }
+            proof {
+              hex
+            }
+          }
+        }
+      }
+    `);
+
+    return {
+      withdrawalInfo: res.stateQuery.withdrawalProof.withdrawalInfo.hex,
+      proof: res.stateQuery.withdrawalProof.proof.hex,
+    };
   }
 
   toHex(address: `0x${string}`): string {

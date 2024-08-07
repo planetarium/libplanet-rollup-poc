@@ -57,8 +57,17 @@ export class AppController {
 
   @Get('prove/withdrawal')
   async proveWithdrawal(@Query('txId') txId: string): Promise<string> {
-    var blockIndex = await this.nc_rpc.getBlockIndexWithTxIdFromLocalNetwork(txId); // from l2
+    var txBlockIndex = await this.nc_rpc.getBlockIndexWithTxIdFromLocalNetwork(txId); // from l2
     var latestOutputRoot = await this.publicClient.GetLatestOutputRoots(); // from l1
+    if (latestOutputRoot == null) {
+      return 'no output root found';
+    }
+    var latestBlockIndex = latestOutputRoot.l2BlockNumber!;
+    if (txBlockIndex > latestBlockIndex) {
+      return 'tx is not commited yet';
+    }
+    var outputRootProof = await this.nc_rpc.getOutputRootProposalFromLocalNetwork(latestBlockIndex);
+    var withdrawalProof = await this.nc_rpc.getWithdrawalProofFromLocalNetwork(outputRootProof.storageRootHash, txId);
     return "test";
   }
 }
