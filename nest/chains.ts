@@ -101,24 +101,6 @@ export const localhost = (configure: ConfigService) => {
       libplanetOutputOracle: {
         address: configure.get('local_contract_address.libplanet_output_oracle'),
       },
-      libplanetTransactionProcessor: {
-        address: configure.get('local_contract_address.libplanet_transaction_processor'),
-      },
-      libplanetTransactionResultsStore: {
-        address: configure.get('local_contract_address.libplanet_transaction_results_store'),
-      },
-      libplanetProofVerifier: {
-        address: configure.get('local_contract_address.libplanet_proof_verifier'),
-      },
-      transactionParser: {
-        address: configure.get('local_contract_address.transaction_parser'),
-      },
-      hackAndSlashParser: {
-        address: configure.get('local_contract_address.hack_and_slash_parser'),
-      },
-      wncgToken: {
-        address: configure.get('local_contract_address.wncg_token'),
-      },
     },
   });
 }

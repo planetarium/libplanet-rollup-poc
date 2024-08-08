@@ -42,13 +42,6 @@ contract LibplanetPortal {
         emit DepositETH(from, to, amount);
     }
 
-    function withdrawNCG(
-        address to,
-        uint256 amount
-    ) public {
-        emit WithdrawNCG(msg.sender, to, amount);
-    }
-
     function withdrawETH(
         address from,
         address to,
@@ -92,9 +85,9 @@ contract LibplanetPortal {
 
         bool success = payable(_tx.to).send(_tx.amount);
 
-        emit WithdrawalFinalized(withdrawalHash, success);
+        finalizedWithdrawals[withdrawalHash] = success;
 
-        provenWithdrawals[withdrawalHash] = success;
+        emit WithdrawalFinalized(withdrawalHash, success);
     }
 
     function hashOutputRootProof(
