@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Query } from '@nestjs/common';
 import { DepositEthDto } from './dto/deposit-eth.dto';
 import { AppService } from './app.service';
 
-@Controller()
+@Controller('/geth')
 export class AppController {
   constructor(
     private readonly appService: AppService

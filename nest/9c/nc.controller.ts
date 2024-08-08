@@ -3,7 +3,7 @@ import { NCRpcService } from './nc.rpc.service';
 import { DepositEthDto } from 'nest/dto/deposit-eth.dto';
 import { WithdrawEthDto } from 'nest/dto/withdraw-eth.dto';
 
-@Controller('9c')
+@Controller('libplanet')
 export class NCController {
   constructor(private readonly RPCService: NCRpcService) {}
 
