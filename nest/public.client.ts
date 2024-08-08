@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Chain, createPublicClient, getContract, http, ChainContract } from 'viem';
+import { Chain, createPublicClient, getContract, http, ChainContract, Address } from 'viem';
 import { mothership, opSepolia, localhost } from './chains';
 import { ConfigService } from '@nestjs/config';
 import { abi as portalAbi } from './abi/LibplanetPortal';
@@ -24,6 +24,10 @@ export class PublicClientManager {
 
   private readonly chain = this.GetChain(this.configure.get('wallet.chain', 'localhost'));
   private readonly client = this.GetClient();
+
+  public async GetBalance(address: Address) {
+    return this.client.getBalance({ address });
+  }
 
   public async GetLatestOutputRoots() {
     var toBlockIndex = await this.client.getBlockNumber();
@@ -127,6 +131,22 @@ export class PublicClientManager {
           if(ok) {
             this.logger.debug(`Minted WETH to ${recipient} with ${amount}`);
           }
+        }
+      },
+    });
+    portalContract.watchEvent.WithdrawalProven({}, {
+      onLogs: (logs) => {
+        for (const log of logs) {
+          this.logger.debug(`Received WithdrawalProven event: ${log}`);
+          this.logger.debug(log.args);
+        }
+      },
+    });
+    portalContract.watchEvent.WithdrawalFinalized({}, {
+      onLogs: (logs) => {
+        for (const log of logs) {
+          this.logger.debug(`Received WithdrawalFinalized event: ${log}`);
+          this.logger.debug(log.args);
         }
       },
     });

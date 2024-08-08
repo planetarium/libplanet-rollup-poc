@@ -66,8 +66,35 @@ export class AppController {
     if (txBlockIndex > latestBlockIndex) {
       return 'tx is not commited yet';
     }
-    var outputRootProof = await this.nc_rpc.getOutputRootProposalFromLocalNetwork(latestBlockIndex);
-    var withdrawalProof = await this.nc_rpc.getWithdrawalProofFromLocalNetwork(outputRootProof.storageRootHash, txId);
-    return "test";
+    var outputRootProposal = await this.nc_rpc.getOutputRootProposalFromLocalNetwork(latestBlockIndex);
+    var withdrawalProof = await this.nc_rpc.getWithdrawalProofFromLocalNetwork(outputRootProposal.storageRootHash, txId);
+    var res = await this.wallet.proveWithdrawalTransaction(
+      withdrawalProof.withdrawalInfo,
+      latestOutputRoot.l2OutputIndex!,
+      outputRootProposal, 
+      '0x'.concat(withdrawalProof.proof) as `0x${string}`);
+    return res;
+  }
+
+  @Get('finalize/withdrawal')
+  async finalizeWithdrawal(@Query('txId') txId: string): Promise<string> {
+    var txBlockIndex = await this.nc_rpc.getBlockIndexWithTxIdFromLocalNetwork(txId); // from l2
+    var latestOutputRoot = await this.publicClient.GetLatestOutputRoots(); // from l1
+    if (latestOutputRoot == null) {
+      return 'no output root found';
+    }
+    var latestBlockIndex = latestOutputRoot.l2BlockNumber!;
+    if (txBlockIndex > latestBlockIndex) {
+      return 'tx is not commited yet';
+    }
+    var outputRootProposal = await this.nc_rpc.getOutputRootProposalFromLocalNetwork(latestBlockIndex);
+    var withdrawalProof = await this.nc_rpc.getWithdrawalProofFromLocalNetwork(outputRootProposal.storageRootHash, txId);
+    var res = await this.wallet.finalizeWithdrawalTransaction(withdrawalProof.withdrawalInfo);
+    return res;
+  }
+
+  @Get('balance')
+  async getBalance(@Query('address') address: `0x${string}`): Promise<bigint> {
+    return this.publicClient.GetBalance(address);
   }
 }

@@ -3,6 +3,7 @@ import { createWalletClient, http, Chain, getContract, ChainContract, Address, s
 import { privateKeyToAccount } from 'viem/accounts';
 import { mothership, opSepolia, localhost } from './chains';
 import { ConfigService } from '@nestjs/config';
+import { abi as portalAbi } from './abi/LibplanetPortal';
 import { abi as bridgeAbi } from './abi/LibplanetBridge';
 import { abi as txParserAbi } from './abi/TransactionParser';
 import { abi as hasParserAbi } from './abi/HackAndSlashParser';
@@ -11,7 +12,7 @@ import { abi as txResultStoreAbi } from './abi/LibplanetTransactionResultsStore'
 import { abi as proofVerifierAbi } from './abi/LibplanetProofVerifier';
 import { abi as outputOracleAbi } from './abi/LibplanetOutputOracle';
 import { KeyManager } from './key.utils';
-import { TransactionResult, TxStatus, TransactionStruct, TransactionWorldProof, OutputRootProposal } from './9c/nc.respose.models';
+import { TransactionResult, TxStatus, TransactionStruct, TransactionWorldProof, OutputRootProposal, WithdrawalTransaction } from './9c/nc.respose.models';
 
 @Injectable()
 export class WalletManager {
@@ -116,15 +117,57 @@ export class WalletManager {
       abi: outputOracleAbi,
       client: this.client,
     });
+    
     var stateRootHash = Uint8Array.from(Buffer.from(outputRootProposal.stateRootHash, 'hex'));
     var storageRootHash = Uint8Array.from(Buffer.from(outputRootProposal.storageRootHash, 'hex'));
-    var outputRoot = sha256(stateRootHash || storageRootHash);
+    
+    var outputRootArray = new Uint8Array(64);
+    outputRootArray.set(stateRootHash, 0);
+    outputRootArray.set(storageRootHash, 32);  
+
+    var outputRoot = sha256(outputRootArray);
+
     var blockIndex = BigInt(outputRootProposal.blockIndex);
 
     return outputOracleContract.write.proposeL2Output([
       outputRoot,
       blockIndex,
     ])
+  }
+
+  async proveWithdrawalTransaction(
+    withdrawalTransaction: WithdrawalTransaction,
+    l2OutputIndex: bigint,
+    outputRootProposal: OutputRootProposal,
+    withdrawalProof: `0x${string}`,
+  ): Promise<`0x${string}`> {
+    const portalContract = getContract({
+      address: (this.chain.contracts?.libplanetPortal as ChainContract).address,
+      abi: portalAbi,
+      client: this.client,
+    });
+    return portalContract.write.proveWithdrawalTransaction([
+      withdrawalTransaction,
+      l2OutputIndex,
+      {
+        stateRoot: '0x'.concat(outputRootProposal.stateRootHash) as `0x${string}`,
+        storageRoot: '0x'.concat(outputRootProposal.storageRootHash) as `0x${string}`,
+      },
+      withdrawalProof,
+    ]);
+  }
+
+  async finalizeWithdrawalTransaction(
+    withdrawalTransaction: WithdrawalTransaction,
+  ): Promise<`0x${string}`> {
+    const portalContract = getContract({
+      address: (this.chain.contracts?.libplanetPortal as ChainContract).address,
+      abi: portalAbi,
+      client: this.client,
+    });
+    return portalContract.write.finalizeWithdrawalTransaction([
+      withdrawalTransaction
+    ]);
   }
 
   private GetChain(chain: string): Chain {

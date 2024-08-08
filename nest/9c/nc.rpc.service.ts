@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { GraphQLClientService } from './graphql.client';
 import { gql } from 'graphql-request';
-import { BlockStruct, BlockWithTransactionsStruct, OutputRootProposal, TransactionResult, TransactionWorldProof } from './nc.respose.models';
+import { BlockStruct, BlockWithTransactionsStruct, OutputRootProposal, TransactionResult, TransactionWorldProof, WithdrawalTransaction } from './nc.respose.models';
 import { Address } from 'viem';
 import { KeyManager } from 'nest/key.utils';
 
@@ -242,7 +242,7 @@ export class NCRpcService {
     return BigInt(res.transactionQuery.transactionResult.blockIndex);
   }
 
-  async getWithdrawalProofFromLocalNetwork(storageRootHash: string, txId: string): Promise<{withdrawalInfo: string, proof: string}> {
+  async getWithdrawalProofFromLocalNetwork(storageRootHash: string, txId: string): Promise<{withdrawalInfo: WithdrawalTransaction, proof: string}> {
     const res = await this.graphqlClient.localExplorerQuery(gql`
       query {
         stateQuery {
@@ -251,7 +251,10 @@ export class NCRpcService {
             txId: "${txId}"
           ) {
             withdrawalInfo {
-              hex
+              nonce
+              from
+              to
+              amount
             }
             proof {
               hex
@@ -262,7 +265,12 @@ export class NCRpcService {
     `);
 
     return {
-      withdrawalInfo: res.stateQuery.withdrawalProof.withdrawalInfo.hex,
+      withdrawalInfo: {
+        nonce: BigInt(res.stateQuery.withdrawalProof.withdrawalInfo.nonce),
+        from: res.stateQuery.withdrawalProof.withdrawalInfo.from,
+        to: res.stateQuery.withdrawalProof.withdrawalInfo.to,
+        amount: BigInt(res.stateQuery.withdrawalProof.withdrawalInfo.amount),
+      },
       proof: res.stateQuery.withdrawalProof.proof.hex,
     };
   }

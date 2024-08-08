@@ -1,3 +1,5 @@
+import { Address } from "viem";
+
 export enum TxStatus {
     INVALID,
     STAGING,
@@ -42,4 +44,11 @@ export type OutputRootProposal = {
     blockIndex: bigint;
     stateRootHash: string;
     storageRootHash: string;
+}
+
+export type WithdrawalTransaction = {
+    nonce: bigint;
+    from: Address;
+    to: Address;
+    amount: bigint;
 }
