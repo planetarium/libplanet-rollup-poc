@@ -169,8 +169,8 @@ export class NCRpcService {
       mutation {
         transactionMutation {
           mintWETH(
-            privateKey: "${this.toHex(this.keyManager.getPrivateKeyFromKeyStore())}",
-            recipient: "${this.toHex(recipient)}",
+            privateKey: "${this.keyManager.getPrivateKeyFromKeyStore().slice(2)}",
+            recipient: "${recipient.slice(2)}",
             amount: ${amount}
           )
         }
@@ -189,8 +189,8 @@ export class NCRpcService {
       mutation {
         transactionMutation {
           withdrawETH(
-            privateKey: "${this.toHex(privateKey)}",
-            recipient: "${this.toHex(recipient)}",
+            privateKey: "${privateKey.slice(2)}",
+            recipient: "${recipient.slice(2)}",
             amount: ${amount}
           )
         }
@@ -275,7 +275,57 @@ export class NCRpcService {
     };
   }
 
-  toHex(address: `0x${string}`): string {
-    return address.slice(2);
+  // For batcher
+
+  async getRecentBlockFromLocal(): Promise<{
+    hash: string;
+    index: bigint;
+  }> {
+    const res = await this.graphqlClient.localExplorerQuery(gql`
+      query {
+        blockQuery {
+          blocks(desc: true, limit: 1){
+            hash
+            index
+          }
+        }
+      }
+    `);
+
+    return {
+      hash: res.blockQuery.blocks[0].hash,
+      index: BigInt(res.blockQuery.blocks[0].index)
+    };
+  }
+
+  async getBlockWithIndexFromLocal(index: bigint): Promise<{
+    hash: string;
+    index: bigint;
+    miner: `0x${string}`;
+    transactions: {
+      serializedPayload: string;
+    }[];
+  }> {
+    const res = await this.graphqlClient.localExplorerQuery(gql`
+      query {
+        blockQuery {
+          block(index: ${Number(index)}) {
+            hash
+            index
+            miner
+            transactions {
+              serializedPayload
+            }
+          }
+        }
+      }
+    `);
+
+    return {
+      hash: res.blockQuery.block.hash,
+      index: BigInt(res.blockQuery.block.index),
+      miner: res.blockQuery.block.miner,
+      transactions: res.blockQuery.block.transactions
+    };
   }
 }
