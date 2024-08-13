@@ -65,4 +65,8 @@ export class Channel {
     public nextFrame(): FrameData | undefined {
         return this.frames.shift();
     }
+
+    public hasTxData(): boolean {
+        return this.frames.length > 0;
+    }
 }

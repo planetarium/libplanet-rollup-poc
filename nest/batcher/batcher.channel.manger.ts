@@ -19,13 +19,17 @@ export class ChannelManager {
     }
 
     public TxData(): TxData {
+        for(let channel of this.channelQueue) {
+            if(channel.hasTxData()) {
+                return this.nextTxData(channel);
+            }
+        }
+
         this.ensureChannelWithSpace();
         this.processBlocks();
         this.outputFrames();
 
-        return {
-            frames: []
-        }
+        return this.nextTxData(this.currentChannel!);
     }
 
     private ensureChannelWithSpace(): void {
