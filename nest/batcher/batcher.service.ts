@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { BlockID } from "./batcher.model";
+import { BlockID } from "./batcher.types";
 import { NCRpcService } from "nest/9c/nc.rpc.service";
 import { start } from "repl";
 import { ChannelManager } from "./batcher.channel.manger";
@@ -15,6 +15,7 @@ export class BatcherService {
 
     public async start(): Promise<void> {
         await this.loadBlocksIntoState();
+        await this.publishTxToL1();
     }
 
     private async loadBlocksIntoState(): Promise<void> {
@@ -63,5 +64,8 @@ export class BatcherService {
             start: this.lastStoredBlock,
             end: recentBlock
         };
+    }
+
+    private async publishTxToL1(): Promise<void> {
     }
 }

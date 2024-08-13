@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { GraphQLClientService } from './graphql.client';
 import { gql } from 'graphql-request';
-import { BlockStruct, BlockWithTransactionsStruct, OutputRootProposal, TransactionResult, TransactionWorldProof, WithdrawalTransaction } from './nc.respose.models';
+import { BlockStruct, BlockWithTransactionsStruct, OutputRootProposal, TransactionResult, TransactionWorldProof, WithdrawalTransaction } from './nc.respose.types';
 import { Address } from 'viem';
 import { KeyManager } from 'nest/key.utils';
 

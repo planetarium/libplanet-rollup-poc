@@ -7,7 +7,7 @@ import { abi as portalAbi } from './abi/LibplanetPortal';
 import { abi as bridgeAbi } from './abi/LibplanetBridge';
 import { abi as outputOracleAbi } from './abi/LibplanetOutputOracle';
 import { KeyManager } from './key.utils';
-import { OutputRootProposal, WithdrawalTransaction } from './9c/nc.respose.models';
+import { OutputRootProposal, WithdrawalTransaction } from './9c/nc.respose.types';
 
 @Injectable()
 export class WalletManager {
