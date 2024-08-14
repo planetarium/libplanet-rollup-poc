@@ -1,4 +1,4 @@
-import { Controller, Get } from "@nestjs/common";
+import { Controller, Get, Query } from "@nestjs/common";
 import { BatcherService } from "./batcher.service";
 
 @Controller('batcher')
@@ -10,5 +10,10 @@ export class BatcherController {
     @Get('start')
     async start() {
         return this.batcherService.start();
+    }
+
+    @Get('process')
+    async processAll(@Query('stop') stop: bigint) {
+        return this.batcherService.loopUntilProcessAllBlocks(stop);
     }
 }

@@ -21,6 +21,13 @@ export class BatcherService {
         await this.publishTxToL1();
     }
 
+    public async loopUntilProcessAllBlocks(stopIndex: bigint): Promise<void> {
+        do {
+            await this.loadBlocksIntoState(MaxBlocksPerChannelManager);
+            await this.publishTxToL1();
+        } while (this.lastStoredBlock!.index < stopIndex);
+    }
+
     private async loadBlocksIntoState(blockLimit: number): Promise<void> {
         var blockRange = await this.calculateL2BlockRangeToStore(blockLimit);
 
@@ -28,8 +35,6 @@ export class BatcherService {
             var blockId = await this.loadBlockIntoState(i);
             this.lastStoredBlock = blockId;
         }
-
-        var blocks = this.channelManager.getBlocks();
     }
 
     private async loadBlockIntoState(index: bigint): Promise<BlockID> {
@@ -92,7 +97,12 @@ export class BatcherService {
     private async sendTransactionToL1(txData: TxData): Promise<void> {
         for (let frame of txData.frames) {
             var data = fromBytes(frame.data, 'hex');
-            await this.walletManager.batchTransaction(data);
+            try {
+                await this.walletManager.batchTransaction(data);
+            }
+            catch (e) {
+                console.log(e);
+            }
         }
     }
 }

@@ -6,7 +6,7 @@ import { NCModule } from "nest/9c/nc.module";
 
 @Module({
     imports: [NCModule],
-    controllers: [],
     providers: [WalletManager, PublicClientManager, KeyManager],
+    exports: [WalletManager, PublicClientManager],
 })
 export class EvmModule {}

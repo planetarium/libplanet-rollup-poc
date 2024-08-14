@@ -10,10 +10,6 @@ export class ChannelManager {
     channelQueue: Channel[] = [];
     currentChannel: Channel | undefined;
 
-    public getBlocks(): Block[] {
-        return this.blocks;
-    }
-
     public addBlock(block: Block): void {
         this.blocks.push(block);
     }
@@ -40,12 +36,17 @@ export class ChannelManager {
     }
 
     private processBlocks(): void {
+        var blockAdded = 0;
         for (let block of this.blocks) {
             var result = this.currentChannel?.AddBlock(block);
             if (result?.isFull) {
                 break;
             }
+
+            blockAdded++;
         }
+
+        this.blocks = this.blocks.slice(blockAdded);
     }
 
     private outputFrames(): void {

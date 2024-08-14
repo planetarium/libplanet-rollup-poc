@@ -1,4 +1,4 @@
-import { max } from "rxjs";
+import { stringify } from "viem";
 import { FrameOverHeadSize, MaxEncodingBytesPerChannel, MaxFrameSize } from "../batcher.constants";
 import { Batch, ChannelID, Frame } from "../batcher.types";
 import { Compressor } from "./batcher.compressor";
@@ -26,7 +26,7 @@ export class ChannelOut {
         }
 
         // todo: maybe need to use a better encoding
-        var encoded = Buffer.from((JSON.stringify(batch)));
+        var encoded = Buffer.from((stringify(batch)));
 
         if (this.encodingLength + encoded.length > MaxEncodingBytesPerChannel) {
             this.closed = true;
