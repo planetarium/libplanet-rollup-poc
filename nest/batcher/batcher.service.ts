@@ -4,6 +4,7 @@ import { NCRpcService } from "nest/9c/nc.rpc.service";
 import { ChannelManager } from "./batcher.channel.manger";
 import { WalletManager } from "nest/evm/wallet.client";
 import { fromBytes } from "viem";
+import { MaxBlocksPerChannelManager } from "./batcher.constants";
 
 @Injectable()
 export class BatcherService {
@@ -16,9 +17,7 @@ export class BatcherService {
     lastStoredBlock: BlockID | undefined;
 
     public async start(): Promise<void> {
-        var blockLimit = 100;
-
-        await this.loadBlocksIntoState(blockLimit);
+        await this.loadBlocksIntoState(MaxBlocksPerChannelManager);
         await this.publishTxToL1();
     }
 
