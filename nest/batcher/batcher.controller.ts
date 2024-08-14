@@ -1,5 +1,6 @@
 import { Controller, Get, Query } from "@nestjs/common";
 import { BatcherService } from "./batcher.service";
+import { stringify } from "viem";
 
 @Controller('batcher')
 export class BatcherController {
@@ -9,11 +10,17 @@ export class BatcherController {
 
     @Get('start')
     async start() {
-        return this.batcherService.start();
+        return await this.batcherService.start();
     }
 
     @Get('process')
     async processAll(@Query('stop') stop: bigint) {
-        return this.batcherService.loopUntilProcessAllBlocks(stop);
+        return await this.batcherService.loopUntilProcessAllBlocks(stop);
+    }
+
+    @Get('transactions')
+    async getTransactions() {
+        var results = await this.batcherService.getBatchTransactions();
+        return stringify(results);
     }
 }

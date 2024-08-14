@@ -11,7 +11,7 @@ export class ChannelOut {
     closed: boolean;
 
     constructor() {
-        const bytes = new Uint8Array(20);
+        const bytes = new Uint8Array(16);
         crypto.getRandomValues(bytes);
         this.id = bytes;
         this.frameNumber = 0;

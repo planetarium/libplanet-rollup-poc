@@ -24,6 +24,12 @@ export class PublicClientManager {
     return this.client.getBalance({ address });
   }
 
+  public async GetTransaction(txHash: `0x${string}`) {
+    return this.client.getTransaction({
+      hash: txHash,
+    });
+  }
+
   public async GetLatestOutputRoots() {
     var toBlockIndex = await this.client.getBlockNumber();
     var fromBlockIndex = toBlockIndex > 100n ? toBlockIndex - 100n : 0n as bigint;

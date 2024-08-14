@@ -1,20 +1,24 @@
 import { Injectable } from "@nestjs/common";
-import { BlockID, TxData } from "./batcher.types";
+import { BlockID, Frame, FrameID, TxData } from "./batcher.types";
 import { NCRpcService } from "nest/9c/nc.rpc.service";
 import { ChannelManager } from "./batcher.channel.manger";
 import { WalletManager } from "nest/evm/wallet.client";
-import { fromBytes } from "viem";
-import { MaxBlocksPerChannelManager } from "./batcher.constants";
+import { fromBytes, hexToBytes } from "viem";
+import { MaxBlocksPerChannelManager, MaxFrameSize } from "./batcher.constants";
+import { PublicClientManager } from "nest/evm/public.client";
 
 @Injectable()
 export class BatcherService {
     constructor(
         private readonly ncRpcService: NCRpcService,
         private readonly channelManager: ChannelManager,
-        private readonly walletManager: WalletManager
+        private readonly walletManager: WalletManager,
+        private readonly publicClientManager: PublicClientManager,
     ) {}
 
     lastStoredBlock: BlockID | undefined;
+    sentTransactions: `0x${string}`[] = [];
+    sentFrames = new Map<FrameID, Uint8Array>();
 
     public async start(): Promise<void> {
         await this.loadBlocksIntoState(MaxBlocksPerChannelManager);
@@ -26,6 +30,34 @@ export class BatcherService {
             await this.loadBlocksIntoState(MaxBlocksPerChannelManager);
             await this.publishTxToL1();
         } while (this.lastStoredBlock!.index < stopIndex);
+    }
+
+    // for testing purpose
+    public async getBatchTransactions() {
+        var transactions = [];
+        for (let txHash of this.sentTransactions) {
+            var transaction = await this.publicClientManager.GetTransaction(txHash);
+            var input = hexToBytes(transaction.input);
+            transactions.push(this.unmarshalFrame(input));
+        }
+        return transactions;
+    }
+
+    // for testing purpose
+    private unmarshalFrame(input: Uint8Array): Frame {
+        var dataLength = input.length;
+        var id = input.slice(0, 16);
+        var buffer = Buffer.from(input.slice(16, 18));
+        var frameNumber = buffer.readUInt16BE(0);
+        var data = input.slice(22, dataLength - 1);
+        var isLast = input[dataLength - 1] == 1;
+
+        return {
+            id: id,
+            frameNumber: frameNumber,
+            data: data,
+            isLast: isLast
+        }
     }
 
     private async loadBlocksIntoState(blockLimit: number): Promise<void> {
@@ -98,7 +130,9 @@ export class BatcherService {
         for (let frame of txData.frames) {
             var data = fromBytes(frame.data, 'hex');
             try {
-                await this.walletManager.batchTransaction(data);
+                var transactionHash = await this.walletManager.batchTransaction(data);
+                this.sentTransactions.push(transactionHash);
+                this.sentFrames.set(frame.id, frame.data);
             }
             catch (e) {
                 console.log(e);
