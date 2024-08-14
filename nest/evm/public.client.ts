@@ -4,7 +4,7 @@ import { mothership, opSepolia, localhost } from './chains';
 import { ConfigService } from '@nestjs/config';
 import { abi as portalAbi } from './abi/LibplanetPortal';
 import { abi as outputOracleAbi } from './abi/LibplanetOutputOracle';
-import { NCRpcService } from './9c/nc.rpc.service';
+import { NCRpcService } from '../9c/nc.rpc.service';
 
 @Injectable()
 export class PublicClientManager {
@@ -77,6 +77,7 @@ export class PublicClientManager {
           this.logger.debug(`From balance: ${fromBalance}`);
           var recipient = log.args.to!;
           var amount = log.args.amount!; 
+          // todo: nc_rpc may not be here
           var ok = await this.nc_rpc.mintWethToLocalNetwork(recipient, amount);
           if(ok) {
             this.logger.debug(`Minted WETH to ${recipient} with ${amount}`);

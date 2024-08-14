@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
-import { WalletManager } from "./wallet.client";
+import { WalletManager } from "./evm/wallet.client";
 import { NCRpcService } from "./9c/nc.rpc.service";
-import { PublicClientManager } from "./public.client";
+import { PublicClientManager } from "./evm/public.client";
 import { OutputRootProposal, WithdrawalTransaction } from "./9c/nc.respose.types";
 
 @Injectable()

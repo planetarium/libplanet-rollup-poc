@@ -1,14 +1,11 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
-import { WalletManager } from './wallet.client';
 import { ConfigModule } from '@nestjs/config';
 import configuration from './config/configuration';
 import { NCModule } from './9c/nc.module';
-import { PublicClientManager } from './public.client';
-import { RollupCronService } from './rollup.cron';
-import { KeyManager } from './key.utils';
 import { AppService } from './app.service';
 import { BatcherModule } from './batcher/batcher.module';
+import { EvmModule } from './evm/evm.module';
 
 @Module({
   imports: [
@@ -18,9 +15,10 @@ import { BatcherModule } from './batcher/batcher.module';
     }),
     NCModule,
     BatcherModule,
+    EvmModule,
   ],
   controllers: [AppController],
-  //providers: [WalletManager, PublicClientManager, RollupCronService, KeyManager, AppService],
-  providers: [WalletManager, PublicClientManager, KeyManager, AppService],
+  //providers: [RollupCronService, AppService],
+  providers: [AppService],
 })
 export class AppModule {}

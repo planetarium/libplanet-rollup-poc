@@ -1,25 +1,29 @@
 import { Injectable } from "@nestjs/common";
-import { BlockID } from "./batcher.types";
+import { BlockID, TxData } from "./batcher.types";
 import { NCRpcService } from "nest/9c/nc.rpc.service";
-import { start } from "repl";
 import { ChannelManager } from "./batcher.channel.manger";
+import { WalletManager } from "nest/evm/wallet.client";
+import { fromBytes } from "viem";
 
 @Injectable()
 export class BatcherService {
     constructor(
         private readonly ncRpcService: NCRpcService,
-        private readonly channelManager: ChannelManager
+        private readonly channelManager: ChannelManager,
+        private readonly walletManager: WalletManager
     ) {}
 
     lastStoredBlock: BlockID | undefined;
 
     public async start(): Promise<void> {
-        await this.loadBlocksIntoState();
+        var blockLimit = 100;
+
+        await this.loadBlocksIntoState(blockLimit);
         await this.publishTxToL1();
     }
 
-    private async loadBlocksIntoState(): Promise<void> {
-        var blockRange = await this.calculateL2BlockRangeToStore();
+    private async loadBlocksIntoState(blockLimit: number): Promise<void> {
+        var blockRange = await this.calculateL2BlockRangeToStore(blockLimit);
 
         for (let i = blockRange.start.index + 1n; i <= blockRange.end.index; i++) {
             var blockId = await this.loadBlockIntoState(i);
@@ -44,7 +48,7 @@ export class BatcherService {
         }
     }
 
-    private async calculateL2BlockRangeToStore(): Promise<{
+    private async calculateL2BlockRangeToStore(blockLimit: number): Promise<{
         start: BlockID,
         end: BlockID
     }> {
@@ -53,19 +57,43 @@ export class BatcherService {
             // todo: get the last stored block from the database
             this.lastStoredBlock = {
                 hash: '00',
-                index: 19500n
+                index: 0n
             }
         }
 
-        var recentBlock: BlockID
-        recentBlock = await this.ncRpcService.getRecentBlockFromLocal();
+        var endBlockId: BlockID
+        endBlockId = await this.ncRpcService.getRecentBlockFromLocal();
+
+        var remainedBlockSpace = blockLimit - this.channelManager.blocks.length;
+
+        if(endBlockId.index - this.lastStoredBlock.index >= remainedBlockSpace) {
+            var endBlock = await this.ncRpcService.getBlockWithIndexFromLocal(this.lastStoredBlock.index + BigInt(remainedBlockSpace));
+            var endBlockId = {
+                hash: endBlock.hash,
+                index: endBlock.index
+            }
+        }
 
         return {
             start: this.lastStoredBlock,
-            end: recentBlock
+            end: endBlockId
         };
     }
 
     private async publishTxToL1(): Promise<void> {
+        var txData = this.channelManager.TxData();
+
+        if (txData.frames.length == 0) {
+            return;
+        }
+
+        await this.sendTransactionToL1(txData);
+    }
+
+    private async sendTransactionToL1(txData: TxData): Promise<void> {
+        for (let frame of txData.frames) {
+            var data = fromBytes(frame.data, 'hex');
+            await this.walletManager.batchTransaction(data);
+        }
     }
 }
