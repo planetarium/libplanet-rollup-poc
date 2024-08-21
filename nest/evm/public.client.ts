@@ -20,6 +20,13 @@ export class PublicClientManager {
   private readonly chain = this.GetChain(this.configure.get('wallet.chain', 'localhost'));
   private readonly client = this.GetClient();
 
+  public async GetBlock(blockNumber: bigint) {
+    return this.client.getBlock({ 
+      blockNumber: blockNumber
+    });
+  }
+
+
   public async GetBalance(address: Address) {
     return this.client.getBalance({ address });
   }
