@@ -44,7 +44,7 @@ export class AppService {
     }
 
     async getBalance(address: `0x${string}`): Promise<bigint> {
-        return this.publicClient.GetBalance(address);
+        return this.publicClient.getBalance(address);
     }
 
     private async getWithdrawalTransactionProofInfos(txId: string): Promise<{ 
@@ -54,7 +54,7 @@ export class AppService {
         withdrawalProof: `0x${string}`; 
     }> {
         var txBlockIndex = await this.ncRpc.getBlockIndexWithTxIdFromLocalNetwork(txId); // from l2
-        var latestOutputRoot = await this.publicClient.GetLatestOutputRoots(); // from l1
+        var latestOutputRoot = await this.publicClient.getLatestOutputRoots(); // from l1
         if (latestOutputRoot == null) {
             throw new Error('no output root found');
         }

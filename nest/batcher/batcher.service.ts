@@ -36,7 +36,7 @@ export class BatcherService {
     public async getBatchTransactions() {
         var transactions = [];
         for (let txHash of this.sentTransactions) {
-            var transaction = await this.publicClientManager.GetTransaction(txHash);
+            var transaction = await this.publicClientManager.getTransaction(txHash);
             var input = hexToBytes(transaction.input);
             transactions.push(this.unmarshalFrame(input));
         }

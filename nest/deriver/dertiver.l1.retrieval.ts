@@ -27,7 +27,7 @@ export class L1Retrieval {
     private async nextL1Block(): Promise<Block | DataStatus> {
         if (this.isBlockPending) {
             this.isBlockPending = false;
-            return await this.publicClientManager.GetBlock(this.l1BlockNumber);
+            return await this.publicClientManager.getBlock(this.l1BlockNumber);
         }
 
         return DataStatus.EOF

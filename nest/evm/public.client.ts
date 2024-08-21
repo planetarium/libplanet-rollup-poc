@@ -12,32 +12,32 @@ export class PublicClientManager {
     private readonly configure: ConfigService,
     private readonly nc_rpc: NCRpcService,
   ) {
-    this.Register();
+    this.register();
   }
 
   private readonly logger = new Logger(PublicClientManager.name);
 
-  private readonly chain = this.GetChain(this.configure.get('wallet.chain', 'localhost'));
-  private readonly client = this.GetClient();
+  private readonly chain = this.getChain(this.configure.get('wallet.chain', 'localhost'));
+  private readonly client = this.getClient();
 
-  public async GetBlock(blockNumber: bigint) {
+  public async getBlock(blockNumber: bigint) {
     return this.client.getBlock({ 
       blockNumber: blockNumber
     });
   }
 
 
-  public async GetBalance(address: Address) {
+  public async getBalance(address: Address) {
     return this.client.getBalance({ address });
   }
 
-  public async GetTransaction(txHash: `0x${string}`) {
+  public async getTransaction(txHash: `0x${string}`) {
     return this.client.getTransaction({
       hash: txHash,
     });
   }
 
-  public async GetLatestOutputRoots() {
+  public async getLatestOutputRoots() {
     var toBlockIndex = await this.client.getBlockNumber();
     var fromBlockIndex = toBlockIndex > 100n ? toBlockIndex - 100n : 0n as bigint;
 
@@ -59,7 +59,7 @@ export class PublicClientManager {
     }
   }
 
-  public GetPortalContract() {
+  public getPortalContract() {
     return getContract({
       address: (this.chain.contracts?.libplanetPortal as ChainContract).address,
       abi: portalAbi,
@@ -67,7 +67,7 @@ export class PublicClientManager {
     });
   }
 
-  public GetOutputOracleContract() {
+  public getOutputOracleContract() {
     return getContract({
       address: (this.chain.contracts?.libplanetOutputOracle as ChainContract).address,
       abi: outputOracleAbi,
@@ -75,9 +75,9 @@ export class PublicClientManager {
     });
   }
 
-  private Register() {
-    const portalContract = this.GetPortalContract();
-    const outputOracleContract = this.GetOutputOracleContract();
+  private register() {
+    const portalContract = this.getPortalContract();
+    const outputOracleContract = this.getOutputOracleContract();
 
     portalContract.watchEvent.DepositETH({
       onLogs: async (logs) => {
@@ -124,7 +124,7 @@ export class PublicClientManager {
     });
   }
 
-  private GetChain(chain: string): Chain {
+  private getChain(chain: string): Chain {
     switch (chain) {
       case 'mothership':
         return mothership;
@@ -137,7 +137,7 @@ export class PublicClientManager {
     }
   }
 
-  private GetClient() {
+  private getClient() {
     return createPublicClient({
       chain: this.chain,
       transport: http(),
