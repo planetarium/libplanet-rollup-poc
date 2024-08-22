@@ -2,7 +2,7 @@ import { Body, Controller, Get, Post, Query } from "@nestjs/common";
 import { EvmService } from "./evm.service";
 import { DepositEthDto } from "nest/dto/deposit-eth.dto";
 
-@Controller('/geth')
+@Controller('geth')
 export class EvmController {
     constructor(
         private readonly evmService: EvmService
