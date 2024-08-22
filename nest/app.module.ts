@@ -6,6 +6,7 @@ import { NCModule } from './9c/nc.module';
 import { AppService } from './app.service';
 import { BatcherModule } from './batcher/batcher.module';
 import { EvmModule } from './evm/evm.module';
+import { RollupCronService } from './rollup.cron';
 
 @Module({
   imports: [
@@ -18,7 +19,7 @@ import { EvmModule } from './evm/evm.module';
     EvmModule,
   ],
   controllers: [AppController],
-  //providers: [RollupCronService, AppService],
+  //providers: [AppService, RollupCronService],
   providers: [AppService],
 })
 export class AppModule {}
