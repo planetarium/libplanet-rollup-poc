@@ -31,6 +31,7 @@
     "@types/keythereum": "^1.2.5",
     "graphql": "^16.8.1",
     "graphql-request": "^6.1.0",
+    "hbs": "^4.2.0",
     "js-yaml": "^4.1.0",
     "keythereum": "^2.0.0",
     "reflect-metadata": "^0.2.0",
@@ -38,7 +39,7 @@
     "viem": "2.9.26"
   },
   "devDependencies": {
-    "@nestjs/cli": "^10.0.0",
+    "@nestjs/cli": "^10.4.4",
     "@nestjs/schematics": "^10.0.0",
     "@nestjs/testing": "^10.0.0",
     "@nomicfoundation/hardhat-chai-matchers": "^2.0.0",
