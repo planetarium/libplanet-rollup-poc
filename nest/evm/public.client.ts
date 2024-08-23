@@ -5,6 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import { abi as portalAbi } from './abi/LibplanetPortal';
 import { abi as outputOracleAbi } from './abi/LibplanetOutputOracle';
 import { NCRpcService } from '../9c/nc.rpc.service';
+import { on } from 'events';
 
 @Injectable()
 export class PublicClientManager {
@@ -12,25 +13,25 @@ export class PublicClientManager {
     private readonly configure: ConfigService,
     private readonly nc_rpc: NCRpcService,
   ) {
-    this.Register();
+    this.register();
   }
 
   private readonly logger = new Logger(PublicClientManager.name);
 
-  private readonly chain = this.GetChain(this.configure.get('wallet.chain', 'localhost'));
-  private readonly client = this.GetClient();
+  private readonly chain = this.getChain(this.configure.get('wallet.chain', 'localhost'));
+  private readonly client = this.getClient();
 
-  public async GetBalance(address: Address) {
+  public async getBalance(address: Address) {
     return this.client.getBalance({ address });
   }
 
-  public async GetTransaction(txHash: `0x${string}`) {
+  public async getTransaction(txHash: `0x${string}`) {
     return this.client.getTransaction({
       hash: txHash,
     });
   }
 
-  public async GetLatestOutputRoots() {
+  public async getLatestOutputRoots() {
     var toBlockIndex = await this.client.getBlockNumber();
     var fromBlockIndex = toBlockIndex > 100n ? toBlockIndex - 100n : 0n as bigint;
 
@@ -52,7 +53,7 @@ export class PublicClientManager {
     }
   }
 
-  public GetPortalContract() {
+  public getPortalContract() {
     return getContract({
       address: (this.chain.contracts?.libplanetPortal as ChainContract).address,
       abi: portalAbi,
@@ -60,7 +61,7 @@ export class PublicClientManager {
     });
   }
 
-  public GetOutputOracleContract() {
+  public getOutputOracleContract() {
     return getContract({
       address: (this.chain.contracts?.libplanetOutputOracle as ChainContract).address,
       abi: outputOracleAbi,
@@ -68,9 +69,9 @@ export class PublicClientManager {
     });
   }
 
-  private Register() {
-    const portalContract = this.GetPortalContract();
-    const outputOracleContract = this.GetOutputOracleContract();
+  private register() {
+    const portalContract = this.getPortalContract();
+    const outputOracleContract = this.getOutputOracleContract();
 
     portalContract.watchEvent.DepositETH({
       onLogs: async (logs) => {
@@ -112,12 +113,41 @@ export class PublicClientManager {
         for (const log of logs) {
           this.logger.debug(`Received OutputProposed event: ${log}`);
           this.logger.debug(log.args);
+          var res = {
+            outputRoot: log.args.outputRoot,
+            l2OutputIndex: log.args.l2OutputIndex?.toString(),
+            l2BlockNumber: log.args.l2BlockNumber?.toString(),
+            l1Timestamp: log.args.l1Timestamp?.toString(),
+          }
         }
       },
     });
   }
 
-  private GetChain(chain: string): Chain {
+  public watchEvmEvents(event : {
+    onDepositETH: (logs: any) => void,
+    onWithdrawalProven: (logs: any) => void,
+    onWithdrawalFinalized: (logs: any) => void,
+    onOutputProposed: (logs: any) => void,
+  }) {
+    const portalContract = this.getPortalContract();
+    const outputOracleContract = this.getOutputOracleContract();
+
+    portalContract.watchEvent.DepositETH({
+      onLogs: event.onDepositETH,
+    });
+    portalContract.watchEvent.WithdrawalProven({}, {
+      onLogs: event.onWithdrawalProven,
+    });
+    portalContract.watchEvent.WithdrawalFinalized({}, {
+      onLogs: event.onWithdrawalFinalized,
+    });
+    outputOracleContract.watchEvent.OutputProposed({}, {
+      onLogs: event.onOutputProposed,
+    });
+  }
+
+  private getChain(chain: string): Chain {
     switch (chain) {
       case 'mothership':
         return mothership;
@@ -130,7 +160,7 @@ export class PublicClientManager {
     }
   }
 
-  private GetClient() {
+  private getClient() {
     return createPublicClient({
       chain: this.chain,
       transport: http(),

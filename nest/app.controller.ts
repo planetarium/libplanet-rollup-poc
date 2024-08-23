@@ -9,7 +9,12 @@ export class AppController {
 
   @Get()
   @Render('index')
-  root() {
-    return { message: 'Hello world!' };
+  async root() {
+    var outputRootInfo = await this.appService.getLatestOutputRoots();
+    var addressBalances = await this.appService.getBalancesForWeb();
+    return { 
+      outputRootInfo: outputRootInfo,
+      addressBalances: addressBalances
+    };
   }
 }
