@@ -20,7 +20,7 @@ import { AppGateway } from './app.gateway';
     EvmModule,
   ],
   controllers: [AppController],
-  //providers: [AppService, AppGateway, RollupCronService],
-  providers: [AppService, AppGateway],
+  providers: [AppService, AppGateway, RollupCronService],
+  //providers: [AppService, AppGateway],
 })
 export class AppModule {}

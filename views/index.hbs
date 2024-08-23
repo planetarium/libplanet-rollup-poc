@@ -22,13 +22,13 @@
     </button>
     <div class="collapse navbar-collapse" id="navbarCollapse">
         <ul class="navbar-nav mr-auto">
-        <li class="nav-item">
+        <li class="nav-item active" id="hm-d">
             <a class="nav-link" href="#">Deposit</a>
         </li>
-        <li class="nav-item active">
+        <li class="nav-item" id="hm-w">
             <a class="nav-link" href="#">Withdraw</a>
         </li>
-        <li class="nav-item">
+        <li class="nav-item" id="hm-bs">
             <a class="nav-link" href="#">Batch Submit</a>
         </li>
         </ul>
@@ -45,43 +45,43 @@
                 <p class="mt-2">0xCE70F2e49927D431234BFc8D439412eef3a6276b</p>
                 <div class="form-group">
                     <div class="row">
-                        <label for="fa-l1-b" class="col-1 col-form-label">L1</label>
+                        <label for="fa-l1-b" class="col-1 col-form-label">L2</label>
                         <input type="text" class="col-11 form-control" id="fa-l1-b" value="{{addressBalances.l1FistAddressBalance}}" readonly>
                     </div>
                     <div class="row mt-1">
-                        <label for="fa-l2-b" class="col-1 col-form-label">L2</label>
+                        <label for="fa-l2-b" class="col-1 col-form-label">L3</label>
                         <input type="text" class="col-11 form-control" id="fa-l2-b" value="{{addressBalances.l2FirstAddressBalance}}" readonly>
                     </div>
                 </div>
                 <p class="mt-2">0x47E0Dd0B503C153D7FB78c43cc9aC135C60Dfd94</p>
                 <div class="form-group">
                     <div class="row">
-                        <label for="sa-l1-b" class="col-1 col-form-label">L1</label>
+                        <label for="sa-l1-b" class="col-1 col-form-label">L2</label>
                         <input type="text" class="col-11 form-control" id="sa-l1-b" value="{{addressBalances.l1SecondAddressBalance}}" readonly>
                     </div>
                     <div class="row mt-1">
-                        <label for="sa-l2-b" class="col-1 col-form-label">L2</label>
+                        <label for="sa-l2-b" class="col-1 col-form-label">L3</label>
                         <input type="text" class="col-11 form-control" id="sa-l2-b" value="{{addressBalances.l2SecondAddressBalance}}" readonly>
                     </div>
                 </div>
             </div>
             <div class="col-6">
-                <h3>Output Root Info | L2 -&gt; L1</h3>
+                <h3>Output Root Info | L3 -&gt; L2</h3>
                 <div class="form-group mt-2">
                     <div class="row">
                         <label for="ori-or" class="col-4 col-form-label">OutputRoot</label>
                         <input type="text" class="col-8 form-control" id="ori-or" value="{{outputRootInfo.outputRoot}}" readonly>
                     </div>
                     <div class="row mt-1">
-                        <label for="ori-l2-oi" class="col-4 col-form-label">L2OutputIndex</label>
+                        <label for="ori-l2-oi" class="col-4 col-form-label">L3OutputIndex</label>
                         <input type="text" class="col-8 form-control" id="ori-l2-oi" value="{{outputRootInfo.l2OutputIndex}}" readonly>
                     </div>
                     <div class="row mt-1">
-                        <label for="ori-l2-bn" class="col-4 col-form-label">L2BlockNumber</label>
+                        <label for="ori-l2-bn" class="col-4 col-form-label">L3BlockNumber</label>
                         <input type="text" class="col-8 form-control" id="ori-l2-bn" value="{{outputRootInfo.l2BlockNumber}}" readonly>
                     </div>
                     <div class="row mt-1">
-                        <label for="ori-l1-ts" class="col-4 col-form-label">L1Timestamp</label>
+                        <label for="ori-l1-ts" class="col-4 col-form-label">L2Timestamp</label>
                         <input type="text" class="col-8 form-control" id="ori-l1-ts" value="{{outputRootInfo.l1Timestamp}}" readonly>
                     </div>
                 </div>
@@ -89,35 +89,109 @@
         </div>
     </div>
 
-    <div class="card">
+    <div class="card" id="c-d">
         <div class="card-header">
             <ul class="nav nav-tabs card-header-tabs">
                 <li class="nav-item">
-                <a class="nav-link active" href="#">Withdraw</a>
-                </li>
-                <li class="nav-item">
-                <a class="nav-link" href="#">Prove</a>
-                </li>
-                <li class="nav-item">
-                <a class="nav-link" href="#">Finalize</a>
-                </li>
+                <a class="nav-link active" href="#">Deposit</a>
             </ul>
         </div>
 
-        <div class="card-body d-none">
+        <div class="card-body" id="cd-cb-d">
             <dev class="row mx-0 align-items-end">
                 <h4 class="mb-0">Parameters</h4>
                 <button type="button" class="btn btn-light ml-auto">Try it out</button>
             </dev>
             <hr>
-            <div class="form-group">
+            <div class="form-group" id="cd-dp">
                 <div class="row mr-2">
-                    <label for="w-amount" class="col-2 col-form-label">Amount</label>
-                    <input type="text" class="col-10 form-control" id="w-amount" value="10">
+                    <label for="w-amount" class="col-2 col-form-label">Recipient</label>
+                    <div class="col-10">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="cd-dp-r-radio" id="cd-dp-r1" value="0xCE70F2e49927D431234BFc8D439412eef3a6276b" checked>
+                            <label class="form-check-label" for="cd-dp-r1">0xCE70F2e49927D431234BFc8D439412eef3a6276b</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="cd-dp-r-radio" id="cd-dp-r2" value="0x47E0Dd0B503C153D7FB78c43cc9aC135C60Dfd94">
+                            <label class="form-check-label" for="cd-dp-r2">0x47E0Dd0B503C153D7FB78c43cc9aC135C60Dfd94</label>
+                        </div>
+                    </div>
                 </div>
-                <div class="row mt-1 mr-2">
-                    <label for="w-to" class="col-2 col-form-label">To</label>
-                    <input type="text" class="col-10 form-control" id="w-to" value="0x0000000000000000000000">
+                <div class="row mt-2 mr-2">
+                    <label for="cd-dp-a" class="col-2 col-form-label">amount</label>
+                    <input type="text" class="col-10 form-control" id="cd-dp-a" placeholder="1000000">
+                </div>
+            </div>
+
+            <h4 class="mt-5">Responses</h4>
+            <hr>
+            <div class="card bg-dark mb-2">
+              <div class="card-body">
+                <pre style="color: white;">
+This is some text within a card body.
+Can I use json format?
+{
+    "key": "value",
+}
+Or Color tag?
+<span style="color: red;">Red</span>
+                </pre>
+              </div>
+            </div>
+            <div class="card bg-dark mb-2">
+              <div class="card-body">
+                <pre style="color: white;">
+This is some text within a card body.
+Can I use json format?
+{
+    "key": "value",
+}
+Or Color tag?
+<span style="color: red;">Red</span>
+                </pre>
+              </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card d-none" id="c-w">
+        <div class="card-header">
+            <ul class="nav nav-tabs card-header-tabs">
+                <li class="nav-item">
+                <a class="nav-link active" href="#" id="cw-hm-w">Withdraw</a>
+                </li>
+                <li class="nav-item">
+                <a class="nav-link" href="#" id="cw-hm-p">Prove</a>
+                </li>
+                <li class="nav-item">
+                <a class="nav-link" href="#" id="cw-hm-f">Finalize</a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="card-body" id="cw-cb-w">
+            <dev class="row mx-0 align-items-end">
+                <h4 class="mb-0">Parameters</h4>
+                <button type="button" class="btn btn-light ml-auto">Try it out</button>
+            </dev>
+            <hr>
+            <div class="form-group" id="cw-wp">
+                <div class="row mr-2">
+                    <label for="w-amount" class="col-2 col-form-label">Recipient</label>
+                    <div class="col-10">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="cw-wp-r-radio" id="cw-wp-r1" value="0xCE70F2e49927D431234BFc8D439412eef3a6276b" checked>
+                            <label class="form-check-label" for="cw-wp-r1">0xCE70F2e49927D431234BFc8D439412eef3a6276b</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="cw-wp-r-radio" id="cw-wp-r2" value="0x47E0Dd0B503C153D7FB78c43cc9aC135C60Dfd94">
+                            <label class="form-check-label" for="cw-wp-r2">0x47E0Dd0B503C153D7FB78c43cc9aC135C60Dfd94</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-2 mr-2">
+                    <label for="cw-wp-a" class="col-2 col-form-label">amount</label>
+                    <input type="text" class="col-10 form-control" id="cw-wp-a" placeholder="1000000">
                 </div>
             </div>
 
@@ -151,20 +225,111 @@ Or Color tag?
             </div>
         </div>
 
-        <div class="card-body">
+        <div class="card-body d-none" id="cw-cb-p">
             <dev class="row mx-0 align-items-end">
                 <h4 class="mb-0">Parameters</h4>
                 <button type="button" class="btn btn-light ml-auto">Try it out</button>
             </dev>
             <hr>
-            <div class="form-group">
+            <div class="form-group" id="cw-pp">
                 <div class="row mr-2">
-                    <label for="w-amount" class="col-2 col-form-label">Amounts</label>
-                    <input type="text" class="col-10 form-control" id="w-amount" value="10">
+                    <label for="cw-pp-ti" class="col-2 col-form-label">txId</label>
+                    <input type="text" class="col-10 form-control" id="cw-pp-ti" placeholder="fe3142e2b95a4a4af4df679d16da3f9439c3bf950f3da52ca25938e493f5789e">
                 </div>
-                <div class="row mt-1 mr-2">
-                    <label for="w-to" class="col-2 col-form-label">To</label>
-                    <input type="text" class="col-10 form-control" id="w-to" value="0x0000000000000000000000">
+            </div>
+
+            <h4 class="mt-5">Responses</h4>
+            <hr>
+            <div class="card bg-dark mb-2">
+              <div class="card-body">
+                <pre style="color: white;">
+This is some text within a card body.
+Can I use json format?
+{
+    "key": "value",
+}
+Or Color tag?
+<span style="color: red;">Red</span>
+                </pre>
+              </div>
+            </div>
+            <div class="card bg-dark mb-2">
+              <div class="card-body">
+                <pre style="color: white;">
+This is some text within a card body.
+Can I use json format?
+{
+    "key": "value",
+}
+Or Color tag?
+<span style="color: red;">Red</span>
+                </pre>
+              </div>
+            </div>
+        </div>
+
+        <div class="card-body d-none" id="cw-cb-f">
+            <dev class="row mx-0 align-items-end">
+                <h4 class="mb-0">Parameters</h4>
+                <button type="button" class="btn btn-light ml-auto">Try it out</button>
+            </dev>
+            <hr>
+            <div class="form-group" id="cw-fp">
+                <div class="row mr-2">
+                    <label for="cw-fp-ti" class="col-2 col-form-label">txId</label>
+                    <input type="text" class="col-10 form-control" id="cw-fp-ti" placeholder="fe3142e2b95a4a4af4df679d16da3f9439c3bf950f3da52ca25938e493f5789e">
+                </div>
+            </div>
+
+            <h4 class="mt-5">Responses</h4>
+            <hr>
+            <div class="card bg-dark mb-2">
+              <div class="card-body">
+                <pre style="color: white;">
+This is some text within a card body.
+Can I use json format?
+{
+    "key": "value",
+}
+Or Color tag?
+<span style="color: red;">Red</span>
+                </pre>
+              </div>
+            </div>
+            <div class="card bg-dark mb-2">
+              <div class="card-body">
+                <pre style="color: white;">
+This is some text within a card body.
+Can I use json format?
+{
+    "key": "value",
+}
+Or Color tag?
+<span style="color: red;">Red</span>
+                </pre>
+              </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card d-none" id="c-bs">
+        <div class="card-header">
+            <ul class="nav nav-tabs card-header-tabs">
+                <li class="nav-item">
+                <a class="nav-link active" href="#">Process</a>
+            </ul>
+        </div>
+
+        <div class="card-body" id="cbs-cb-p">
+            <dev class="row mx-0 align-items-end">
+                <h4 class="mb-0">Parameters</h4>
+                <button type="button" class="btn btn-light ml-auto">Try it out</button>
+            </dev>
+            <hr>
+            <div class="form-group" id="cbs-pp">
+                <div class="row mr-2">
+                    <label for="cbs-pp-s" class="col-2 col-form-label">stop</label>
+                    <input type="text" class="col-10 form-control" id="cbs-pp-s" placeholder="3000">
                 </div>
             </div>
 
