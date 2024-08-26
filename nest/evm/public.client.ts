@@ -5,6 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import { abi as portalAbi } from './abi/LibplanetPortal';
 import { abi as outputOracleAbi } from './abi/LibplanetOutputOracle';
 import { NCRpcService } from '../9c/nc.rpc.service';
+import { on } from 'events';
 
 @Injectable()
 export class PublicClientManager {
@@ -12,7 +13,7 @@ export class PublicClientManager {
     private readonly configure: ConfigService,
     private readonly nc_rpc: NCRpcService,
   ) {
-    this.register();
+    //this.register();
   }
 
   private readonly logger = new Logger(PublicClientManager.name);
@@ -25,7 +26,6 @@ export class PublicClientManager {
       blockNumber: blockNumber
     });
   }
-
 
   public async getBalance(address: Address) {
     return this.client.getBalance({ address });
@@ -119,8 +119,37 @@ export class PublicClientManager {
         for (const log of logs) {
           this.logger.debug(`Received OutputProposed event: ${log}`);
           this.logger.debug(log.args);
+          var res = {
+            outputRoot: log.args.outputRoot,
+            l2OutputIndex: log.args.l2OutputIndex?.toString(),
+            l2BlockNumber: log.args.l2BlockNumber?.toString(),
+            l1Timestamp: log.args.l1Timestamp?.toString(),
+          }
         }
       },
+    });
+  }
+
+  public watchEvmEvents(event : {
+    onDepositETH: (logs: any) => void,
+    onWithdrawalProven: (logs: any) => void,
+    onWithdrawalFinalized: (logs: any) => void,
+    onOutputProposed: (logs: any) => void,
+  }) {
+    const portalContract = this.getPortalContract();
+    const outputOracleContract = this.getOutputOracleContract();
+
+    portalContract.watchEvent.DepositETH({
+      onLogs: event.onDepositETH,
+    });
+    portalContract.watchEvent.WithdrawalProven({}, {
+      onLogs: event.onWithdrawalProven,
+    });
+    portalContract.watchEvent.WithdrawalFinalized({}, {
+      onLogs: event.onWithdrawalFinalized,
+    });
+    outputOracleContract.watchEvent.OutputProposed({}, {
+      onLogs: event.onOutputProposed,
     });
   }
 

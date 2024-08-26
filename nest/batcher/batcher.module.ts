@@ -9,5 +9,6 @@ import { EvmModule } from "nest/evm/evm.module";
     imports: [NCModule, EvmModule],
     controllers: [BatcherController],
     providers: [BatcherService, ChannelManager],
+    exports: [BatcherService]
 })
 export class BatcherModule {}

@@ -19,7 +19,7 @@ export class WalletManager {
   private readonly logger = new Logger(WalletManager.name);
 
   private readonly chain = this.getChain(this.configure.get('wallet.chain', 'localhost'));
-  private readonly client = this.getClient();
+  private client = this.getMainClient();
 
   async sendTransaction(payload: `0x${string}`): Promise<`0x${string}`> {
     return this.client.sendTransaction({
@@ -125,10 +125,27 @@ export class WalletManager {
     }
   }
 
-  private getClient() {
+  public switchClient(client: 'main' | 'sub') {
+    this.client = client === 'main' ? this.getMainClient() : this.getSubClient();
+  }
+
+  private getMainClient() {
     const account = privateKeyToAccount(
       this.chain.name === 'localhost' ?
       this.keyManager.getPrivateKeyFromKeyStore() :
+      this.configure.get('wallet.private_key') as `0x${string}`,
+    );
+    return createWalletClient({
+      chain: this.chain,
+      account: account,
+      transport: http(),
+    });
+  }
+
+  private getSubClient() {
+    const account = privateKeyToAccount(
+      this.chain.name === 'localhost' ?
+      this.keyManager.getSubPrivateKeyFromKeyStore() :
       this.configure.get('wallet.private_key') as `0x${string}`,
     );
     return createWalletClient({

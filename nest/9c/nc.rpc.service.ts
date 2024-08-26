@@ -275,6 +275,7 @@ export class NCRpcService {
     };
   }
 
+
   // For batcher
 
   async getRecentBlockFromLocal(): Promise<{
@@ -327,5 +328,39 @@ export class NCRpcService {
       miner: res.blockQuery.block.miner,
       transactions: res.blockQuery.block.transactions
     };
+  }
+
+  //For Web
+
+  // todo: it handles only minorUnit
+  async getWethBalanceFromLocal(address: Address): Promise<bigint> {
+    var recentBlockInfo = await this.getRecentBlockFromLocal();
+    const res = await this.graphqlClient.localExplorerQuery(gql`
+      query {
+        stateQuery {
+          balance(
+            offsetBlockHash: "${recentBlockInfo.hash}",
+            owner: "${address.slice(2)}",
+            currency: {
+              ticker: "WETH",
+              decimalPlaces: 18,
+              minters: [
+                "CE70F2e49927D431234BFc8D439412eef3a6276b"
+              ],
+              totalSupplyTrackable: true
+            }
+          ) {
+            currency {
+              ticker
+            }
+            majorUnit
+            minorUnit
+            quantity
+          }
+        }
+      }
+    `);
+
+    return BigInt(res.stateQuery.balance.minorUnit);
   }
 }

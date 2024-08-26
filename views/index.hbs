@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N" crossorigin="anonymous">
+
+    <title>Libplanet Rollup PoC</title>
+
+    <!-- Socket IO -->
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" integrity="sha384-2huaZvOR9iDzHqslqwpR87isEmrfxqyWOF7hr7BY6KG0+hVKLoEXMPUJw3ynWuhO" crossorigin="anonymous"></script>
+    <script defer src='js/index.js'></script>
+</head>
+<body>
+    <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
+        <a class="navbar-brand" href="#">Libplanet Rollup PoC</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav mr-auto">
+            <li class="nav-item active" id="hm-d">
+                <a class="nav-link" href="#">Deposit</a>
+            </li>
+            <li class="nav-item" id="hm-w">
+                <a class="nav-link" href="#">Withdraw</a>
+            </li>
+            <li class="nav-item" id="hm-bs">
+                <a class="nav-link" href="#">Batch Submit</a>
+            </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div style="height: 56px;"></div>
+
+    <main role="main" class="container">
+    <div class="jumbotron mt-4 py-2">
+        <div class="row justify-content-around">
+            <div class="col-6">
+                <h3>Balance(wei)</h3>
+                <p class="mt-2">0xCE70F2e49927D431234BFc8D439412eef3a6276b</p>
+                <div class="form-group">
+                    <div class="row">
+                        <label for="fa-l1-b" class="col-1 col-form-label">L2</label>
+                        <input type="text" class="col-11 form-control" id="fa-l1-b" value="{{addressBalances.l1FirstAddressBalance}}" readonly>
+                    </div>
+                    <div class="row mt-1">
+                        <label for="fa-l2-b" class="col-1 col-form-label">L3</label>
+                        <input type="text" class="col-11 form-control" id="fa-l2-b" value="{{addressBalances.l2FirstAddressBalance}}" readonly>
+                    </div>
+                </div>
+                <p class="mt-2">0xaA2337b6FC4EDcc99FBDc9dee5973c94849dCEce</p>
+                <div class="form-group">
+                    <div class="row">
+                        <label for="sa-l1-b" class="col-1 col-form-label">L2</label>
+                        <input type="text" class="col-11 form-control" id="sa-l1-b" value="{{addressBalances.l1SecondAddressBalance}}" readonly>
+                    </div>
+                    <div class="row mt-1">
+                        <label for="sa-l2-b" class="col-1 col-form-label">L3</label>
+                        <input type="text" class="col-11 form-control" id="sa-l2-b" value="{{addressBalances.l2SecondAddressBalance}}" readonly>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6">
+                <h3>Output Root Info | L3 -&gt; L2</h3>
+                <div class="form-group mt-2">
+                    <div class="row">
+                        <label for="ori-or" class="col-4 col-form-label">OutputRoot</label>
+                        <input type="text" class="col-8 form-control" id="ori-or" value="{{outputRootInfo.outputRoot}}" readonly>
+                    </div>
+                    <div class="row mt-1">
+                        <label for="ori-l2-oi" class="col-4 col-form-label">L3OutputIndex</label>
+                        <input type="text" class="col-8 form-control" id="ori-l2-oi" value="{{outputRootInfo.l2OutputIndex}}" readonly>
+                    </div>
+                    <div class="row mt-1">
+                        <label for="ori-l2-bn" class="col-4 col-form-label">L3BlockNumber</label>
+                        <input type="text" class="col-8 form-control" id="ori-l2-bn" value="{{outputRootInfo.l2BlockNumber}}" readonly>
+                    </div>
+                    <div class="row mt-1">
+                        <label for="ori-l1-ts" class="col-4 col-form-label">L2Timestamp</label>
+                        <input type="text" class="col-8 form-control" id="ori-l1-ts" value="{{outputRootInfo.l1Timestamp}}" readonly>
+                    </div>
+                </div>
+                <hr>
+                <h6>L2: Mothership (Local private network)</h6>
+                <h6>L3: Libplanet</h6>
+            </div>
+        </div>
+    </div>
+
+    <div class="card" id="c-d">
+        <div class="card-header">
+            <ul class="nav nav-tabs card-header-tabs">
+                <li class="nav-item">
+                <a class="nav-link active" href="#">Deposit</a>
+            </ul>
+        </div>
+
+        <div class="card-body" id="cd-cb-d">
+            <form id="cd-df">
+                <dev class="row mx-0 align-items-end">
+                    <h4 class="mb-0">Parameters</h4>
+                    <button type="button" class="btn btn-light ml-auto" id="cd-ds">Try it out</button>
+                </dev>
+                <hr>
+                <div class="form-group">
+                    <div class="row mr-2">
+                        <label for="w-amount" class="col-2 col-form-label">From(L2)</label>
+                        <div class="col-10">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="from" id="cd-dp-f1" value="main" checked>
+                                <label class="form-check-label" for="cd-dp-f1">0xCE70F2e49927D431234BFc8D439412eef3a6276b</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="from" id="cd-dp-f2" value="sub">
+                                <label class="form-check-label" for="cd-dp-f2">0xaA2337b6FC4EDcc99FBDc9dee5973c94849dCEce</label>
+                            </div>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row mr-2">
+                        <label for="w-amount" class="col-2 col-form-label">Recipient(L3)</label>
+                        <div class="col-10">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="recipient" id="cd-dp-r1" value="0xCE70F2e49927D431234BFc8D439412eef3a6276b" checked>
+                                <label class="form-check-label" for="cd-dp-r1">0xCE70F2e49927D431234BFc8D439412eef3a6276b</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="recipient" id="cd-dp-r2" value="0xaA2337b6FC4EDcc99FBDc9dee5973c94849dCEce">
+                                <label class="form-check-label" for="cd-dp-r2">0xaA2337b6FC4EDcc99FBDc9dee5973c94849dCEce</label>
+                            </div>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row mt-2 mr-2">
+                        <label for="cd-dp-a" class="col-2 col-form-label">amount</label>
+                        <input type="text" class="col-10 form-control" placeholder="1000000" name="amount" id="cd-dp-a">
+                    </div>
+                </div>
+            </form>
+
+            <h4 class="mt-5">Responses</h4>
+            <hr>
+            <div class="card bg-dark mb-2">
+                <div class="card-body" id="cd-dr-cb"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card d-none" id="c-w">
+        <div class="card-header">
+            <ul class="nav nav-tabs card-header-tabs">
+                <li class="nav-item">
+                <a class="nav-link active" href="#" id="cw-hm-w">Withdraw</a>
+                </li>
+                <li class="nav-item">
+                <a class="nav-link" href="#" id="cw-hm-p">Prove</a>
+                </li>
+                <li class="nav-item">
+                <a class="nav-link" href="#" id="cw-hm-f">Finalize</a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="card-body" id="cw-cb-w">
+            <form id="cw-wf">
+                <dev class="row mx-0 align-items-end">
+                    <h4 class="mb-0">Parameters</h4>
+                    <button type="button" class="btn btn-light ml-auto" id="cw-ws">Try it out</button>
+                </dev>
+                <hr>
+                <div class="form-group" id="cw-wp">
+                    <div class="row mr-2">
+                        <label for="w-amount" class="col-2 col-form-label">From(L3)</label>
+                        <div class="col-10">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="from" id="cw-wp-f1" value="main" checked>
+                                <label class="form-check-label" for="cw-wp-f1">0xCE70F2e49927D431234BFc8D439412eef3a6276b</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="from" id="cw-wp-f2" value="sub">
+                                <label class="form-check-label" for="cw-wp-f2">0xaA2337b6FC4EDcc99FBDc9dee5973c94849dCEce</label>
+                            </div>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row mr-2">
+                        <label for="w-amount" class="col-2 col-form-label">Recipient(L2)</label>
+                        <div class="col-10">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="recipient" id="cw-wp-r1" value="0xCE70F2e49927D431234BFc8D439412eef3a6276b" checked>
+                                <label class="form-check-label" for="cw-wp-r1">0xCE70F2e49927D431234BFc8D439412eef3a6276b</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="recipient" id="cw-wp-r2" value="0xaA2337b6FC4EDcc99FBDc9dee5973c94849dCEce">
+                                <label class="form-check-label" for="cw-wp-r2">0xaA2337b6FC4EDcc99FBDc9dee5973c94849dCEce</label>
+                            </div>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row mt-2 mr-2">
+                        <label for="cw-wp-a" class="col-2 col-form-label">amount</label>
+                        <input type="text" class="col-10 form-control" placeholder="1000000" name="amount" id="cw-wp-a">
+                    </div>
+                </div>
+            </form>
+
+            <h4 class="mt-5">Responses</h4>
+            <hr>
+            <div class="card bg-dark mb-2">
+                <div class="card-body" id="cw-wr-cb"></div>
+            </div>
+        </div>
+
+        <div class="card-body d-none" id="cw-cb-p">
+            <form id="cw-pf">
+                <dev class="row mx-0 align-items-end">
+                    <h4 class="mb-0">Parameters</h4>
+                    <button type="button" class="btn btn-light ml-auto" id="cw-ps">Try it out</button>
+                </dev>
+                <hr>
+                <div class="form-group" id="cw-pp">
+                    <div class="row mr-2">
+                        <label for="cw-pp-ti" class="col-2 col-form-label">txId</label>
+                        <input type="text" class="col-10 form-control" name="txId" id="cw-pp-ti" placeholder="fe3142e2b95a4a4af4df679d16da3f9439c3bf950f3da52ca25938e493f5789e">
+                    </div>
+                </div>
+            </form>
+
+            <h4 class="mt-5">Responses</h4>
+            <hr>
+            <div class="card bg-dark mb-2">
+                <div class="card-body" id="cw-pr-cb"></div>
+            </div>
+        </div>
+
+        <div class="card-body d-none" id="cw-cb-f">
+            <form id="cw-ff">
+                <dev class="row mx-0 align-items-end">
+                    <h4 class="mb-0">Parameters</h4>
+                    <button type="button" class="btn btn-light ml-auto" id="cw-fs">Try it out</button>
+                </dev>
+                <hr>
+                <div class="form-group" id="cw-fp">
+                    <div class="row mr-2">
+                        <label for="cw-fp-ti" class="col-2 col-form-label">txId</label>
+                        <input type="text" class="col-10 form-control" name="txId" id="cw-fp-ti" placeholder="fe3142e2b95a4a4af4df679d16da3f9439c3bf950f3da52ca25938e493f5789e">
+                    </div>
+                </div>
+            </form>
+
+            <h4 class="mt-5">Responses</h4>
+            <hr>
+            <div class="card bg-dark mb-2">
+                <div class="card-body" id="cw-fr-cb"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card d-none" id="c-bs">
+        <div class="card-header">
+            <ul class="nav nav-tabs card-header-tabs">
+                <li class="nav-item">
+                <a class="nav-link active" href="#">Process</a>
+            </ul>
+        </div>
+
+        <div class="card-body" id="cbs-cb-p">
+            <form id="cbs-pf">
+                <dev class="row mx-0 align-items-end">
+                    <h4 class="mb-0">Parameters</h4>
+                    <button type="button" class="btn btn-light ml-auto" id="cbs-ps">Try it out</button>
+                </dev>
+                <hr>
+                <div class="form-group" id="cbs-pp">
+                    <div class="row mr-2">
+                        <label for="cbs-pp-s" class="col-2 col-form-label">stop</label>
+                        <input type="text" class="col-10 form-control" name="stop" id="cbs-pp-s" placeholder="3000">
+                    </div>
+                </div>
+            </form>
+
+            <h4 class="mt-5">Responses</h4>
+            <hr>
+            <div class="card bg-dark mb-2">
+                <div class="card-body" id="cbs-pr-cb"></div>
+            </div>
+        </div>
+    </div>
+    </main>
+
+    <div style="height: 50px;"></div>
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.min.js" integrity="sha384-+sLIOodYLS7CIrQpBjl+C7nPvqq+FbNUBDunl/OZv93DB7Ln/533i8e/mZXLi/P+" crossorigin="anonymous"></script>
+</body>
+</html>

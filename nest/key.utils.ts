@@ -12,8 +12,15 @@ export class KeyManager {
 
     public getPrivateKeyFromKeyStore(): `0x${string}` {
         return this.exportPrivateKeyFromKeyStore(
-          this.configure.get('wallet.keystore.path', ''),
-          this.configure.get('wallet.keystore.password', ''),
+          this.configure.get('wallet.keystore.main.path', ''),
+          this.configure.get('wallet.keystore.main.password', ''),
+        );
+    }
+
+    public getSubPrivateKeyFromKeyStore(): `0x${string}` {
+        return this.exportPrivateKeyFromKeyStore(
+          this.configure.get('wallet.keystore.sub.path', ''),
+          this.configure.get('wallet.keystore.sub.password', ''),
         );
     }
 
