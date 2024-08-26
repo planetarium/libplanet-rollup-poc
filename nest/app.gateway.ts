@@ -48,11 +48,14 @@ export class AppGateway
         @ConnectedSocket() socket: Socket,
         @MessageBody() data: any
     ) {
+        var from: `main` | `sub` = data.from;
         var recipient = data.recipient;
         var amount = data.amount ? BigInt(data.amount) : BigInt(0);
 
         this.sendDepositLog("- L2 Mothership Process -");
+        await this.walletManger.switchClient(from);
         var res = await this.walletManger.depositETH(recipient, amount);
+        await this.walletManger.switchClient('main');
         this.sendDepositLog("Depsit ETH requested");
         this.sendDepositLog("Tx Hash: " + res);
         this.sendDepositLog('Waiting for deposit event...');
@@ -63,11 +66,12 @@ export class AppGateway
         @ConnectedSocket() socket: Socket,
         @MessageBody() data: any
     ) {
+        var from: `main` | `sub` = data.from;
         var recipient = data.recipient;
         var amount = data.amount ? BigInt(data.amount) : BigInt(0);
 
         this.sendWithdrawLog("- L3 Libplanet Process -");
-        var res = await this.appService.withdrawETH(recipient, amount);
+        var res = await this.appService.withdrawETH(from, recipient, amount);
         this.sendWithdrawLog("Withdraw ETH requested");
         this.sendWithdrawLog("Tx Id: " + res);
         this.sendWithdrawLog('Latest output root info:');

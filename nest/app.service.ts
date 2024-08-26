@@ -17,7 +17,7 @@ export class AppService {
 
     async getBalancesForWeb() {
         const firstAddress = '0xCE70F2e49927D431234BFc8D439412eef3a6276b';
-        const secondAddress = '0x47E0Dd0B503C153D7FB78c43cc9aC135C60Dfd94';
+        const secondAddress = '0xaA2337b6FC4EDcc99FBDc9dee5973c94849dCEce';
 
         var l1FistAddressBalance = await this.publicClient.getBalance(firstAddress);
         var l1SecondAddressBalance = await this.publicClient.getBalance(secondAddress);
@@ -49,12 +49,20 @@ export class AppService {
         return outputRootInfo;
     }
 
-    async withdrawETH(recipient: Address, amount: bigint) {
-        return this.ncRpc.withdrawEthToLocalNetwork(
-            this.keyManager.getPrivateKeyFromKeyStore(),
-            recipient,
-            amount
-        )
+    async withdrawETH(from: `main` | `sub`, recipient: Address, amount: bigint) {
+        if(from == `main`) {
+            return this.ncRpc.withdrawEthToLocalNetwork(
+                this.keyManager.getPrivateKeyFromKeyStore(),
+                recipient,
+                amount
+            );
+        } else {
+            return this.ncRpc.withdrawEthToLocalNetwork(
+                this.keyManager.getSubPrivateKeyFromKeyStore(),
+                recipient, 
+                amount
+            );
+        }
     }
 
     async getWithdrawalTransactionProofInfos(txId: string): Promise<{ 
