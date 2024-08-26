@@ -60,7 +60,7 @@ export class BatcherService {
         }
     }
 
-    private async loadBlocksIntoState(blockLimit: number): Promise<void> {
+    public async loadBlocksIntoState(blockLimit: number): Promise<void> {
         var blockRange = await this.calculateL2BlockRangeToStore(blockLimit);
 
         for (let i = blockRange.start.index + 1n; i <= blockRange.end.index; i++) {
@@ -116,7 +116,7 @@ export class BatcherService {
         };
     }
 
-    private async publishTxToL1(): Promise<void> {
+    public async publishTxToL1(): Promise<void> {
         var txData = this.channelManager.TxData();
 
         if (txData.frames.length == 0) {

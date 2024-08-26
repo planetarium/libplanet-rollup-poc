@@ -87,14 +87,8 @@ const toggleCwCardBody = (index) => {
     });
 }
 
-
-// socket io
+// socket setup
 const socket = io('/rollup');
-
-const outputRootText = getElementById('ori-or');
-const l2OutputIndexText = getElementById('ori-l2-oi');
-const l2BlockNumberText = getElementById('ori-l2-bn');
-const l1TimestampText = getElementById('ori-l1-ts');
 
 socket.on("connect", () => {
     console.log(socket.connected); // true
@@ -104,9 +98,158 @@ socket.on("disconnect", () => {
     console.log(socket.connected); // false
 });
 
+// socket data
+const outputRootText = getElementById('ori-or');
+const l2OutputIndexText = getElementById('ori-l2-oi');
+const l2BlockNumberText = getElementById('ori-l2-bn');
+const l1TimestampText = getElementById('ori-l1-ts');
 socket.on('onOutputProposed', (data) => {
     outputRootText.value = data.outputRoot;
     l2OutputIndexText.value = data.l2OutputIndex;
     l2BlockNumberText.value = data.l2BlockNumber;
     l1TimestampText.value = data.l1Timestamp;
 })
+
+const firstAddressL1BalanceText = getElementById('fa-l1-b');
+const firstAddressL2BalanceText = getElementById('fa-l2-b');
+const secondAddressL1BalanceText = getElementById('sa-l1-b');
+const secondAddressL2BalanceText = getElementById('sa-l2-b');
+socket.on('onBalancesUpdated', (data) => {
+    firstAddressL1BalanceText.value = data.l1FirstAddressBalance;
+    firstAddressL2BalanceText.value = data.l2FirstAddressBalance;
+    secondAddressL1BalanceText.value = data.l1SecondAddressBalance;
+    secondAddressL2BalanceText.value = data.l2SecondAddressBalance;
+});
+
+// socket request
+const cdDepositForm = getElementById('cd-df');
+const cdDepositSubmitButton = getElementById('cd-ds');
+const cdDepositResponseCardBody = getElementById('cd-dr-cb');
+
+const cwWithdrawForm = getElementById('cw-wf');
+const cwWithdrawSubmitButton = getElementById('cw-ws');
+const cwWithdrawResponseCardBody = getElementById('cw-wr-cb');
+
+const cwProveForm = getElementById('cw-pf');
+const cwProveSubmitButton = getElementById('cw-ps');
+const cwProveResponseCardBody = getElementById('cw-pr-cb');
+
+const cwFinalizeForm = getElementById('cw-ff');
+const cwFinalizeSubmitButton = getElementById('cw-fs');
+const cwFinalizeResponseCardBody = getElementById('cw-fr-cb');
+
+const cbsProcessForm = getElementById('cbs-pf');
+const cbsProcessSubmitButton = getElementById('cbs-ps');
+const cbsProcessResponseCardBody = getElementById('cbs-pr-cb');
+
+const init = () => {
+    attachQueryLogsToForm(
+        cdDepositForm, 
+        cdDepositSubmitButton, 
+        cdDepositResponseCardBody, 
+        'onDepositRequested', 
+        'onDepositLog'
+    );
+
+    attachQueryLogsToForm(
+        cwWithdrawForm, 
+        cwWithdrawSubmitButton, 
+        cwWithdrawResponseCardBody, 
+        'onWithdrawRequested', 
+        'onWithdrawLog'
+    );
+
+    attachQueryLogsToForm(
+        cwProveForm, 
+        cwProveSubmitButton, 
+        cwProveResponseCardBody, 
+        'onProveRequested', 
+        'onProveLog'
+    );
+
+    attachQueryLogsToForm(
+        cwFinalizeForm, 
+        cwFinalizeSubmitButton, 
+        cwFinalizeResponseCardBody, 
+        'onFinalizeRequested', 
+        'onFinalizeLog'
+    );
+
+    attachQueryLogsToForm(
+        cbsProcessForm, 
+        cbsProcessSubmitButton, 
+        cbsProcessResponseCardBody, 
+        'onProcessRequested', 
+        'onProcessLog'
+    );
+}
+
+// utility
+const attachQueryLogsToForm = (
+    form, submitButton, responseCardBody, socketEmitEvent, socketOnEvent
+) => {
+    submitButton.addEventListener('click', (e) => {
+        const formData = new FormData(form);
+        const data = formDataToJson(formData);
+        if (!data) {
+            return;
+        }
+    
+        responseCardBody.innerHTML = '';
+        socket.emit(socketEmitEvent, data);
+    });
+    socket.on(socketOnEvent, (text) => {
+        var elem = responseCardBody;
+        if (typeof text === 'object') {
+            addPreElem(elem, balancesToText(text));
+        } else {
+            addPreElem(elem, text);
+        }
+    });
+}
+
+const addPreElem = (elem, text) => {
+    const preElem = document.createElement('pre');
+    preElem.style = 'color: white;';
+    preElem.innerText = text;
+    elem.appendChild(preElem);
+}
+
+const balancesToText = (balances) => {
+    balanceLogData = {
+        before: {
+            l2FirstAddressBalance: firstAddressL1BalanceText.value,
+            l3FirstAddressBalance: firstAddressL2BalanceText.value,
+            l2SecondAddressBalance: secondAddressL1BalanceText.value,
+            l3SecondAddressBalance: secondAddressL2BalanceText.value,
+        },
+        after: {
+            l2FirstAddressBalance: balances.l2FirstAddressBalance,
+            l3FirstAddressBalance: balances.l3FirstAddressBalance,
+            l2SecondAddressBalance: balances.l2SecondAddressBalance,
+            l3SecondAddressBalance: balances.l3SecondAddressBalance,
+        }
+    }
+
+    return JSON.stringify(balanceLogData, null, 2);
+}
+
+const formDataToJson = (formData) => {
+    const data = {};
+    var valid = true;
+    formData.forEach((value, key) => {
+        if (value === '' || value === null) {
+            valid = false;
+            alert('All fields are required');
+            return false;
+        }
+        data[key] = value;
+    });
+    if (!valid) {
+        return false;
+    }
+    return data;
+}
+
+// init
+init();

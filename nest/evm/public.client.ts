@@ -13,7 +13,7 @@ export class PublicClientManager {
     private readonly configure: ConfigService,
     private readonly nc_rpc: NCRpcService,
   ) {
-    this.register();
+    //this.register();
   }
 
   private readonly logger = new Logger(PublicClientManager.name);

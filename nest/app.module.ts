@@ -8,6 +8,7 @@ import { BatcherModule } from './batcher/batcher.module';
 import { EvmModule } from './evm/evm.module';
 import { RollupCronService } from './rollup.cron';
 import { AppGateway } from './app.gateway';
+import { KeyManager } from './key.utils';
 
 @Module({
   imports: [
@@ -20,7 +21,7 @@ import { AppGateway } from './app.gateway';
     EvmModule,
   ],
   controllers: [AppController],
-  providers: [AppService, AppGateway, RollupCronService],
-  //providers: [AppService, AppGateway],
+  providers: [AppService, AppGateway, KeyManager, RollupCronService],
+  //providers: [AppService, AppGateway, KeyManager],
 })
 export class AppModule {}
