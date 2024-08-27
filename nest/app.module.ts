@@ -9,6 +9,7 @@ import { EvmModule } from './evm/evm.module';
 import { RollupCronService } from './rollup.cron';
 import { AppGateway } from './app.gateway';
 import { KeyManager } from './key.utils';
+import { DeriverModule } from './deriver/deriver.module';
 
 @Module({
   imports: [
@@ -17,8 +18,9 @@ import { KeyManager } from './key.utils';
       isGlobal: true,
     }),
     NCModule,
-    BatcherModule,
     EvmModule,
+    BatcherModule,
+    DeriverModule,
   ],
   controllers: [AppController],
   providers: [AppService, AppGateway, KeyManager, RollupCronService],

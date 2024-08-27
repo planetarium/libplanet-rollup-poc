@@ -49,10 +49,6 @@ export class AppService {
         return outputRootInfo;
     }
 
-    async getBalance(address: `0x${string}`): Promise<bigint> {
-        return this.publicClient.getBalance(address);
-    }
-    
     async withdrawETH(from: `main` | `sub`, recipient: Address, amount: bigint) {
         if(from == `main`) {
             return this.ncRpc.withdrawEthToLocalNetwork(

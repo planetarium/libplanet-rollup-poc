@@ -22,8 +22,9 @@ export class PublicClientManager {
   private readonly client = this.getClient();
 
   public async getBlock(blockNumber: bigint) {
-    return this.client.getBlock({ 
-      blockNumber: blockNumber
+    return this.client.getBlock({
+      blockNumber: blockNumber,
+      includeTransactions: true,
     });
   }
 
