@@ -94,22 +94,27 @@ export class AppGateway
     ) {
         var txId = data.txId;
 
-        this.sendProveLog("- L3 Libplanet Process -");
-        this.sendProveLog("Getting withdrawal transaction proof infos from L3...");
-        var withdrawalTransactionProofInfos = await this.appService.getWithdrawalTransactionProofInfos(txId);
-        this.sendProveLog("Withdrawal transaction proof infos:");
-        this.sendProveLog(withdrawalTransactionProofInfos);
+        try {
+            this.sendProveLog("- L3 Libplanet Process -");
+            this.sendProveLog("Getting withdrawal transaction proof infos from L3...");
+            var withdrawalTransactionProofInfos = await this.appService.getWithdrawalTransactionProofInfos(txId);
+            this.sendProveLog("Withdrawal transaction proof infos:");
+            this.sendProveLog(withdrawalTransactionProofInfos);
 
-        this.sendProveLog("- L2 Mothership Process -");
-        var res = await this.walletManger.proveWithdrawalTransaction(
-            withdrawalTransactionProofInfos.withdrawalTransaction,
-            withdrawalTransactionProofInfos.l2OutputIndex,
-            withdrawalTransactionProofInfos.outputRootProposal,
-            withdrawalTransactionProofInfos.withdrawalProof
-        );
-        this.sendProveLog("Prove withdrawal requested to L2");
-        this.sendProveLog("Tx Hash: " + res);
-        this.sendProveLog('Waiting for withdrawal proven event...');
+            this.sendProveLog("- L2 Mothership Process -");
+            var res = await this.walletManger.proveWithdrawalTransaction(
+                withdrawalTransactionProofInfos.withdrawalTransaction,
+                withdrawalTransactionProofInfos.l2OutputIndex,
+                withdrawalTransactionProofInfos.outputRootProposal,
+                withdrawalTransactionProofInfos.withdrawalProof
+            );
+            this.sendProveLog("Prove withdrawal requested to L2");
+            this.sendProveLog("Tx Hash: " + res);
+            this.sendProveLog('Waiting for withdrawal proven event...');
+        }
+        catch(e) {
+            this.sendProveLog('Error: ' + e);
+        }
     }
 
     @SubscribeMessage('onFinalizeRequested')
@@ -119,18 +124,24 @@ export class AppGateway
     ) {
         var txId = data.txId;
 
-        this.sendFinalizeLog("- L3 Libplanet Process -");
-        this.sendFinalizeLog("Getting withdrawal transaction info from L3...");
-        var withdrawalTransactionProofInfos = await this.appService.getWithdrawalTransactionProofInfos(txId);
-        var withdrawalTransaction = withdrawalTransactionProofInfos.withdrawalTransaction;
-        this.sendFinalizeLog("Withdrawal transaction info:");
-        this.sendFinalizeLog(withdrawalTransaction);
+        try {
+            this.sendFinalizeLog("- L3 Libplanet Process -");
+            this.sendFinalizeLog("Getting withdrawal transaction info from L3...");
+            var withdrawalTransactionProofInfos = await this.appService.getWithdrawalTransactionProofInfos(txId);
+            var withdrawalTransaction = withdrawalTransactionProofInfos.withdrawalTransaction;
+            this.sendFinalizeLog("Withdrawal transaction info:");
+            this.sendFinalizeLog(withdrawalTransaction);
 
-        this.sendFinalizeLog("- L2 Mothership Process -");
-        var res = await this.walletManger.finalizeWithdrawalTransaction(withdrawalTransaction);
-        this.sendFinalizeLog("Finalize withdrawal requested to L2");
-        this.sendFinalizeLog("Tx Hash: " + res);
-        this.sendFinalizeLog('Waiting for withdrawal finalized event...');
+            this.sendFinalizeLog("- L2 Mothership Process -");
+            var res = await this.walletManger.finalizeWithdrawalTransaction(withdrawalTransaction);
+            this.sendFinalizeLog("Finalize withdrawal requested to L2");
+            this.sendFinalizeLog("Tx Hash: " + res);
+            this.sendFinalizeLog('Waiting for withdrawal finalized event...');
+        }
+        catch(e) {
+            this.sendFinalizeLog('Error: ' + e);
+        }
+        
     }
 
     @SubscribeMessage('onProcessRequested')
