@@ -2,7 +2,6 @@ import { Injectable } from "@nestjs/common";
 import { FrameQueue } from "./deriver.frame.queue";
 import { ChannelID, DataStatus, Frame } from "./deriver.types";
 import { Channel } from "./models/deriver.channel";
-import { channelIdToHexKey } from "./deriver.utils";
 
 @Injectable()
 export class ChannelBank {
@@ -38,12 +37,12 @@ export class ChannelBank {
 
         for(var i = 0; i < this.channelQueue.length; i++) {
             var chId = this.channelQueue[i];
-            var channel = this.channels.get(channelIdToHexKey(chId));
+            var channel = this.channels.get(this.channelIdToHexKey(chId));
             if (!channel || !channel.isReady()) {
                 continue;
             }
 
-            this.channels.delete(channelIdToHexKey(chId));
+            this.channels.delete(this.channelIdToHexKey(chId));
             this.channelQueue.splice(i, 1);
 
             return channel.reader();
@@ -53,13 +52,17 @@ export class ChannelBank {
     }
 
     private ingestFrame(frame: Frame) {
-        var channel = this.channels.get(channelIdToHexKey(frame.id));
+        var channel = this.channels.get(this.channelIdToHexKey(frame.id));
         if (!channel) {
             channel = new Channel(frame.id);
-            this.channels.set(channelIdToHexKey(frame.id), channel);
+            this.channels.set(this.channelIdToHexKey(frame.id), channel);
             this.channelQueue.push(frame.id);
         }
 
         channel.addFrame(frame);
+    }
+
+    private channelIdToHexKey(id: ChannelID): string {
+        return Buffer.from(id).toString("hex");
     }
 }

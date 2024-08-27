@@ -11,7 +11,7 @@ export class Channel {
     }
 
     public addFrame(frame: Frame): void {
-        if (frame.id != this.id) {
+        if (Buffer.compare(this.id, frame.id) !== 0) {
             throw new Error("Frame ID does not match channel ID");
         }
         if (this.inputs.has(frame.frameNumber)) {

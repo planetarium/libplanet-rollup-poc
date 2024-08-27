@@ -11,7 +11,7 @@ export class L1Retrieval {
         private readonly dataSource: DataSource,
     ) {}
 
-    l1BlockNumber: bigint = 1n;
+    l1BlockNumber: bigint = 20000n;
     isBlockPending: boolean = true;
     datas: Uint8Array[] = [];
 
