@@ -28,8 +28,8 @@
             <li class="nav-item" id="hm-w">
                 <a class="nav-link" href="#">Withdraw</a>
             </li>
-            <li class="nav-item" id="hm-bs">
-                <a class="nav-link" href="#">Batch Submit</a>
+            <li class="nav-item" id="hm-v">
+                <a class="nav-link" href="#">Verify</a>
             </li>
             </ul>
         </div>
@@ -261,25 +261,27 @@
         </div>
     </div>
 
-    <div class="card d-none" id="c-bs">
+    <div class="card d-none" id="c-v">
         <div class="card-header">
             <ul class="nav nav-tabs card-header-tabs">
                 <li class="nav-item">
-                <a class="nav-link active" href="#">Process</a>
+                <a class="nav-link active" href="#" id="cv-hm-sb">Submit Batch</a>
+                <li class="nav-item">
+                <a class="nav-link" href="#" id="cv-hm-d">Derivate</a>
             </ul>
         </div>
 
-        <div class="card-body" id="cbs-cb-p">
-            <form id="cbs-pf">
+        <div class="card-body" id="cv-cb-sb">
+            <form id="cv-sbf">
                 <dev class="row mx-0 align-items-end">
                     <h4 class="mb-0">Parameters</h4>
-                    <button type="button" class="btn btn-light ml-auto" id="cbs-ps">Try it out</button>
+                    <button type="button" class="btn btn-light ml-auto" id="cv-sbs">Try it out</button>
                 </dev>
                 <hr>
-                <div class="form-group" id="cbs-pp">
+                <div class="form-group" id="cv-sbp">
                     <div class="row mr-2">
-                        <label for="cbs-pp-s" class="col-2 col-form-label">stop</label>
-                        <input type="text" class="col-10 form-control" name="stop" id="cbs-pp-s" placeholder="3000">
+                        <label for="cv-sbp-s" class="col-2 col-form-label">stop</label>
+                        <input type="text" class="col-10 form-control" name="stop" id="cv-sbp-s" placeholder="3000">
                     </div>
                 </div>
             </form>
@@ -287,8 +289,11 @@
             <h4 class="mt-5">Responses</h4>
             <hr>
             <div class="card bg-dark mb-2">
-                <div class="card-body" id="cbs-pr-cb"></div>
+                <div class="card-body" id="cv-sbr-cb"></div>
             </div>
+        </div>
+        <div class="card-body d-none" id="cv-cb-d">
+            <h2>Not Implemented Yet</h2>
         </div>
     </div>
     </main>

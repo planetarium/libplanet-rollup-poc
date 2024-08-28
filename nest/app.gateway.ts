@@ -144,33 +144,33 @@ export class AppGateway
         
     }
 
-    @SubscribeMessage('onProcessRequested')
-    async onProcessRequested(
+    @SubscribeMessage('onSubmitBatchRequested')
+    async onSubmitBatchRequested(
         @ConnectedSocket() socket: Socket,
         @MessageBody() data: any
     ) {
         var stop = BigInt(data.stop);
         
-        this.sendProcessLog("- L3 Libplanet Process -");
+        this.sendSubmitBatchLog("- L3 Libplanet Process -");
         var lastTxHash: `0x${string}` = '0x';
         do {
             await this.batcherService.loadBlocksIntoState(100);
             await this.batcherService.publishTxToL1();
-            this.sendProcessLog('Compressed until ' + this.batcherService.lastStoredBlock!.index + ' block');
+            this.sendSubmitBatchLog('Compressed until ' + this.batcherService.lastStoredBlock!.index + ' block');
             if (this.batcherService.sentTransactions.length > 0) {
                 var txHash = this.batcherService.sentTransactions[this.batcherService.sentTransactions.length - 1];
                 if (!(lastTxHash === txHash)) {
                     lastTxHash = txHash;
-                    this.sendProcessLog('Batch transaction sent');
-                    this.sendProcessLog('Tx Hash: ' + txHash);
+                    this.sendSubmitBatchLog('Batch transaction sent');
+                    this.sendSubmitBatchLog('Tx Hash: ' + txHash);
                 }
             }
         } while (this.batcherService.lastStoredBlock!.index < stop);
 
-        this.sendProcessLog('Sent transaction hashs:');
-        this.sendProcessLog(this.batcherService.sentTransactions);
+        this.sendSubmitBatchLog('Sent transaction hashs:');
+        this.sendSubmitBatchLog(this.batcherService.sentTransactions);
 
-        this.sendProcessLog('Process completed');
+        this.sendSubmitBatchLog('Process completed');
     }
 
     private register() {
@@ -306,10 +306,10 @@ export class AppGateway
         }
     }
 
-    sendProcessLog(log: any) {
+    sendSubmitBatchLog(log: any) {
         var text = typeof log === 'string' ? log : stringify(log, null, 2);
         for (const socket of this.activeSockets) {
-            socket.emit('onProcessLog', text);
+            socket.emit('onSubmitBatchLog', text);
         }
     }
 

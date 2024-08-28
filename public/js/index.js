@@ -3,12 +3,12 @@ const getElementById = (id) => document.getElementById(id) || null;
 // Initializing
 const headerMenuDeposit = getElementById('hm-d');
 const headerMenuWithdraw = getElementById('hm-w');
-const headerMenuBatchSubmit = getElementById('hm-bs');
+const headerMenuBatchSubmit = getElementById('hm-v');
 const headerMenus = [headerMenuDeposit, headerMenuWithdraw, headerMenuBatchSubmit];
 
 const cardDeposit = getElementById('c-d');
 const cardWithdraw = getElementById('c-w');
-const cardBatchSubmit = getElementById('c-bs');
+const cardBatchSubmit = getElementById('c-v');
 const cards = [cardDeposit, cardWithdraw, cardBatchSubmit];
 
 headerMenuDeposit.addEventListener('click', () => {
@@ -87,6 +87,44 @@ const toggleCwCardBody = (index) => {
     });
 }
 
+const cvHeaderMenuSubmitBatch = getElementById('cv-hm-sb');
+const cvHeaderMenuDerivate = getElementById('cv-hm-d');
+const cvHeaderMenus = [cvHeaderMenuSubmitBatch, cvHeaderMenuDerivate];
+
+const cvCardBodySubmitBatch = getElementById('cv-cb-sb');
+const cvCardBodyDerivate = getElementById('cv-cb-d');
+const cvCardBodies = [cvCardBodySubmitBatch, cvCardBodyDerivate];
+
+cvHeaderMenuSubmitBatch.addEventListener('click', () => {
+    toggleCvMenu(0);
+    toggleCvCardBody(0);
+});
+
+cvHeaderMenuDerivate.addEventListener('click', () => {
+    toggleCvMenu(1);
+    toggleCvCardBody(1);
+});
+
+const toggleCvMenu = (index) => {
+    cvHeaderMenus.forEach((menu, i) => {
+        if (i === index) {
+            menu.classList.add('active');
+        } else {
+            menu.classList.remove('active');
+        }
+    });
+}
+
+const toggleCvCardBody = (index) => {
+    cvCardBodies.forEach((card, i) => {
+        if (i === index) {
+            card.classList.remove('d-none');
+        } else {
+            card.classList.add('d-none');
+        }
+    });
+}
+
 // socket setup
 const socket = io('/rollup');
 
@@ -138,9 +176,9 @@ const cwFinalizeForm = getElementById('cw-ff');
 const cwFinalizeSubmitButton = getElementById('cw-fs');
 const cwFinalizeResponseCardBody = getElementById('cw-fr-cb');
 
-const cbsProcessForm = getElementById('cbs-pf');
-const cbsProcessSubmitButton = getElementById('cbs-ps');
-const cbsProcessResponseCardBody = getElementById('cbs-pr-cb');
+const cvSubmitBatchForm = getElementById('cv-sbf');
+const cvSubmitBatchSubmitButton = getElementById('cv-sbs');
+const cvSubmitBatchResponseCardBody = getElementById('cv-sbr-cb');
 
 const init = () => {
     attachQueryLogsToForm(
@@ -176,11 +214,11 @@ const init = () => {
     );
 
     attachQueryLogsToForm(
-        cbsProcessForm, 
-        cbsProcessSubmitButton, 
-        cbsProcessResponseCardBody, 
-        'onProcessRequested', 
-        'onProcessLog'
+        cvSubmitBatchForm, 
+        cvSubmitBatchSubmitButton, 
+        cvSubmitBatchResponseCardBody, 
+        'onSubmitBatchRequested', 
+        'onSubmitBatchLog'
     );
 }
 
