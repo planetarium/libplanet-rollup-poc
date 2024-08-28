@@ -196,15 +196,15 @@ export class AppGateway
             if (next === DataStatus.EOF) {
                 res = "EOF";
 
-                this.sendDerivateLog(`Load L1 blocks until ${this.l1Retrieval.l1BlockNumber} block`);
-                this.sendDerivateLog(`Derivated ${derivatedBlockCount} L2 blocks, ${derivatedTransactionsCount} transactions`);
-                this.sendDerivateLog(`Latest L2 block index: ${derivatedLatestBlockIndex}`);
+                this.sendDerivateLog(`Load L2 blocks until ${this.l1Retrieval.l1BlockNumber} block`);
+                this.sendDerivateLog(`Derivated ${derivatedBlockCount} L3 blocks, ${derivatedTransactionsCount} transactions`);
+                this.sendDerivateLog(`Latest L3 block index: ${derivatedLatestBlockIndex}`);
                 this.sendDerivateLog("Derivation finished");
 
                 break;
             } else if (next === DataStatus.NotEnoughData) {
                 if(BigInt(this.l1Retrieval.l1BlockNumber) % 500n === 0n) {
-                    this.sendDerivateLog(`Load L1 blocks until ${this.l1Retrieval.l1BlockNumber} block`);
+                    this.sendDerivateLog(`Load L2 blocks until ${this.l1Retrieval.l1BlockNumber} block`);
                 }
                 this.l1Retrieval.advanceBlock();
                 continue;
@@ -216,8 +216,8 @@ export class AppGateway
                     derivatedLatestBlockIndex = res.index;
                 }
                 if(derivatedBlockCount % 2000n === 0n) {
-                    this.sendDerivateLog(`Derivated ${derivatedBlockCount} L2 blocks, ${derivatedTransactionsCount} transactions`);
-                    this.sendDerivateLog(`Latest L2 block index: ${derivatedLatestBlockIndex}`);
+                    this.sendDerivateLog(`Derivated ${derivatedBlockCount} L3 blocks, ${derivatedTransactionsCount} transactions`);
+                    this.sendDerivateLog(`Latest L3 block index: ${derivatedLatestBlockIndex}`);
                 }
             }
         }
