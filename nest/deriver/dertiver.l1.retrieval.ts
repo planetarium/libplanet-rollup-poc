@@ -60,4 +60,8 @@ export class L1Retrieval {
             this.isBlockPending = true;
         }
     }
+
+    public setL1BlockNumber(blockNumber: bigint) {
+        this.l1BlockNumber = blockNumber;
+    }
 }

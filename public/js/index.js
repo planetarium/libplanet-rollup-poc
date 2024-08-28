@@ -180,6 +180,10 @@ const cvSubmitBatchForm = getElementById('cv-sbf');
 const cvSubmitBatchSubmitButton = getElementById('cv-sbs');
 const cvSubmitBatchResponseCardBody = getElementById('cv-sbr-cb');
 
+const cvDerivateForm = getElementById('cv-df');
+const cvDerivateSubmitButton = getElementById('cv-ds');
+const cvDerivateResponseCardBody = getElementById('cv-dr-cb');
+
 const init = () => {
     attachQueryLogsToForm(
         cdDepositForm, 
@@ -219,6 +223,14 @@ const init = () => {
         cvSubmitBatchResponseCardBody, 
         'onSubmitBatchRequested', 
         'onSubmitBatchLog'
+    );
+
+    attachQueryLogsToForm(
+        cvDerivateForm, 
+        cvDerivateSubmitButton, 
+        cvDerivateResponseCardBody, 
+        'onDerivateRequested', 
+        'onDerivateLog'
     );
 }
 

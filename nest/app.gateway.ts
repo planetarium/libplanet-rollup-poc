@@ -7,6 +7,9 @@ import { stringify } from "viem";
 import { NCRpcService } from "./9c/nc.rpc.service";
 import { AppService } from "./app.service";
 import { BatcherService } from "./batcher/batcher.service";
+import { L1Retrieval } from "./deriver/dertiver.l1.retrieval";
+import { ChannelInReader } from "./deriver/deriver.channel.in.reader";
+import { Batch, DataStatus } from "./deriver/deriver.types";
 
 @WebSocketGateway({ namespace: 'rollup' })
 export class AppGateway 
@@ -17,7 +20,9 @@ export class AppGateway
         private readonly walletManger: WalletManager,
         private readonly ncRpcService: NCRpcService,
         private readonly appService: AppService,
-        private readonly batcherService: BatcherService
+        private readonly batcherService: BatcherService,
+        private readonly l1Retrieval: L1Retrieval,
+        private readonly channelInReader: ChannelInReader,
     ) {
         this.register();
     }
@@ -173,6 +178,51 @@ export class AppGateway
         this.sendSubmitBatchLog('Process completed');
     }
 
+    @SubscribeMessage('onDerivateRequested')
+    async onDerivateRequested(
+        @ConnectedSocket() socket: Socket,
+        @MessageBody() data: any
+    ) {
+        var start = BigInt(data.start);
+
+        var derivatedLatestBlockIndex: bigint = 0n;
+        var derivatedBlockCount: bigint = 0n;
+        var derivatedTransactionsCount: bigint = 0n;
+
+        this.l1Retrieval.setL1BlockNumber(start);
+        var res;
+        while (true) {
+            var next = await this.channelInReader.nextBatch();
+            if (next === DataStatus.EOF) {
+                res = "EOF";
+
+                this.sendDerivateLog(`Load L1 blocks until ${this.l1Retrieval.l1BlockNumber} block`);
+                this.sendDerivateLog(`Derivated ${derivatedBlockCount} L2 blocks, ${derivatedTransactionsCount} transactions`);
+                this.sendDerivateLog(`Latest L2 block index: ${derivatedLatestBlockIndex}`);
+                this.sendDerivateLog("Derivation finished");
+
+                break;
+            } else if (next === DataStatus.NotEnoughData) {
+                if(BigInt(this.l1Retrieval.l1BlockNumber) % 500n === 0n) {
+                    this.sendDerivateLog(`Load L1 blocks until ${this.l1Retrieval.l1BlockNumber} block`);
+                }
+                this.l1Retrieval.advanceBlock();
+                continue;
+            } else {
+                res = next as Batch;
+                derivatedBlockCount++;
+                derivatedTransactionsCount += BigInt(res.transactions.length);
+                if(derivatedLatestBlockIndex < res.index) {
+                    derivatedLatestBlockIndex = res.index;
+                }
+                if(derivatedBlockCount % 2000n === 0n) {
+                    this.sendDerivateLog(`Derivated ${derivatedBlockCount} L2 blocks, ${derivatedTransactionsCount} transactions`);
+                    this.sendDerivateLog(`Latest L2 block index: ${derivatedLatestBlockIndex}`);
+                }
+            }
+        }
+    }
+
     private register() {
         this.publicClientManager.watchEvmEvents({
             onDepositETH: (logs) => {
@@ -310,6 +360,13 @@ export class AppGateway
         var text = typeof log === 'string' ? log : stringify(log, null, 2);
         for (const socket of this.activeSockets) {
             socket.emit('onSubmitBatchLog', text);
+        }
+    }
+
+    sendDerivateLog(log: any) {
+        var text = typeof log === 'string' ? log : stringify(log, null, 2);
+        for (const socket of this.activeSockets) {
+            socket.emit('onDerivateLog', text);
         }
     }
 

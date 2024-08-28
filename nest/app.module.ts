@@ -23,7 +23,7 @@ import { DeriverModule } from './deriver/deriver.module';
     DeriverModule,
   ],
   controllers: [AppController],
-  providers: [AppService, AppGateway, KeyManager, RollupCronService],
-  //providers: [AppService, AppGateway, KeyManager],
+  //providers: [AppService, AppGateway, KeyManager, RollupCronService],
+  providers: [AppService, AppGateway, KeyManager],
 })
 export class AppModule {}

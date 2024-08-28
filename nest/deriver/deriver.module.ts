@@ -19,5 +19,6 @@ import { ChannelInReader } from "./deriver.channel.in.reader";
         ChannelBank,
         ChannelInReader,
     ],
+    exports: [L1Retrieval, ChannelInReader],
 })
 export class DeriverModule {}

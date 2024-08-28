@@ -1,4 +1,4 @@
-import { Controller, Get } from "@nestjs/common";
+import { Controller, Get, Query } from "@nestjs/common";
 import { DeriverService } from "./deriver.service";
 
 @Controller('deriver')
@@ -7,8 +7,8 @@ export class DeriverController {
         private readonly deriverService: DeriverService
     ) {}
 
-    @Get('test')
-    async test() {
-        return await this.deriverService.test();
+    @Get('derivate')
+    async derivate(@Query('start') start: bigint) {
+        return await this.deriverService.derivate(start);
     }
 }
