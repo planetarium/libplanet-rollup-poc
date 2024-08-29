@@ -22,18 +22,18 @@ export class PublicClientManager {
   private readonly client = this.getClient();
 
   public async getBlock(blockNumber: bigint) {
-    return this.client.getBlock({
+    return await this.client.getBlock({
       blockNumber: blockNumber,
       includeTransactions: true,
     });
   }
 
   public async getBalance(address: Address) {
-    return this.client.getBalance({ address });
+    return await this.client.getBalance({ address });
   }
 
   public async getTransaction(txHash: `0x${string}`) {
-    return this.client.getTransaction({
+    return await this.client.getTransaction({
       hash: txHash,
     });
   }

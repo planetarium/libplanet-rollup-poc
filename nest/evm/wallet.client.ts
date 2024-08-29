@@ -22,14 +22,14 @@ export class WalletManager {
   private client = this.getMainClient();
 
   async sendTransaction(payload: `0x${string}`): Promise<`0x${string}`> {
-    return this.client.sendTransaction({
+    return await this.client.sendTransaction({
       to: this.client.account.address,
       data: payload,
     });
   }
 
   async batchTransaction(payload: `0x${string}`): Promise<`0x${string}`> {
-    return this.client.sendTransaction({
+    return await this.client.sendTransaction({
       to: this.configure.get('local_contract_address.libplanet_batch_inbox') as `0x${string}`,
       data: payload,
     });
@@ -41,7 +41,7 @@ export class WalletManager {
       abi: bridgeAbi,
       client: this.client,
     });
-    return bridgeContract.write.depositETH(
+    return await bridgeContract.write.depositETH(
       [
         this.client.account.address,
         recipient,
@@ -51,30 +51,6 @@ export class WalletManager {
         value: amount,
       },
     );
-  }
-
-  async proposeOutputRoot(outputRootProposal: OutputRootProposal): Promise<`0x${string}`> {
-    const outputOracleContract = getContract({
-      address: (this.chain.contracts?.libplanetOutputOracle as ChainContract).address,
-      abi: outputOracleAbi,
-      client: this.client,
-    });
-    
-    var stateRootHash = Uint8Array.from(Buffer.from(outputRootProposal.stateRootHash, 'hex'));
-    var storageRootHash = Uint8Array.from(Buffer.from(outputRootProposal.storageRootHash, 'hex'));
-    
-    var outputRootArray = new Uint8Array(64);
-    outputRootArray.set(stateRootHash, 0);
-    outputRootArray.set(storageRootHash, 32);  
-
-    var outputRoot = sha256(outputRootArray);
-
-    var blockIndex = BigInt(outputRootProposal.blockIndex);
-
-    return outputOracleContract.write.proposeL2Output([
-      outputRoot,
-      blockIndex,
-    ])
   }
 
   async proveWithdrawalTransaction(
@@ -88,7 +64,7 @@ export class WalletManager {
       abi: portalAbi,
       client: this.client,
     });
-    return portalContract.write.proveWithdrawalTransaction([
+    return await portalContract.write.proveWithdrawalTransaction([
       withdrawalTransaction,
       l2OutputIndex,
       {
@@ -107,7 +83,7 @@ export class WalletManager {
       abi: portalAbi,
       client: this.client,
     });
-    return portalContract.write.finalizeWithdrawalTransaction([
+    return await portalContract.write.finalizeWithdrawalTransaction([
       withdrawalTransaction
     ]);
   }

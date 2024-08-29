@@ -2,11 +2,13 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { WalletManager } from './evm/wallet.client';
 import { NCRpcService } from './9c/nc.rpc.service';
+import { OutputRootProposeManager } from './evm/propose.client';
 
 @Injectable()
 export class RollupCronService {
   constructor(
     private readonly wallet: WalletManager,
+    private readonly outputRootProposeManager: OutputRootProposeManager,
     private readonly nc_rpc: NCRpcService,
   ) {}
 
@@ -17,6 +19,6 @@ export class RollupCronService {
     this.logger.debug('Running get cron...');
     const result = await this.nc_rpc.getOutputRootProposalFromLocalNetwork();
     this.logger.debug(`Got OutputRootProposal from Libplanet`);
-    await this.wallet.proposeOutputRoot(result);
+    await this.outputRootProposeManager.propose(result);
   }
 }
