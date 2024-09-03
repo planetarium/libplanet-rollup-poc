@@ -24,16 +24,8 @@ export class DeriverService {
             if (next === DataStatus.EOF) {
                 res = "EOF";
 
-                this.logger.debug(`Load L1 blocks until ${this.l1Retrieval.l1BlockNumber} block`);
-                this.logger.debug(`Derivated ${this.derivatedBlockCount} L2 blocks, ${this.derivatedTransactionsCount} transactions`);
-                this.logger.debug(`Latest L2 block index: ${this.derivatedLatestBlockIndex}`);
-                this.logger.debug("Derivation finished");
-
                 break;
             } else if (next === DataStatus.NotEnoughData) {
-                if(BigInt(this.l1Retrieval.l1BlockNumber) % 500n === 0n) {
-                    this.logger.debug(`Load L1 blocks until ${this.l1Retrieval.l1BlockNumber} block`);
-                }
                 this.l1Retrieval.advanceBlock();
                 continue;
             } else {
@@ -42,10 +34,6 @@ export class DeriverService {
                 this.derivatedTransactionsCount += BigInt(res.transactions.length);
                 if(this.derivatedLatestBlockIndex < res.index) {
                     this.derivatedLatestBlockIndex = res.index;
-                }
-                if(this.derivatedBlockCount % 2000n === 0n) {
-                    this.logger.debug(`Derivated ${this.derivatedBlockCount} L2 blocks, ${this.derivatedTransactionsCount} transactions`);
-                    this.logger.debug(`Latest L2 block index: ${this.derivatedLatestBlockIndex}`);
                 }
             }
         }
