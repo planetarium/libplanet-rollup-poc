@@ -1,11 +1,12 @@
-import { Injectable } from "@nestjs/common";
-import { BlockID, Frame, FrameID, TxData } from "./batcher.types";
+import { Injectable, Logger } from "@nestjs/common";
+import { BlockID, BlockRange, Frame, FrameID, TxData } from "./batcher.types";
 import { NCRpcService } from "nest/9c/nc.rpc.service";
 import { ChannelManager } from "./batcher.channel.manger";
 import { WalletManager } from "nest/evm/wallet.client";
 import { fromBytes, hexToBytes } from "viem";
 import { MaxBlocksPerChannelManager, MaxFrameSize } from "./batcher.constants";
 import { PublicClientManager } from "nest/evm/public.client";
+import { DataStatus } from "nest/deriver/deriver.types";
 
 @Injectable()
 export class BatcherService {
@@ -14,15 +15,42 @@ export class BatcherService {
         private readonly channelManager: ChannelManager,
         private readonly walletManager: WalletManager,
         private readonly publicClientManager: PublicClientManager,
-    ) {}
+    ) {
+        this.batchStart();
+    }
+
+    private readonly logger = new Logger(BatcherService.name);
+
+    private readonly TIME_INTERVAL = 10000;
 
     lastStoredBlock: BlockID | undefined;
-    sentTransactions: `0x${string}`[] = [];
-    sentFrames = new Map<FrameID, Uint8Array>();
+    batching: boolean = false;
 
-    public async start(): Promise<void> {
-        await this.loadBlocksIntoState(MaxBlocksPerChannelManager);
-        await this.publishTxToL1();
+    public async batchStart(): Promise<void> {
+        if (this.batching) {
+            throw new Error("Already batching");
+        }
+
+        this.batching = true;
+
+        this.logger.log("Batching started");
+
+        while(this.batching) {
+            var res = await this.loadBlocksIntoState(MaxBlocksPerChannelManager);
+            if (res === DataStatus.NotEnoughData) {
+                this.logger.log("Batching paused: not enough data");
+                await this.delay(this.TIME_INTERVAL);
+                continue;
+            } else {
+                var blockRange = res as BlockRange;
+                this.logger.log(`Loaded blocks from ${blockRange.start.index} to ${blockRange.end.index}`);
+                await this.publishTxToL1();
+            }
+        }
+    }
+
+    public async batchStop(): Promise<void> {
+        this.batching = false;
     }
 
     public async loopUntilProcessAllBlocks(stopIndex: bigint): Promise<void> {
@@ -32,41 +60,24 @@ export class BatcherService {
         } while (this.lastStoredBlock!.index < stopIndex);
     }
 
-    // for testing purpose
-    public async getBatchTransactions() {
-        var transactions = [];
-        for (let txHash of this.sentTransactions) {
-            var transaction = await this.publicClientManager.getTransaction(txHash);
-            var input = hexToBytes(transaction.input);
-            transactions.push(this.unmarshalFrame(input));
+    public async loadBlocksIntoState(blockLimit: number): Promise<DataStatus | BlockRange> {
+        var res = await this.calculateL2BlockRangeToStore(blockLimit);
+        if (res === DataStatus.NotEnoughData) {
+            return DataStatus.NotEnoughData;
         }
-        return transactions;
-    }
 
-    // for testing purpose
-    private unmarshalFrame(input: Uint8Array): Frame {
-        var dataLength = input.length;
-        var id = input.slice(0, 16);
-        var buffer = Buffer.from(input.slice(16, 18));
-        var frameNumber = buffer.readUInt16BE(0);
-        var data = input.slice(22, dataLength - 1);
-        var isLast = input[dataLength - 1] == 1;
+        var blockRange = res as BlockRange;
 
-        return {
-            id: id,
-            frameNumber: frameNumber,
-            data: data,
-            isLast: isLast
+        if (blockRange.start.index === blockRange.end.index) {
+            return DataStatus.NotEnoughData;
         }
-    }
-
-    public async loadBlocksIntoState(blockLimit: number): Promise<void> {
-        var blockRange = await this.calculateL2BlockRangeToStore(blockLimit);
 
         for (let i = blockRange.start.index + 1n; i <= blockRange.end.index; i++) {
             var blockId = await this.loadBlockIntoState(i);
             this.lastStoredBlock = blockId;
         }
+
+        return blockRange;
     }
 
     private async loadBlockIntoState(index: bigint): Promise<BlockID> {
@@ -84,16 +95,12 @@ export class BatcherService {
         }
     }
 
-    private async calculateL2BlockRangeToStore(blockLimit: number): Promise<{
-        start: BlockID,
-        end: BlockID
-    }> {
+    private async calculateL2BlockRangeToStore(blockLimit: number): Promise<BlockRange | DataStatus> {
 
         if (!this.lastStoredBlock) {
-            // todo: get the last stored block from the database
-            this.lastStoredBlock = {
-                hash: '00',
-                index: 0n
+            await this.initBlock();
+            if(!this.lastStoredBlock) {
+                return DataStatus.NotEnoughData;
             }
         }
 
@@ -116,6 +123,23 @@ export class BatcherService {
         };
     }
 
+    private async initBlock() {
+        var outputRoot = await this.publicClientManager.getLatestOutputRoots();
+        if (!outputRoot) {
+            throw new Error("Failed to get latest output root");
+        }
+
+        var block = await this.ncRpcService.getBlockWithIndexFromLocal(outputRoot.l2BlockNumber!);
+        if (!block) {
+            throw new Error("Failed to get block");
+        }
+
+        this.lastStoredBlock = {
+            hash: block.hash,
+            index: block.index
+        }
+    }
+
     public async publishTxToL1(): Promise<void> {
         var txData = this.channelManager.TxData();
 
@@ -130,13 +154,16 @@ export class BatcherService {
         for (let frame of txData.frames) {
             var data = fromBytes(frame.data, 'hex');
             try {
-                var transactionHash = await this.walletManager.batchTransaction(data);
-                this.sentTransactions.push(transactionHash);
-                this.sentFrames.set(frame.id, frame.data);
+                await this.walletManager.batchTransaction(data);
+                this.logger.log(`Sent batch transaction to L1`);
             }
             catch (e) {
                 console.log(e);
             }
         }
+    }
+
+    async delay(ms: number) {
+        return new Promise( resolve => setTimeout(resolve, ms) );
     }
 }

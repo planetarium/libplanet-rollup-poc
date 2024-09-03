@@ -43,3 +43,8 @@ export type Frame = {
     data: Uint8Array;
     isLast: boolean;
 }
+
+export type BlockRange = {
+    start: BlockID;
+    end: BlockID;
+}

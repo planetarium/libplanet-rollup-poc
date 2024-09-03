@@ -18,3 +18,14 @@ export type Batch = {
     miner: `0x${string}`;
     transactions: Uint8Array[];
 }
+
+export type Block = {
+    hash: string;
+    index: bigint;
+    miner: `0x${string}`;
+    transactions: Transaction[];
+}
+
+export type Transaction = {
+    serializedPayload: string;
+}

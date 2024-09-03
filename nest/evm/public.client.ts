@@ -13,7 +13,7 @@ export class PublicClientManager {
     private readonly configure: ConfigService,
     private readonly nc_rpc: NCRpcService,
   ) {
-    //this.register();
+    this.register();
   }
 
   private readonly logger = new Logger(PublicClientManager.name);
@@ -39,8 +39,9 @@ export class PublicClientManager {
   }
 
   public async getLatestOutputRoots() {
+    const interval = 100n;
     var toBlockIndex = await this.client.getBlockNumber();
-    var fromBlockIndex = toBlockIndex > 100n ? toBlockIndex - 100n : 0n as bigint;
+    var fromBlockIndex = toBlockIndex > interval ? toBlockIndex - interval : 0n as bigint;
 
     while(toBlockIndex > 0n) {
       const logs = await this.client.getContractEvents({
@@ -56,7 +57,30 @@ export class PublicClientManager {
       }
 
       toBlockIndex = fromBlockIndex;
-      fromBlockIndex = toBlockIndex > 100n ? toBlockIndex - 100n : 0n;
+      fromBlockIndex = toBlockIndex > interval ? toBlockIndex - interval : 0n;
+    }
+  }
+
+  public async getLatestOutputRootBlockIndex() {
+    const interval = 10n;
+    var toBlockIndex = await this.client.getBlockNumber();
+    var fromBlockIndex = toBlockIndex > interval ? toBlockIndex - interval : 0n as bigint;
+
+    while(toBlockIndex > 0n) {
+      const logs = await this.client.getContractEvents({
+        address: (this.chain.contracts?.libplanetOutputOracle as ChainContract).address,
+        abi: outputOracleAbi,
+        eventName: 'OutputProposed',
+        fromBlock: fromBlockIndex as bigint,
+        toBlock: toBlockIndex as bigint,
+      });
+
+      if(logs.length > 0) {
+        return fromBlockIndex;
+      }
+
+      toBlockIndex = fromBlockIndex;
+      fromBlockIndex = toBlockIndex > interval ? toBlockIndex - interval : 0n;
     }
   }
 

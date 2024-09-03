@@ -24,7 +24,7 @@ export class AppGateway
         private readonly l1Retrieval: L1Retrieval,
         private readonly channelInReader: ChannelInReader,
     ) {
-        this.register();
+        //this.register();
     }
 
     private logger = new Logger('AppGateway');
