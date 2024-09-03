@@ -19,12 +19,17 @@ export class DeriverService {
 
     private readonly TIME_INTERVAL = 10000;
 
-    derivatedLatestBlockIndex: bigint = 0n;
     deriving: boolean = false;
     deriveInit: boolean = true;
-    blocks: Block[] = [];
+    blocks: Map<bigint, Block> = new Map();
+    derivatedLatestBlockIndex: bigint = 0n;
+    derivatedOldestBlockIndex: bigint = 0n;
 
-    async derivateStart() {
+    recovering: boolean = false;
+    recoveringLatestBlockIndex: bigint = 0n;
+    recoveringOldestBlockIndex: bigint = 0n;
+
+    public async derivateStart() {
         var l1OutputBlockIndex = await this.publicClientManager.getLatestOutputRootBlockIndex();
         if (l1OutputBlockIndex === undefined) {
             throw new Error("Failed to get latest output root block index");
@@ -43,7 +48,7 @@ export class DeriverService {
         while (this.deriving) {
             var next = await this.batchQueue.nextBlock();
             if (next === DataStatus.EOF) {
-                this.logger.log(`Derivation paused: derived ${this.blocks.length} blocks`);
+                this.logger.log(`Derivation paused: derived ${this.derivatedLatestBlockIndex - this.derivatedOldestBlockIndex} blocks`);
                 await this.delay(this.TIME_INTERVAL);
                 this.logger.log(`Derivation resumed`);
                 continue;
@@ -52,25 +57,86 @@ export class DeriverService {
                 continue;
             } else {
                 var res = next as Block;
-                if(this.deriveInit) {
-                    this.derivatedLatestBlockIndex = res.index;
-                    this.deriveInit = false;
-                } else {
-                    if(this.derivatedLatestBlockIndex + 1n !== res.index) {
-                        throw new Error("Block index is not continuous");
-                    }
-                    this.derivatedLatestBlockIndex = res.index;
-                    this.blocks.push(res);
+                this.handleBlock(res);
+            }
+        }
+    }
+
+    private handleBlock(block: Block) {
+        this.blocks.set(block.index, block);
+
+        if(this.recovering) {
+            if (block.index < this.recoveringOldestBlockIndex) {
+                this.recoveringLatestBlockIndex = block.index;
+                this.recoveringOldestBlockIndex = block.index;
+            } else if (block.index > this.recoveringLatestBlockIndex + 1n) {
+                throw new Error("Block index is not continuous");
+            } else {
+                this.recoveringLatestBlockIndex = block.index;
+                if (this.recoveringLatestBlockIndex === this.derivatedOldestBlockIndex) {
+                    this.derivatedOldestBlockIndex = this.recoveringOldestBlockIndex;
+                    this.recoveringLatestBlockIndex = 0n;
+                    this.recoveringOldestBlockIndex = 0n;
+                    this.recovering = false;
+                }
+            }
+        }
+
+        if(this.deriveInit) {
+            this.derivatedLatestBlockIndex = block.index;
+            this.derivatedOldestBlockIndex = block.index;
+            this.deriveInit = false;
+        } else {
+            if (block.index < this.derivatedOldestBlockIndex) {
+                if (!this.recovering) {
+                    this.recovering = true;
+                    this.recoveringLatestBlockIndex = block.index;
+                    this.recoveringOldestBlockIndex = block.index;
+                }
+            } else if (block.index > this.derivatedLatestBlockIndex + 1n) {
+                throw new Error("Block index is not continuous");
+            } else {
+                if (block.index > this.derivatedLatestBlockIndex) {
+                    this.derivatedLatestBlockIndex = block.index;
                 }
             }
         }
     }
 
-    async derivateStop() {
+    public derivateStop() {
         this.deriving = false;
     }
 
-    async delay(ms: number) {
+    public checkRecovering() {
+        return this.recovering;
+    }
+
+    public nextBlock(): Block | DataStatus {
+        // Proposer should not call this function while recovering
+        if(this.recovering) {
+            throw new Error("Recovering");
+        }
+
+        if(this.deriveInit) {
+            return DataStatus.NotEnoughData;
+        }
+
+        if(this.derivatedOldestBlockIndex === this.derivatedLatestBlockIndex
+            && !this.blocks.has(this.derivatedOldestBlockIndex)) {
+            return DataStatus.NotEnoughData;
+        }
+
+        var block = this.blocks.get(this.derivatedOldestBlockIndex);
+        if(block === undefined) {
+            throw new Error("Block is undefined");
+        } else {
+            this.blocks.delete(this.derivatedOldestBlockIndex);
+            this.derivatedOldestBlockIndex++;
+            return block;
+        }
+    }
+
+    private async delay(ms: number) {
         return new Promise( resolve => setTimeout(resolve, ms) );
     }
 }

@@ -1,12 +1,11 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { BlockID, BlockRange, Frame, FrameID, TxData } from "./batcher.types";
+import { BlockID, BlockRange, DataStatus, Frame, FrameID, TxData } from "./batcher.types";
 import { NCRpcService } from "nest/9c/nc.rpc.service";
 import { ChannelManager } from "./batcher.channel.manger";
 import { WalletManager } from "nest/evm/wallet.client";
 import { fromBytes, hexToBytes } from "viem";
 import { MaxBlocksPerChannelManager, MaxFrameSize } from "./batcher.constants";
 import { PublicClientManager } from "nest/evm/public.client";
-import { DataStatus } from "nest/deriver/deriver.types";
 
 @Injectable()
 export class BatcherService {

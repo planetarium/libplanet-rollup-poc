@@ -1,3 +1,7 @@
+export enum DataStatus {
+    NotEnoughData,
+}
+
 export type BlockID = {
     hash: string;
     index: bigint;
