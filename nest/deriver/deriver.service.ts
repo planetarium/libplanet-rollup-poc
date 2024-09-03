@@ -1,6 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ChannelInReader } from "./deriver.channel.in.reader";
-import { Batch, Block, DataStatus } from "./deriver.types";
+import { Batch, Block, BlocksInfo, DataStatus } from "./deriver.types";
 import { L1Retrieval } from "./dertiver.l1.retrieval";
 import { PublicClientManager } from "nest/evm/public.client";
 import { BatchQueue } from "./deriver.batch.queue";
@@ -111,7 +111,11 @@ export class DeriverService {
         return this.recovering;
     }
 
-    public nextBlock(): Block | DataStatus {
+    public getLatestBlockIndex(): bigint {
+        return this.derivatedLatestBlockIndex;
+    } 
+
+    public getBlocks(): BlocksInfo | DataStatus {
         // Proposer should not call this function while recovering
         if(this.recovering) {
             throw new Error("Recovering");
@@ -122,18 +126,24 @@ export class DeriverService {
         }
 
         if(this.derivatedOldestBlockIndex === this.derivatedLatestBlockIndex
-            && !this.blocks.has(this.derivatedOldestBlockIndex)) {
+            && this.blocks.size === 0) {
             return DataStatus.NotEnoughData;
         }
 
-        var block = this.blocks.get(this.derivatedOldestBlockIndex);
-        if(block === undefined) {
-            throw new Error("Block is undefined");
-        } else {
-            this.blocks.delete(this.derivatedOldestBlockIndex);
-            this.derivatedOldestBlockIndex++;
-            return block;
+        if(this.derivatedOldestBlockIndex - this.derivatedLatestBlockIndex + 1n !== BigInt(this.blocks.size)) {
+            throw new Error("Blocks size is not correct");
         }
+
+        var blocksClone = Array.from(this.blocks.values());
+        var oldestBlockIndex = this.derivatedOldestBlockIndex;
+        var latestBlockIndex = this.derivatedLatestBlockIndex;
+        this.blocks.clear();
+        this.derivatedOldestBlockIndex = this.derivatedLatestBlockIndex;
+        return {
+            blocks: blocksClone,
+            oldestBlockIndex: oldestBlockIndex,
+            latestBlockIndex: latestBlockIndex,
+        };
     }
 
     private async delay(ms: number) {

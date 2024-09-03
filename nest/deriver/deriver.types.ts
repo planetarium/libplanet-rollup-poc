@@ -29,3 +29,9 @@ export type Block = {
 export type Transaction = {
     serializedPayload: string;
 }
+
+export type BlocksInfo = { 
+    blocks: Block[],
+    oldestBlockIndex: bigint,
+    latestBlockIndex: bigint,
+}
