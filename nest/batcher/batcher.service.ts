@@ -14,9 +14,7 @@ export class BatcherService {
         private readonly channelManager: ChannelManager,
         private readonly walletManager: WalletManager,
         private readonly publicClientManager: PublicClientManager,
-    ) {
-        this.batchStart();
-    }
+    ) {}
 
     private readonly logger = new Logger(BatcherService.name);
 
@@ -46,6 +44,8 @@ export class BatcherService {
                 await this.publishTxToL1();
             }
         }
+
+        this.logger.log("Batching stopped");
     }
 
     public async batchStop(): Promise<void> {

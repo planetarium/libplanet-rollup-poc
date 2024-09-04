@@ -5,12 +5,12 @@ import { KeyManager } from "../key.utils";
 import { NCModule } from "nest/9c/nc.module";
 import { EvmService } from "./evm.service";
 import { EvmController } from "./evm.controller";
-import { OutputRootProposeManager } from "./propose.client";
+import { ProposeClientManager } from "./propose.client";
 
 @Module({
     imports: [NCModule],
     controllers: [EvmController],
-    providers: [WalletManager, PublicClientManager, OutputRootProposeManager, EvmService, KeyManager],
-    exports: [WalletManager, PublicClientManager, OutputRootProposeManager],
+    providers: [WalletManager, PublicClientManager, ProposeClientManager, EvmService, KeyManager],
+    exports: [WalletManager, PublicClientManager, ProposeClientManager],
 })
 export class EvmModule {}

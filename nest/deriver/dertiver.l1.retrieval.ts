@@ -11,7 +11,7 @@ export class L1Retrieval {
         private readonly dataSource: DataSource,
     ) {}
 
-    l1BlockNumber: bigint = 20000n;
+    l1BlockNumber: bigint = 0n;
     datas: Uint8Array[] = [];
 
     public async nextData(): Promise<Uint8Array | DataStatus> {
@@ -45,6 +45,10 @@ export class L1Retrieval {
                 throw e;
             }
         }
+    }
+
+    public getL1BlockNumber(): bigint {
+        return this.l1BlockNumber;
     }
 
     public advanceBlock() {

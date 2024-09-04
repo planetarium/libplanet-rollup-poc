@@ -3,7 +3,7 @@ import { WalletManager } from "./wallet.client";
 import { PublicClientManager } from "./public.client";
 import { NCRpcService } from "nest/9c/nc.rpc.service";
 import { OutputRootProposal, WithdrawalTransaction } from "nest/9c/nc.respose.types";
-import { OutputRootProposeManager } from "./propose.client";
+import { ProposeClientManager } from "./propose.client";
 import { randomBytes } from "crypto";
 
 @Injectable()
@@ -11,7 +11,7 @@ export class EvmService {
     constructor(
         private readonly wallet: WalletManager,
         private readonly publicClient: PublicClientManager,
-        private readonly outputRootProposeManager: OutputRootProposeManager,
+        private readonly outputRootProposeManager: ProposeClientManager,
         private readonly ncRpc: NCRpcService
     ) {}
 
@@ -25,7 +25,7 @@ export class EvmService {
 
     async proposeOutputRoot(): Promise<`0x${string}`> {
         const outputRoot = await this.ncRpc.getOutputRootProposalFromLocalNetwork();
-        return this.outputRootProposeManager.propose(outputRoot);
+        return this.outputRootProposeManager.proposeOutputRoot(outputRoot);
     }
 
     async proveWithdrawal(txId: string): Promise<`0x${string}`> {

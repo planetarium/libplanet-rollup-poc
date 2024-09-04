@@ -3,91 +3,77 @@ import { WalletManager } from "./evm/wallet.client";
 import { NCRpcService } from "./9c/nc.rpc.service";
 import { PublicClientManager } from "./evm/public.client";
 import { KeyManager } from "./key.utils";
-import { Address } from "viem";
-import { OutputRootProposal, WithdrawalTransaction } from "./9c/nc.respose.types";
+import { ProposeClientManager } from "./evm/propose.client";
+import { BatcherService } from "./batcher/batcher.service";
+import { DeriverService } from "./deriver/deriver.service";
+import { ProposerService } from "./proposer/proposer.service";
 
 @Injectable()
 export class AppService {
     constructor(
-        private readonly wallet: WalletManager,
-        private readonly publicClient: PublicClientManager,
-        private readonly ncRpc: NCRpcService,
+        private readonly walletManager: WalletManager,
+        private readonly publicClientManager: PublicClientManager,
+        private readonly proposeClientManager: ProposeClientManager,
+        private readonly ncRpcService: NCRpcService,
         private readonly keyManager: KeyManager,
+        private readonly batcherService: BatcherService,
+        private readonly deriverService: DeriverService,
+        private readonly proposerService: ProposerService,
     ) {}
+    
+    async checkInitialized(): Promise<string | boolean> {
+        const contractDeployed = await this.publicClientManager.checkContractsDeployed();
+        if (!contractDeployed) {
+            return "Contracts not deployed";
+        }
 
-    async getBalancesForWeb() {
-        const firstAddress = '0xCE70F2e49927D431234BFc8D439412eef3a6276b';
-        const secondAddress = '0xaA2337b6FC4EDcc99FBDc9dee5973c94849dCEce';
+        const latestOutputRoot = await this.publicClientManager.getLatestOutputRoots();
+        if (latestOutputRoot === undefined) {
+            return "Output root not found";
+        }
 
-        var l1FistAddressBalance = await this.publicClient.getBalance(firstAddress);
-        var l1SecondAddressBalance = await this.publicClient.getBalance(secondAddress);
-
-        var l2FirstAddressBalance = await this.ncRpc.getWethBalanceFromLocal(firstAddress);
-        var l2SecondAddressBalance = await this.ncRpc.getWethBalanceFromLocal(secondAddress);
-
-        var res = {
-            l1FirstAddressBalance: l1FistAddressBalance.toString(),
-            l1SecondAddressBalance: l1SecondAddressBalance.toString(),
-            l2FirstAddressBalance: l2FirstAddressBalance.toString(),
-            l2SecondAddressBalance: l2SecondAddressBalance.toString()
-        };
-
-        return res;
+        return true;
     }
 
-    async getLatestOutputRoots() {
-        var res = await this.publicClient.getLatestOutputRoots();
-        if(res == undefined) {
-            return null;
+    async initialize(): Promise<string | boolean> {
+        const contractDeployed = await this.publicClientManager.checkContractsDeployed();
+        if (!contractDeployed) {
+            return "Contracts not deployed";
         }
-        var outputRootInfo = {
-            outputRoot: res.outputRoot,
-            l2OutputIndex: res.l2OutputIndex?.toString(),
-            l2BlockNumber: res.l2BlockNumber?.toString(),
-            l1Timestamp: res.l1Timestamp?.toString(),
+
+        const latestOutputRoot = await this.publicClientManager.getLatestOutputRoots();
+        if (latestOutputRoot) {
+            return "Already initialized";
         }
-        return outputRootInfo;
+
+        try {
+            const outputRoot = await this.ncRpcService.getOutputRootProposalFromLocalNetwork(1n);
+            await this.proposeClientManager.proposeOutputRoot(outputRoot);
+        } catch (e) {
+            return "Failed to propose output root";
+        }
+
+        return true;
     }
 
-    async withdrawETH(from: `main` | `sub`, recipient: Address, amount: bigint) {
-        if(from == `main`) {
-            return this.ncRpc.withdrawEthToLocalNetwork(
-                this.keyManager.getPrivateKeyFromKeyStore(),
-                recipient,
-                amount
-            );
-        } else {
-            return this.ncRpc.withdrawEthToLocalNetwork(
-                this.keyManager.getSubPrivateKeyFromKeyStore(),
-                recipient, 
-                amount
-            );
+    async startRollup(): Promise<string | boolean> {
+        const initialized = await this.checkInitialized();
+        if (initialized !== true) {
+            return initialized;
         }
+
+        this.batcherService.batchStart();
+        this.deriverService.derivateStart();
+        this.proposerService.proposeStart();
+
+        return true;
     }
 
-    async getWithdrawalTransactionProofInfos(txId: string): Promise<{ 
-        withdrawalTransaction: WithdrawalTransaction; 
-        l2OutputIndex: bigint; 
-        outputRootProposal: OutputRootProposal; 
-        withdrawalProof: `0x${string}`; 
-    }> {
-        var txBlockIndex = await this.ncRpc.getBlockIndexWithTxIdFromLocalNetwork(txId); // from l2
-        var latestOutputRoot = await this.publicClient.getLatestOutputRoots(); // from l1
-        if (latestOutputRoot == null) {
-            throw new Error('no output root found');
-        }
-        var latestBlockIndex = latestOutputRoot.l2BlockNumber!;
-        if (txBlockIndex > latestBlockIndex) {
-            throw new Error('tx is not commited yet');
-        }
-        var outputRootProposal = await this.ncRpc.getOutputRootProposalFromLocalNetwork(latestBlockIndex);
-        var withdrawalProof = await this.ncRpc.getWithdrawalProofFromLocalNetwork(outputRootProposal.storageRootHash, txId);
-        
-        return {
-            withdrawalTransaction: withdrawalProof.withdrawalInfo,
-            l2OutputIndex: latestOutputRoot.l2OutputIndex!,
-            outputRootProposal: outputRootProposal,
-            withdrawalProof: '0x'.concat(withdrawalProof.proof) as `0x${string}`
-        };
+    async stopRollup(): Promise<boolean> {
+        this.batcherService.batchStop();
+        this.deriverService.derivateStop();
+        this.proposerService.proposeStop();
+
+        return true;
     }
 }

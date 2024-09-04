@@ -12,9 +12,7 @@ export class DeriverService {
         private readonly publicClientManager: PublicClientManager,
         private readonly l1Retrieval: L1Retrieval,
         private readonly batchQueue: BatchQueue,
-    ) {
-        this.derivateStart();
-    }
+    ) {}
 
     private readonly logger = new Logger(DeriverService.name);
 
@@ -27,18 +25,24 @@ export class DeriverService {
     derivatedOldestBlockIndex: bigint = 0n;
 
     public async derivateStart() {
-        var l1OutputBlockIndex = await this.publicClientManager.getLatestOutputRootBlockIndex();
-        if (l1OutputBlockIndex === undefined) {
-            throw new Error("Failed to get latest output root block index");
-        }
+        
 
         if(this.deriving){
             throw new Error("Already deriving");
         }
 
-        this.deriving = true;
+        var l1OutputBlockIndex = this.l1Retrieval.getL1BlockNumber();
+        if(l1OutputBlockIndex === 0n) {
+            var latestOutputRootBlockIndex = await this.publicClientManager.getLatestOutputRootBlockIndex();
+            if (latestOutputRootBlockIndex === undefined) {
+                throw new Error("Failed to get latest output root block index");
+            }
 
-        this.l1Retrieval.setL1BlockNumber(l1OutputBlockIndex);
+            l1OutputBlockIndex = latestOutputRootBlockIndex;
+            this.l1Retrieval.setL1BlockNumber(l1OutputBlockIndex);
+        }
+
+        this.deriving = true;
 
         this.logger.log(`Derivation started from block ${l1OutputBlockIndex}`);
 
@@ -57,6 +61,12 @@ export class DeriverService {
                 this.handleBlock(res);
             }
         }
+
+        this.logger.log(`Derivation stopped`);
+    }
+
+    public derivateStop() {
+        this.deriving = false;
     }
 
     private handleBlock(block: Block) {
@@ -75,12 +85,6 @@ export class DeriverService {
         if(this.derivatedOldestBlockIndex > block.index) {
             this.derivatedOldestBlockIndex = block.index;
         }
-    }
-
-    public derivateStop() {
-        this.deriving = false;
-        this.blocks.clear();
-        this.deriveInit = false;
     }
 
     public checkSanity(): boolean {

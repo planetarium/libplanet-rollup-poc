@@ -11,5 +11,6 @@ import { EvmModule } from "nest/evm/evm.module";
         EvmModule,
     ],
     providers: [ProposerService],
+    exports: [ProposerService],
 })
 export class ProposerModule {}

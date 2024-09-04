@@ -8,6 +8,7 @@ import { EvmModule } from './evm/evm.module';
 import { KeyManager } from './key.utils';
 import { DeriverModule } from './deriver/deriver.module';
 import { ProposerModule } from './proposer/proposer.module';
+import { AppController } from './app.controller';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { ProposerModule } from './proposer/proposer.module';
     DeriverModule,
     ProposerModule,
   ],
+  controllers: [AppController],
   providers: [AppService, KeyManager],
 })
 export class AppModule {}

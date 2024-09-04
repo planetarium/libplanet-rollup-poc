@@ -8,7 +8,7 @@ import { KeyManager } from '../key.utils';
 import { OutputRootProposal } from '../9c/nc.respose.types';
 
 @Injectable()
-export class OutputRootProposeManager {
+export class ProposeClientManager {
     constructor(
         private readonly configure: ConfigService,
         private readonly keyManager: KeyManager,
@@ -17,7 +17,7 @@ export class OutputRootProposeManager {
     private readonly chain = this.getChain(this.configure.get('wallet.chain', 'localhost'));
     private client = this.getClient();
 
-    async propose(outputRootProposal: OutputRootProposal): Promise<`0x${string}`> {
+    async proposeOutputRoot(outputRootProposal: OutputRootProposal): Promise<`0x${string}`> {
         const outputOracleContract = getContract({
           address: (this.chain.contracts?.libplanetOutputOracle as ChainContract).address,
           abi: outputOracleAbi,

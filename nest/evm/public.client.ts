@@ -84,7 +84,7 @@ export class PublicClientManager {
     }
   }
 
-  public async checkContractsInitialized(): Promise<boolean> {
+  public async checkContractsDeployed(): Promise<boolean> {
     const bridgeContract = this.getBridgeContract();
     if (!bridgeContract) {
       return false;
@@ -96,18 +96,6 @@ export class PublicClientManager {
     }
     const outputOracleContract = this.getOutputOracleContract();
     if (!outputOracleContract) {
-      return false;
-    }
-
-    const logs = await this.client.getContractEvents({
-      address: (this.chain.contracts?.libplanetOutputOracle as ChainContract).address,
-      abi: outputOracleAbi,
-      eventName: 'OutputProposed',
-      fromBlock: 0n,
-      toBlock: 'latest',
-    });
-    
-    if(logs.length <= 0) {
       return false;
     }
 
