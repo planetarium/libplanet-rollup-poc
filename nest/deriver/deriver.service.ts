@@ -4,6 +4,7 @@ import { Batch, Block, BlocksInfo, DataStatus } from "./deriver.types";
 import { L1Retrieval } from "./dertiver.l1.retrieval";
 import { PublicClientManager } from "nest/evm/public.client";
 import { BatchQueue } from "./deriver.batch.queue";
+import { check } from "prettier";
 
 @Injectable()
 export class DeriverService {
@@ -24,10 +25,6 @@ export class DeriverService {
     blocks: Map<bigint, Block> = new Map();
     derivatedLatestBlockIndex: bigint = 0n;
     derivatedOldestBlockIndex: bigint = 0n;
-
-    recovering: boolean = false;
-    recoveringLatestBlockIndex: bigint = 0n;
-    recoveringOldestBlockIndex: bigint = 0n;
 
     public async derivateStart() {
         var l1OutputBlockIndex = await this.publicClientManager.getLatestOutputRootBlockIndex();
@@ -65,50 +62,45 @@ export class DeriverService {
     private handleBlock(block: Block) {
         this.blocks.set(block.index, block);
 
-        if(this.recovering) {
-            if (block.index < this.recoveringOldestBlockIndex) {
-                this.recoveringLatestBlockIndex = block.index;
-                this.recoveringOldestBlockIndex = block.index;
-            } else if (block.index > this.recoveringLatestBlockIndex + 1n) {
-                throw new Error("Block index is not continuous");
-            } else {
-                this.recoveringLatestBlockIndex = block.index;
-                if (this.recoveringLatestBlockIndex === this.derivatedOldestBlockIndex) {
-                    this.derivatedOldestBlockIndex = this.recoveringOldestBlockIndex;
-                    this.recoveringLatestBlockIndex = 0n;
-                    this.recoveringOldestBlockIndex = 0n;
-                    this.recovering = false;
-                }
-            }
-        }
-
         if(this.deriveInit) {
             this.derivatedLatestBlockIndex = block.index;
             this.derivatedOldestBlockIndex = block.index;
             this.deriveInit = false;
-        } else {
-            if (block.index < this.derivatedOldestBlockIndex) {
-                if (!this.recovering) {
-                    this.recovering = true;
-                    this.recoveringLatestBlockIndex = block.index;
-                    this.recoveringOldestBlockIndex = block.index;
-                }
-            } else if (block.index > this.derivatedLatestBlockIndex + 1n) {
-                throw new Error("Block index is not continuous");
-            } else {
-                if (block.index > this.derivatedLatestBlockIndex) {
-                    this.derivatedLatestBlockIndex = block.index;
-                }
-            }
+        }
+
+        if(this.derivatedLatestBlockIndex < block.index) {
+            this.derivatedLatestBlockIndex = block.index;
+        }
+
+        if(this.derivatedOldestBlockIndex > block.index) {
+            this.derivatedOldestBlockIndex = block.index;
         }
     }
 
     public derivateStop() {
         this.deriving = false;
+        this.deriveInit = true;
     }
 
-    public checkRecovering() {
-        return this.recovering;
+    public checkSanity(): boolean {
+        if(this.derivatedOldestBlockIndex === this.derivatedLatestBlockIndex
+            && this.blocks.size === 0) {
+            return true;
+        }
+
+        if(this.derivatedLatestBlockIndex - this.derivatedOldestBlockIndex + 1n !== BigInt(this.blocks.size)) {
+            return false;
+        }
+
+        var sanity: boolean = true;
+        for(let i = this.derivatedOldestBlockIndex; i <= this.derivatedLatestBlockIndex; i++) {
+            if(!this.blocks.has(i)) {
+                sanity = false;
+                break;
+            }
+        }
+
+        return sanity;
     }
 
     public getLatestBlockIndex(): bigint {
@@ -117,8 +109,8 @@ export class DeriverService {
 
     public getBlocks(): BlocksInfo | DataStatus {
         // Proposer should not call this function while recovering
-        if(this.recovering) {
-            throw new Error("Recovering");
+        if(!this.checkSanity()) {
+            throw new Error("blocks are recovering");
         }
 
         if(this.deriveInit) {
@@ -130,14 +122,11 @@ export class DeriverService {
             return DataStatus.NotEnoughData;
         }
 
-        if(this.derivatedOldestBlockIndex - this.derivatedLatestBlockIndex + 1n !== BigInt(this.blocks.size)) {
-            throw new Error("Blocks size is not correct");
-        }
-
         var blocksClone = Array.from(this.blocks.values());
         var oldestBlockIndex = this.derivatedOldestBlockIndex;
         var latestBlockIndex = this.derivatedLatestBlockIndex;
         this.blocks.clear();
+        this.deriveInit = true;
         this.derivatedOldestBlockIndex = this.derivatedLatestBlockIndex;
         return {
             blocks: blocksClone,

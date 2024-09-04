@@ -12,7 +12,6 @@ export class L1Retrieval {
     ) {}
 
     l1BlockNumber: bigint = 20000n;
-    isBlockPending: boolean = true;
     datas: Uint8Array[] = [];
 
     public async nextData(): Promise<Uint8Array | DataStatus> {
@@ -36,29 +35,20 @@ export class L1Retrieval {
     }
 
     private async nextL1Block(): Promise<Block | DataStatus> {
-        if (this.isBlockPending) {
-            this.isBlockPending = false;
-            
-            try {
-                var block = await this.publicClientManager.getBlock(this.l1BlockNumber);
-                return block;
-            } catch (e) {
-                if(e instanceof BlockNotFoundError) {
-                    return DataStatus.EOF;
-                } else {
-                    throw e;
-                }
+        try {
+            var block = await this.publicClientManager.getBlock(this.l1BlockNumber);
+            return block;
+        } catch (e) {
+            if(e instanceof BlockNotFoundError) {
+                return DataStatus.EOF;
+            } else {
+                throw e;
             }
         }
-
-        return DataStatus.EOF
     }
 
     public advanceBlock() {
-        if(!this.isBlockPending) {
-            this.l1BlockNumber++;
-            this.isBlockPending = true;
-        }
+        this.l1BlockNumber++;
     }
 
     public setL1BlockNumber(blockNumber: bigint) {

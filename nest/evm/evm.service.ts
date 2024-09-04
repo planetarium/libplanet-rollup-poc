@@ -4,6 +4,7 @@ import { PublicClientManager } from "./public.client";
 import { NCRpcService } from "nest/9c/nc.rpc.service";
 import { OutputRootProposal, WithdrawalTransaction } from "nest/9c/nc.respose.types";
 import { OutputRootProposeManager } from "./propose.client";
+import { randomBytes } from "crypto";
 
 @Injectable()
 export class EvmService {
@@ -15,7 +16,7 @@ export class EvmService {
     ) {}
 
     async sendTransaction(): Promise<`0x${string}`> {
-        return this.wallet.sendTransaction('0xdeadbeef');
+        return this.wallet.sendTransaction('0x'.concat(randomBytes(32).toString('hex')) as `0x${string}`);
     }
 
     async depositETH(recipient: `0x${string}`, amount: bigint): Promise<`0x${string}`> {

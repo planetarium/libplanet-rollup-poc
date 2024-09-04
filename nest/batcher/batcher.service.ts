@@ -68,7 +68,11 @@ export class BatcherService {
         var blockRange = res as BlockRange;
 
         if (blockRange.start.index === blockRange.end.index) {
-            return DataStatus.NotEnoughData;
+            if (this.channelManager.blocks.length === 0) {
+                return DataStatus.NotEnoughData;
+            } else {
+                return blockRange;
+            }
         }
 
         for (let i = blockRange.start.index + 1n; i <= blockRange.end.index; i++) {

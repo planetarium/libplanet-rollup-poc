@@ -5,7 +5,6 @@ import { ConfigService } from '@nestjs/config';
 import { abi as portalAbi } from './abi/LibplanetPortal';
 import { abi as outputOracleAbi } from './abi/LibplanetOutputOracle';
 import { NCRpcService } from '../9c/nc.rpc.service';
-import { on } from 'events';
 
 @Injectable()
 export class PublicClientManager {

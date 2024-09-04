@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body } from '@nestjs/common';
 import { NCRpcService } from './nc.rpc.service';
 import { DepositEthDto } from 'nest/dto/deposit-eth.dto';
 import { WithdrawEthDto } from 'nest/dto/withdraw-eth.dto';
+import { randomBytes } from 'crypto';
 
 @Controller('libplanet')
 export class NCController {
@@ -29,5 +30,12 @@ export class NCController {
       withdrawEth.recipient,
       withdrawEth.amount,
     );
+  }
+
+  @Get('send/bulk')
+  async sendBulk() {
+    for(let i=0; i<100; i++){
+      await this.RPCService.sendSimpleTransactionToLocalNetwork(randomBytes(16384).toString('hex'));
+    }
   }
 }

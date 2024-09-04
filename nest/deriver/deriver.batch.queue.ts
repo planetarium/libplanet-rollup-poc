@@ -36,12 +36,11 @@ export class BatchQueue {
             hash: batch.hash,
             index: batch.index,
             miner: batch.miner,
-            transactions: batch.transactions.map(tx => 
-                {
-                    return {
-                        serializedPayload: btoa(String.fromCharCode(...tx))
-                    } as Transaction
-                })
+            transactions: batch.transactions.map(tx => {
+                return {
+                    serializedPayload: Buffer.from(tx).toString('base64'),
+                }
+            }),
         }
     }
 }
