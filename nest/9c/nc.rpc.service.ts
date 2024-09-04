@@ -12,64 +12,8 @@ export class NCRpcService {
     private readonly keyManager: KeyManager,
   ) {}
 
-  async getBlocks(): Promise<BlockStruct[]> {
+  async sendSimpleTransaction(simpleString: string): Promise<string> {
     const res = await this.graphqlClient.query(gql`
-      query {
-        nodeStatus {
-          topmostBlocks(limit: 5) {
-            index
-            hash
-            miner
-          }
-        }
-      }
-    `);
-
-    const result: BlockStruct[] = [];
-    res.nodeStatus.topmostBlocks.forEach(
-      (block: { index: number; hash: string; miner: string }) => {
-        result.push({
-          index: block.index,
-          hash: block.hash,
-          miner: block.miner,
-        });
-      },
-    );
-
-    return result;
-  }
-
-  async getTransactions(): Promise<BlockWithTransactionsStruct> {
-    const res = await this.graphqlClient.explorerQuery(gql`
-      query	{
-        blockQuery {
-          blocks(desc: true, limit: 1) {
-            index
-            transactions {
-              serializedPayload
-            }
-          }
-        }
-      }
-    `);
-
-    const result: BlockWithTransactionsStruct = {
-      index: res.blockQuery.blocks[0].index,
-      transactions: []
-    };
-    res.blockQuery.blocks[0].transactions.forEach(
-      (transaction: { serializedPayload: string }) => {
-        result.transactions.push({
-          serializedPayload: transaction.serializedPayload,
-        });
-      },
-    );
-
-    return result;
-  }
-
-  async sendSimpleTransactionToLocalNetwork(simpleString: string): Promise<string> {
-    const res = await this.graphqlClient.localExplorerQuery(gql`
       mutation {
         transactionMutation {
           simpleStringStage(simpleString: "${simpleString}")
@@ -80,8 +24,8 @@ export class NCRpcService {
     return res.transactionMutation.simpleStringStage;
   }
 
-  async getTxResultsFromLocalNetwork(limit: number): Promise<TransactionResult[]> {
-    const txIdsRes = await this.graphqlClient.localExplorerQuery(gql`
+  async getTxResults(limit: number): Promise<TransactionResult[]> {
+    const txIdsRes = await this.graphqlClient.query(gql`
       query {
         transactionQuery {
           transactions (limit: ${limit}, desc: true) {
@@ -93,7 +37,7 @@ export class NCRpcService {
     
     const txResultList: TransactionResult[] = [];
     for (const tx of txIdsRes.transactionQuery.transactions) {
-      const txResultsRes = await this.graphqlClient.localExplorerQuery(gql`
+      const txResultsRes = await this.graphqlClient.query(gql`
         query {
           transactionQuery {
             transactionResult(txId: "${tx.id}") {
@@ -120,8 +64,8 @@ export class NCRpcService {
     return txResultList;
   }
 
-  async getTxWorldProofsFromLocalNetwork(limit: number): Promise<TransactionWorldProof[]> {
-    const txIdsRes = await this.graphqlClient.localExplorerQuery(gql`
+  async getTxWorldProofs(limit: number): Promise<TransactionWorldProof[]> {
+    const txIdsRes = await this.graphqlClient.query(gql`
       query {
         transactionQuery {
           transactions (limit: ${limit}, desc: true) {
@@ -133,7 +77,7 @@ export class NCRpcService {
     
     const txWorldProofList: TransactionWorldProof[] = [];
     for (const tx of txIdsRes.transactionQuery.transactions) {
-      const txWorldProofRes = await this.graphqlClient.localExplorerQuery(gql`
+      const txWorldProofRes = await this.graphqlClient.query(gql`
         query {
           transactionQuery {
             transactionWorldProof(
@@ -164,8 +108,8 @@ export class NCRpcService {
     return txWorldProofList;
   }
 
-  async mintWethToLocalNetwork(recipient: Address, amount: bigint): Promise<boolean> {
-    const res = await this.graphqlClient.localExplorerQuery(gql`
+  async mintWeth(recipient: Address, amount: bigint): Promise<boolean> {
+    const res = await this.graphqlClient.query(gql`
       mutation {
         transactionMutation {
           mintWETH(
@@ -184,8 +128,8 @@ export class NCRpcService {
     return false;
   }
 
-  async withdrawEthToLocalNetwork(privateKey: `0x${string}`, recipient: Address, amount: bigint): Promise<string> {
-    const res = await this.graphqlClient.localExplorerQuery(gql`
+  async withdrawEth(privateKey: `0x${string}`, recipient: Address, amount: bigint): Promise<string> {
+    const res = await this.graphqlClient.query(gql`
       mutation {
         transactionMutation {
           withdrawETH(
@@ -200,10 +144,10 @@ export class NCRpcService {
     return res.transactionMutation.withdrawETH;
   }
 
-  async getOutputRootProposalFromLocalNetwork(index?: bigint | undefined): Promise<OutputRootProposal> {
+  async getOutputRootProposal(index?: bigint | undefined): Promise<OutputRootProposal> {
     const arg = index === undefined ? '' : `(index: ${index})`;
 
-    const res = await this.graphqlClient.localExplorerQuery(gql`
+    const res = await this.graphqlClient.query(gql`
       query {
         stateQuery {
           outputRoot ${arg} {
@@ -226,8 +170,8 @@ export class NCRpcService {
     };
   }
 
-  async getBlockIndexWithTxIdFromLocalNetwork(txId: string): Promise<bigint> {
-    const res = await this.graphqlClient.localExplorerQuery(gql`
+  async getBlockIndexWithTxId(txId: string): Promise<bigint> {
+    const res = await this.graphqlClient.query(gql`
       query {
         transactionQuery {
           transactionResult(
@@ -242,8 +186,8 @@ export class NCRpcService {
     return BigInt(res.transactionQuery.transactionResult.blockIndex);
   }
 
-  async getWithdrawalProofFromLocalNetwork(storageRootHash: string, txId: string): Promise<{withdrawalInfo: WithdrawalTransaction, proof: string}> {
-    const res = await this.graphqlClient.localExplorerQuery(gql`
+  async getWithdrawalProof(storageRootHash: string, txId: string): Promise<{withdrawalInfo: WithdrawalTransaction, proof: string}> {
+    const res = await this.graphqlClient.query(gql`
       query {
         stateQuery {
           withdrawalProof(
@@ -275,14 +219,11 @@ export class NCRpcService {
     };
   }
 
-
-  // For batcher
-
-  async getRecentBlockFromLocal(): Promise<{
+  async getRecentBlock(): Promise<{
     hash: string;
     index: bigint;
   }> {
-    const res = await this.graphqlClient.localExplorerQuery(gql`
+    const res = await this.graphqlClient.query(gql`
       query {
         blockQuery {
           blocks(desc: true, limit: 1){
@@ -299,8 +240,8 @@ export class NCRpcService {
     };
   }
 
-  async getBlockWithIndexFromLocal(index: bigint): Promise<Block> {
-    const res = await this.graphqlClient.localExplorerQuery(gql`
+  async getBlockWithIndex(index: bigint): Promise<Block> {
+    const res = await this.graphqlClient.query(gql`
       query {
         blockQuery {
           block(index: ${Number(index)}) {
@@ -321,39 +262,5 @@ export class NCRpcService {
       miner: res.blockQuery.block.miner,
       transactions: res.blockQuery.block.transactions
     };
-  }
-
-  //For Web
-
-  // todo: it handles only minorUnit
-  async getWethBalanceFromLocal(address: Address): Promise<bigint> {
-    var recentBlockInfo = await this.getRecentBlockFromLocal();
-    const res = await this.graphqlClient.localExplorerQuery(gql`
-      query {
-        stateQuery {
-          balance(
-            offsetBlockHash: "${recentBlockInfo.hash}",
-            owner: "${address.slice(2)}",
-            currency: {
-              ticker: "WETH",
-              decimalPlaces: 18,
-              minters: [
-                "CE70F2e49927D431234BFc8D439412eef3a6276b"
-              ],
-              totalSupplyTrackable: true
-            }
-          ) {
-            currency {
-              ticker
-            }
-            majorUnit
-            minorUnit
-            quantity
-          }
-        }
-      }
-    `);
-
-    return BigInt(res.stateQuery.balance.minorUnit);
   }
 }

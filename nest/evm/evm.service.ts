@@ -24,7 +24,7 @@ export class EvmService {
     }
 
     async proposeOutputRoot(): Promise<`0x${string}`> {
-        const outputRoot = await this.ncRpc.getOutputRootProposalFromLocalNetwork();
+        const outputRoot = await this.ncRpc.getOutputRootProposal();
         return this.outputRootProposeManager.proposeOutputRoot(outputRoot);
     }
 
@@ -56,7 +56,7 @@ export class EvmService {
         outputRootProposal: OutputRootProposal; 
         withdrawalProof: `0x${string}`; 
     }> {
-        var txBlockIndex = await this.ncRpc.getBlockIndexWithTxIdFromLocalNetwork(txId); // from l2
+        var txBlockIndex = await this.ncRpc.getBlockIndexWithTxId(txId); // from l2
         var latestOutputRoot = await this.publicClient.getLatestOutputRoots(); // from l1
         if (latestOutputRoot == null) {
             throw new Error('no output root found');
@@ -65,8 +65,8 @@ export class EvmService {
         if (txBlockIndex > latestBlockIndex) {
             throw new Error('tx is not commited yet');
         }
-        var outputRootProposal = await this.ncRpc.getOutputRootProposalFromLocalNetwork(latestBlockIndex);
-        var withdrawalProof = await this.ncRpc.getWithdrawalProofFromLocalNetwork(outputRootProposal.storageRootHash, txId);
+        var outputRootProposal = await this.ncRpc.getOutputRootProposal(latestBlockIndex);
+        var withdrawalProof = await this.ncRpc.getWithdrawalProof(outputRootProposal.storageRootHash, txId);
         
         return {
             withdrawalTransaction: withdrawalProof.withdrawalInfo,

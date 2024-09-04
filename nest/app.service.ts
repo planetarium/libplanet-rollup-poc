@@ -47,7 +47,7 @@ export class AppService {
         }
 
         try {
-            const outputRoot = await this.ncRpcService.getOutputRootProposalFromLocalNetwork(1n);
+            const outputRoot = await this.ncRpcService.getOutputRootProposal(1n);
             await this.proposeClientManager.proposeOutputRoot(outputRoot);
         } catch (e) {
             return "Failed to propose output root";
@@ -60,6 +60,18 @@ export class AppService {
         const initialized = await this.checkInitialized();
         if (initialized !== true) {
             return initialized;
+        }
+
+        if (this.batcherService.getBatchingStatus()) {
+            return "Batching already started";
+        }
+
+        if (this.deriverService.getDerivingStatus()) {
+            return "Deriving already started";
+        }
+
+        if (this.proposerService.getProposingStatus()) {
+            return "Proposing already started";
         }
 
         this.batcherService.batchStart();

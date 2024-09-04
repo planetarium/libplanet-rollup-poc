@@ -5,6 +5,7 @@ import { L1Retrieval } from "./dertiver.l1.retrieval";
 import { PublicClientManager } from "nest/evm/public.client";
 import { BatchQueue } from "./deriver.batch.queue";
 import { check } from "prettier";
+import { ConfigService } from "@nestjs/config";
 
 @Injectable()
 export class DeriverService {
@@ -12,11 +13,12 @@ export class DeriverService {
         private readonly publicClientManager: PublicClientManager,
         private readonly l1Retrieval: L1Retrieval,
         private readonly batchQueue: BatchQueue,
+        private readonly configService: ConfigService,
     ) {}
 
     private readonly logger = new Logger(DeriverService.name);
 
-    private readonly TIME_INTERVAL = 10000;
+    private readonly TIME_INTERVAL = this.configService.get('deriver.timeInterval', 10000);
 
     deriving: boolean = false;
     deriveInit: boolean = false;
@@ -63,6 +65,10 @@ export class DeriverService {
         }
 
         this.logger.log(`Derivation stopped`);
+    }
+
+    public getDerivingStatus(): boolean {
+        return this.deriving;
     }
 
     public derivateStop() {

@@ -6,6 +6,7 @@ import { WalletManager } from "nest/evm/wallet.client";
 import { fromBytes, hexToBytes } from "viem";
 import { MaxBlocksPerChannelManager, MaxFrameSize } from "./batcher.constants";
 import { PublicClientManager } from "nest/evm/public.client";
+import { ConfigService } from "@nestjs/config";
 
 @Injectable()
 export class BatcherService {
@@ -14,11 +15,12 @@ export class BatcherService {
         private readonly channelManager: ChannelManager,
         private readonly walletManager: WalletManager,
         private readonly publicClientManager: PublicClientManager,
+        private readonly configService: ConfigService,
     ) {}
 
     private readonly logger = new Logger(BatcherService.name);
 
-    private readonly TIME_INTERVAL = 10000;
+    private readonly TIME_INTERVAL = this.configService.get('batcher.timeInterval', 10000);
 
     lastStoredBlock: BlockID | undefined;
     batching: boolean = false;
@@ -48,7 +50,11 @@ export class BatcherService {
         this.logger.log("Batching stopped");
     }
 
-    public async batchStop(): Promise<void> {
+    public getBatchingStatus(): boolean {
+        return this.batching;
+    }
+
+    public batchStop() {
         this.batching = false;
     }
 
@@ -84,7 +90,7 @@ export class BatcherService {
     }
 
     private async loadBlockIntoState(index: bigint): Promise<BlockID> {
-        var block = await this.ncRpcService.getBlockWithIndexFromLocal(index);
+        var block = await this.ncRpcService.getBlockWithIndex(index);
 
         if (!block) {
             throw new Error('block not found');
@@ -108,12 +114,12 @@ export class BatcherService {
         }
 
         var endBlockId: BlockID
-        endBlockId = await this.ncRpcService.getRecentBlockFromLocal();
+        endBlockId = await this.ncRpcService.getRecentBlock();
 
         var remainedBlockSpace = blockLimit - this.channelManager.blocks.length;
 
         if(endBlockId.index - this.lastStoredBlock.index >= remainedBlockSpace) {
-            var endBlock = await this.ncRpcService.getBlockWithIndexFromLocal(this.lastStoredBlock.index + BigInt(remainedBlockSpace));
+            var endBlock = await this.ncRpcService.getBlockWithIndex(this.lastStoredBlock.index + BigInt(remainedBlockSpace));
             var endBlockId = {
                 hash: endBlock.hash,
                 index: endBlock.index
@@ -132,7 +138,7 @@ export class BatcherService {
             throw new Error("Failed to get latest output root");
         }
 
-        var block = await this.ncRpcService.getBlockWithIndexFromLocal(outputRoot.l2BlockNumber!);
+        var block = await this.ncRpcService.getBlockWithIndex(outputRoot.l2BlockNumber!);
         if (!block) {
             throw new Error("Failed to get block");
         }

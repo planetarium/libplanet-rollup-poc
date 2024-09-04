@@ -1,4 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import { NCRpcService } from "nest/9c/nc.rpc.service";
 import { DeriverService } from "nest/deriver/deriver.service";
 import { Block, BlocksInfo, DataStatus } from "nest/deriver/deriver.types";
@@ -12,11 +13,12 @@ export class ProposerService {
         private readonly ncRpcService: NCRpcService,
         private readonly publicClientManager: PublicClientManager,
         private readonly outputRootProposeManager: ProposeClientManager,
+        private readonly configService: ConfigService,
     ) {}
 
     private readonly logger = new Logger(ProposerService.name);
 
-    private readonly TIME_INTERVAL = 10000;
+    private readonly TIME_INTERVAL = this.configService.get('proposer.timeInterval', 10000);
 
     proposing: boolean = false;
     sequencerDown: boolean = false;
@@ -45,7 +47,7 @@ export class ProposerService {
             await this.delay(this.TIME_INTERVAL);
 
             if(this.sequencerDown) {
-                var outputRootInfo = await this.ncRpcService.getOutputRootProposalFromLocalNetwork();
+                var outputRootInfo = await this.ncRpcService.getOutputRootProposal();
                 await this.outputRootProposeManager.proposeOutputRoot(outputRootInfo);
             }
 
@@ -60,7 +62,7 @@ export class ProposerService {
                 || (this.deriverService.getLatestBlockIndex() < this.latestProposedBlockIndex)) {
                 this.logger.log("Proposing delayed: recovering batch datas");
                 this.invalidSanityCount++;
-                if(this.invalidSanityCount > 10) {
+                if(this.invalidSanityCount > 100) {
                     this.logger.log("Failed to recover batch datas");
                     this.deriverService.derivateStop();
                     this.sequencerDown = true;
@@ -80,7 +82,7 @@ export class ProposerService {
                     this.deriverService.derivateStop();
                     this.sequencerDown = true;
                 }
-                var outputRootInfo = await this.ncRpcService.getOutputRootProposalFromLocalNetwork(blocksInfo.latestBlockIndex);
+                var outputRootInfo = await this.ncRpcService.getOutputRootProposal(blocksInfo.latestBlockIndex);
                 await this.outputRootProposeManager.proposeOutputRoot(outputRootInfo);
                 this.latestProposedBlockIndex = blocksInfo.latestBlockIndex;
                 this.logger.log(`Proposed output root from L2 block ${outputRootInfo.blockIndex}`);
@@ -90,13 +92,17 @@ export class ProposerService {
         this.logger.log("Proposing stopped");
     }
 
-    public async proposeStop(): Promise<void> {
+    public getProposingStatus(): boolean {
+        return this.proposing;
+    }
+
+    public proposeStop() {
         this.proposing = false;
     }
 
     private async checkBlocksSanity(blocks: Block[]): Promise<boolean> {
         for(var block of blocks) {
-            var comparisonBlock = await this.ncRpcService.getBlockWithIndexFromLocal(block.index) as Block;
+            var comparisonBlock = await this.ncRpcService.getBlockWithIndex(block.index) as Block;
 
             if(comparisonBlock === undefined) {
                 return false;

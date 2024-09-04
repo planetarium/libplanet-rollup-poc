@@ -142,7 +142,7 @@ export class PublicClientManager {
           var recipient = log.args.to!;
           var amount = log.args.amount!; 
           // todo: nc_rpc may not be here
-          var ok = await this.nc_rpc.mintWethToLocalNetwork(recipient, amount);
+          var ok = await this.nc_rpc.mintWeth(recipient, amount);
           if(ok) {
             this.logger.debug(`Minted WETH to ${recipient} with ${amount}`);
           }

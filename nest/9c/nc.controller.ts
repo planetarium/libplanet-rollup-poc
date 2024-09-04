@@ -8,24 +8,14 @@ import { randomBytes } from 'crypto';
 export class NCController {
   constructor(private readonly RPCService: NCRpcService) {}
 
-  @Get('blocks')
-  async getBlocks() {
-    return this.RPCService.getBlocks();
-  }
-
-  @Get('transactions')
-  async getTransactions() {
-    return this.RPCService.getTransactions();
-  }
-
   @Post('mint')
   async mintWeth(@Body() depositEth: DepositEthDto): Promise<boolean> {
-    return this.RPCService.mintWethToLocalNetwork(depositEth.recipient, depositEth.amount);
+    return this.RPCService.mintWeth(depositEth.recipient, depositEth.amount);
   }
 
   @Post('withdraw')
   async withdrawEth(@Body() withdrawEth: WithdrawEthDto): Promise<string> {
-    return this.RPCService.withdrawEthToLocalNetwork(
+    return this.RPCService.withdrawEth(
       withdrawEth.privateKey,
       withdrawEth.recipient,
       withdrawEth.amount,
@@ -35,7 +25,7 @@ export class NCController {
   @Get('send/bulk')
   async sendBulk() {
     for(let i=0; i<100; i++){
-      await this.RPCService.sendSimpleTransactionToLocalNetwork(randomBytes(16384).toString('hex'));
+      await this.RPCService.sendSimpleTransaction(randomBytes(16384).toString('hex'));
     }
   }
 }
