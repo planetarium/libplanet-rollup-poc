@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { GraphQLClientService } from './graphql.client';
 import { gql } from 'graphql-request';
-import { BlockStruct, BlockWithTransactionsStruct, OutputRootProposal, TransactionResult, TransactionWorldProof, WithdrawalTransaction } from './nc.respose.types';
+import { Block, BlockStruct, BlockWithTransactionsStruct, OutputRootProposal, TransactionResult, TransactionWorldProof, WithdrawalTransaction } from './nc.respose.types';
 import { Address } from 'viem';
 import { KeyManager } from 'nest/key.utils';
 
@@ -299,14 +299,7 @@ export class NCRpcService {
     };
   }
 
-  async getBlockWithIndexFromLocal(index: bigint): Promise<{
-    hash: string;
-    index: bigint;
-    miner: `0x${string}`;
-    transactions: {
-      serializedPayload: string;
-    }[];
-  }> {
+  async getBlockWithIndexFromLocal(index: bigint): Promise<Block> {
     const res = await this.graphqlClient.localExplorerQuery(gql`
       query {
         blockQuery {

@@ -21,7 +21,7 @@ export class DeriverService {
     private readonly TIME_INTERVAL = 10000;
 
     deriving: boolean = false;
-    deriveInit: boolean = true;
+    deriveInit: boolean = false;
     blocks: Map<bigint, Block> = new Map();
     derivatedLatestBlockIndex: bigint = 0n;
     derivatedOldestBlockIndex: bigint = 0n;
@@ -62,10 +62,10 @@ export class DeriverService {
     private handleBlock(block: Block) {
         this.blocks.set(block.index, block);
 
-        if(this.deriveInit) {
+        if(!this.deriveInit) {
             this.derivatedLatestBlockIndex = block.index;
             this.derivatedOldestBlockIndex = block.index;
-            this.deriveInit = false;
+            this.deriveInit = true;
         }
 
         if(this.derivatedLatestBlockIndex < block.index) {
@@ -79,7 +79,8 @@ export class DeriverService {
 
     public derivateStop() {
         this.deriving = false;
-        this.deriveInit = true;
+        this.blocks.clear();
+        this.deriveInit = false;
     }
 
     public checkSanity(): boolean {
@@ -103,6 +104,10 @@ export class DeriverService {
         return sanity;
     }
 
+    public checkDeriveInit(): boolean {
+        return this.deriveInit;
+    }
+
     public getLatestBlockIndex(): bigint {
         return this.derivatedLatestBlockIndex;
     } 
@@ -113,8 +118,9 @@ export class DeriverService {
             throw new Error("blocks are recovering");
         }
 
-        if(this.deriveInit) {
-            return DataStatus.NotEnoughData;
+        // Proposer should not call this function before any block is loaded
+        if(!this.deriveInit) {
+            throw new Error("Not loaded any block yet");
         }
 
         if(this.derivatedOldestBlockIndex === this.derivatedLatestBlockIndex
@@ -126,7 +132,7 @@ export class DeriverService {
         var oldestBlockIndex = this.derivatedOldestBlockIndex;
         var latestBlockIndex = this.derivatedLatestBlockIndex;
         this.blocks.clear();
-        this.deriveInit = true;
+        this.deriveInit = false;
         this.derivatedOldestBlockIndex = this.derivatedLatestBlockIndex;
         return {
             blocks: blocksClone,

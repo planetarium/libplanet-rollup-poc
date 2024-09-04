@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Chain, createPublicClient, getContract, http, ChainContract, Address } from 'viem';
 import { mothership, opSepolia, localhost } from './chains';
 import { ConfigService } from '@nestjs/config';
+import { abi as bridgeAbi } from './abi/LibplanetBridge';
 import { abi as portalAbi } from './abi/LibplanetPortal';
 import { abi as outputOracleAbi } from './abi/LibplanetOutputOracle';
 import { NCRpcService } from '../9c/nc.rpc.service';
@@ -81,6 +82,44 @@ export class PublicClientManager {
       toBlockIndex = fromBlockIndex;
       fromBlockIndex = toBlockIndex > interval ? toBlockIndex - interval : 0n;
     }
+  }
+
+  public async checkContractsInitialized(): Promise<boolean> {
+    const bridgeContract = this.getBridgeContract();
+    if (!bridgeContract) {
+      return false;
+    }
+
+    const portalContract = this.getPortalContract();
+    if (!portalContract) {
+      return false;
+    }
+    const outputOracleContract = this.getOutputOracleContract();
+    if (!outputOracleContract) {
+      return false;
+    }
+
+    const logs = await this.client.getContractEvents({
+      address: (this.chain.contracts?.libplanetOutputOracle as ChainContract).address,
+      abi: outputOracleAbi,
+      eventName: 'OutputProposed',
+      fromBlock: 0n,
+      toBlock: 'latest',
+    });
+    
+    if(logs.length <= 0) {
+      return false;
+    }
+
+    return true;
+  }
+
+  public getBridgeContract() {
+    return getContract({
+      address: (this.chain.contracts?.libplanetBridge as ChainContract).address,
+      abi: bridgeAbi,
+      client: this.client,
+    });
   }
 
   public getPortalContract() {

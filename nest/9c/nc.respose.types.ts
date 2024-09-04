@@ -33,10 +33,17 @@ export type BlockStruct = {
 
 export type BlockWithTransactionsStruct = {
     index: number;
-    transactions: TransactionStruct[];
+    transactions: Transaction[];
 };
 
-export type TransactionStruct = {
+export type Block = {
+    hash: string;
+    index: bigint;
+    miner: `0x${string}`;
+    transactions: Transaction[];
+}
+
+export type Transaction = {
     serializedPayload: string;
 };
 
