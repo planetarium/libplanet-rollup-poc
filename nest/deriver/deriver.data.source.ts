@@ -8,8 +8,7 @@ export class DataSource {
         private readonly configure: ConfigService
     ) {}
 
-    // todo: get from config
-    batcherAddress: Address = '0xCE70F2e49927D431234BFc8D439412eef3a6276b';
+    batcherAddress: Address = this.configure.get('batcher_address') as Address;
     batchInboxAddress: Address = this.configure.get('local_contract_address.libplanet_batch_inbox') as Address;
 
     public async openData(block: Block): Promise<Uint8Array[]> {

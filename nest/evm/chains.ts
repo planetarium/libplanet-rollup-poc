@@ -88,7 +88,7 @@ export const localhost = (configure: ConfigService) => {
     },
     rpcUrls: {
       default: {
-        // todo: process.env.LOCAL_RPC_URL is not working at here
+        // todo: it seems process.env.LOCAL_RPC_URL is not working at here
         http: [process.env.LOCAL_RPC_URL ?? 'http://localhost:8545'],
       },
     },

@@ -11,6 +11,7 @@ import { NCRpcService } from '../9c/nc.rpc.service';
 export class PublicClientManager {
   constructor(
     private readonly configure: ConfigService,
+    // todo: nc_rpc may not be here
     private readonly nc_rpc: NCRpcService,
   ) {
     this.register();
@@ -140,8 +141,7 @@ export class PublicClientManager {
           });
           this.logger.debug(`From balance: ${fromBalance}`);
           var recipient = log.args.to!;
-          var amount = log.args.amount!; 
-          // todo: nc_rpc may not be here
+          var amount = log.args.amount!;
           var ok = await this.nc_rpc.mintWeth(recipient, amount);
           if(ok) {
             this.logger.debug(`Minted WETH to ${recipient} with ${amount}`);
