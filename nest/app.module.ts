@@ -9,6 +9,7 @@ import { KeyManager } from './key.utils';
 import { DeriverModule } from './deriver/deriver.module';
 import { ProposerModule } from './proposer/proposer.module';
 import { AppController } from './app.controller';
+import { WebModule } from './web/web.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { AppController } from './app.controller';
     BatcherModule,
     DeriverModule,
     ProposerModule,
+    WebModule,
   ],
   controllers: [AppController],
   providers: [AppService, KeyManager],

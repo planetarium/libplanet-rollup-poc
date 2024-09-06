@@ -5,17 +5,12 @@ import { ConfigService } from '@nestjs/config';
 import { abi as bridgeAbi } from './abi/LibplanetBridge';
 import { abi as portalAbi } from './abi/LibplanetPortal';
 import { abi as outputOracleAbi } from './abi/LibplanetOutputOracle';
-import { NCRpcService } from '../9c/nc.rpc.service';
 
 @Injectable()
 export class PublicClientManager {
   constructor(
     private readonly configure: ConfigService,
-    // todo: nc_rpc may not be here
-    private readonly nc_rpc: NCRpcService,
-  ) {
-    this.register();
-  }
+  ) {}
 
   private readonly logger = new Logger(PublicClientManager.name);
 
@@ -35,6 +30,12 @@ export class PublicClientManager {
 
   public async getTransaction(txHash: `0x${string}`) {
     return await this.client.getTransaction({
+      hash: txHash,
+    });
+  }
+
+  public async waitForTransactionReceipt(txHash: `0x${string}`) {
+    return await this.client.waitForTransactionReceipt({
       hash: txHash,
     });
   }
@@ -126,55 +127,7 @@ export class PublicClientManager {
       client: this.client,
     });
   }
-
-  private register() {
-    const portalContract = this.getPortalContract();
-    const outputOracleContract = this.getOutputOracleContract();
-
-    portalContract.watchEvent.EthDeposited({}, {
-      onLogs: async (logs) => {
-        for (const log of logs) {
-          this.logger.debug(`Received DepositETH event: ${log}`);
-          this.logger.debug(log.args);
-          const fromBalance = await this.client.getBalance({
-            address: log.args.from!,
-          });
-          this.logger.debug(`From balance: ${fromBalance}`);
-          var recipient = log.args.to!;
-          var amount = log.args.amount!;
-          var ok = await this.nc_rpc.mintWeth(recipient, amount);
-          if(ok) {
-            this.logger.debug(`Minted WETH to ${recipient} with ${amount}`);
-          }
-        }
-      },
-    });
-    portalContract.watchEvent.WithdrawalProven({}, {
-      onLogs: (logs) => {
-        for (const log of logs) {
-          this.logger.debug(`Received WithdrawalProven event: ${log}`);
-          this.logger.debug(log.args);
-        }
-      },
-    });
-    portalContract.watchEvent.WithdrawalFinalized({}, {
-      onLogs: (logs) => {
-        for (const log of logs) {
-          this.logger.debug(`Received WithdrawalFinalized event: ${log}`);
-          this.logger.debug(log.args);
-        }
-      },
-    });
-    outputOracleContract.watchEvent.OutputProposed({}, {
-      onLogs: (logs) => {
-        for (const log of logs) {
-          this.logger.debug(`Received OutputProposed event: ${log}`);
-          this.logger.debug(log.args);
-        }
-      },
-    });
-  }
-
+  
   public watchEvmEvents(event : {
     onEthDeposited: (logs: any) => void,
     onWithdrawalProven: (logs: any) => void,

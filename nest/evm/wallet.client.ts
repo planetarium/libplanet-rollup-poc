@@ -21,6 +21,10 @@ export class WalletManager {
   private readonly chain = this.getChain(this.configure.get('wallet.chain', 'localhost'));
   private client = this.getMainClient();
 
+  public getCurrentAddress() {
+    return this.client.account.address;
+  }
+
   async sendTransaction(payload: `0x${string}`): Promise<`0x${string}`> {
     return await this.client.sendTransaction({
       to: this.client.account.address,

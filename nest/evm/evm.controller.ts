@@ -14,8 +14,8 @@ export class EvmController {
       }
     
       @Post('deposit')
-      async depositETH(@Body() depositEth: DepositEthDto): Promise<`0x${string}`> {
-        return this.evmService.depositETH(depositEth.recipient, depositEth.amount);
+      async depositETH(@Body() depositEth: DepositEthDto) {
+        return await this.evmService.depositETH(depositEth.recipient, depositEth.amount);
       }
     
       @Get('propose/outputroot')

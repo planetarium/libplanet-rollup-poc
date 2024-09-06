@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { WalletManager } from "./evm/wallet.client";
 import { NCRpcService } from "./9c/nc.rpc.service";
 import { PublicClientManager } from "./evm/public.client";
@@ -19,7 +19,11 @@ export class AppService {
         private readonly batcherService: BatcherService,
         private readonly deriverService: DeriverService,
         private readonly proposerService: ProposerService,
-    ) {}
+    ) {
+        this.register();
+    }
+
+    private readonly logger = new Logger(AppService.name);
     
     async checkInitialized(): Promise<string | boolean> {
         const contractDeployed = await this.publicClientManager.checkContractsDeployed();
@@ -87,5 +91,39 @@ export class AppService {
         this.proposerService.proposeStop();
 
         return true;
+    }
+
+    private register() {
+        this.publicClientManager.watchEvmEvents({
+            onEthDeposited: async (logs) => {
+                for (const log of logs) {
+                    this.logger.debug(`Received EthDeposited event`);
+                    this.logger.debug(log.args);
+
+                    const recipient = log.args.to;
+                    const amount = log.args.amount;
+                    await this.ncRpcService.mintWeth(recipient, amount);
+                    this.logger.debug(`Minted WETH to ${recipient} with amount ${amount}`);
+                }
+            },
+            onWithdrawalProven: async (logs) => {
+                for (const log of logs) {
+                    this.logger.debug(`Received WithdrawalProven event`);
+                    this.logger.debug(log.args);
+                }
+            },
+            onWithdrawalFinalized: async (logs) => {
+                for (const log of logs) {
+                    this.logger.debug(`Received WithdrawalFinalized event`);
+                    this.logger.debug(log.args);
+                }
+            },
+            onOutputProposed: async (logs) => {
+                for (const log of logs) {
+                    this.logger.debug(`Received OutputProposed event`);
+                    this.logger.debug(log.args);
+                }
+            },
+        });
     }
 }

@@ -263,4 +263,37 @@ export class NCRpcService {
       transactions: res.blockQuery.block.transactions
     };
   }
+
+  async getWethBalance(address: Address): Promise<bigint> {
+    var recentBlockInfo = await this.getRecentBlock();
+    const res = await this.graphqlClient.query(gql`
+      query {
+        stateQuery {
+          balance(
+            offsetBlockHash: "${recentBlockInfo.hash}",
+            owner: "${address.slice(2)}",
+            currency: {
+              ticker: "WETH",
+              decimalPlaces: 18,
+              minters: [
+                "CE70F2e49927D431234BFc8D439412eef3a6276b"
+              ],
+              totalSupplyTrackable: true
+            }
+          ) {
+            currency {
+              ticker
+            }
+            majorUnit
+            minorUnit
+            quantity
+          }
+        }
+      }
+    `);
+
+    var majorUnit = BigInt(res.stateQuery.balance.majorUnit) * (BigInt(10) ** BigInt(18));
+    var minorUnit = BigInt(res.stateQuery.balance.minorUnit);
+    return majorUnit + minorUnit;
+  }
 }
