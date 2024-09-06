@@ -2,7 +2,6 @@
 pragma solidity ^0.8.24;
 
 import { LibplanetPortal } from "./LibplanetPortal.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract LibplanetBridge {
 
@@ -19,14 +18,5 @@ contract LibplanetBridge {
     ) public payable {
         require(msg.value == amount, "Invalid amount");
         PORTAL.depositETH{value: msg.value}(from, to, amount);
-    }
-
-    function withdrawETH(
-        address from,
-        address to,
-        uint256 amount
-    ) public {
-        payable(to).transfer(amount);
-        PORTAL.withdrawETH(from, to, amount);
     }
 }

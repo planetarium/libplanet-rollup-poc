@@ -1,10 +1,8 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { ChannelInReader } from "./deriver.channel.in.reader";
 import { Batch, Block, BlocksInfo, DataStatus } from "./deriver.types";
 import { L1Retrieval } from "./dertiver.l1.retrieval";
 import { PublicClientManager } from "nest/evm/public.client";
 import { BatchQueue } from "./deriver.batch.queue";
-import { check } from "prettier";
 import { ConfigService } from "@nestjs/config";
 
 @Injectable()
@@ -18,7 +16,7 @@ export class DeriverService {
 
     private readonly logger = new Logger(DeriverService.name);
 
-    private readonly TIME_INTERVAL = this.configService.get('deriver.timeInterval', 10000);
+    private readonly TIME_INTERVAL = this.configService.get('deriver.time_interval', 10000);
 
     deriving: boolean = false;
     deriveInit: boolean = false;
@@ -27,7 +25,6 @@ export class DeriverService {
     derivatedOldestBlockIndex: bigint = 0n;
 
     public async derivateStart() {
-        
 
         if(this.deriving){
             throw new Error("Already deriving");
@@ -46,21 +43,24 @@ export class DeriverService {
 
         this.deriving = true;
 
-        this.logger.log(`Derivation started from block ${l1OutputBlockIndex}`);
+        var check = this.l1Retrieval.getL1BlockNumber();
+        this.logger.log(`Derivation started from block ${check}`);
 
         while (this.deriving) {
             var next = await this.batchQueue.nextBlock();
             if (next === DataStatus.EOF) {
-                this.logger.log(`Derivation paused: derived ${this.derivatedLatestBlockIndex - this.derivatedOldestBlockIndex} blocks`);
+                var latestL1BlockIndex = this.l1Retrieval.getL1BlockNumber() - 1n;
+                this.logger.log(`Derivation paused: derived up to ${latestL1BlockIndex} block`);
                 await this.delay(this.TIME_INTERVAL);
-                this.logger.log(`Derivation resumed`);
                 continue;
             } else if (next === DataStatus.NotEnoughData) {
-                this.l1Retrieval.advanceBlock();
+                await this.l1Retrieval.advanceBlock();
+                continue;
+            } else if (next === DataStatus.ProcessingData) {
                 continue;
             } else {
                 var res = next as Block;
-                this.handleBlock(res);
+                await this.handleBlock(res);
             }
         }
 
@@ -75,7 +75,7 @@ export class DeriverService {
         this.deriving = false;
     }
 
-    private handleBlock(block: Block) {
+    private async handleBlock(block: Block) {
         this.blocks.set(block.index, block);
 
         if(!this.deriveInit) {

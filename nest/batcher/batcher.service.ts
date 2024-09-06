@@ -20,7 +20,7 @@ export class BatcherService {
 
     private readonly logger = new Logger(BatcherService.name);
 
-    private readonly TIME_INTERVAL = this.configService.get('batcher.timeInterval', 10000);
+    private readonly TIME_INTERVAL = this.configService.get('batcher.time_interval', 10000);
 
     lastStoredBlock: BlockID | undefined;
     batching: boolean = false;

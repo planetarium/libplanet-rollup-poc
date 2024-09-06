@@ -20,6 +20,11 @@ export class FrameQueue {
             } else {
                 var data = next as Uint8Array;
                 this.frames.push(this.unmarshalFrame(data));
+
+                // todo: maybe there would be a better way to handle this
+                if (this.l1Retrieval.getDatasLength() == 0) {
+                    return DataStatus.NotEnoughData;
+                }
             }
         }
 

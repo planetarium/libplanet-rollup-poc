@@ -47,11 +47,15 @@ export class L1Retrieval {
         }
     }
 
+    public getDatasLength(): number {
+        return this.datas.length;
+    }
+
     public getL1BlockNumber(): bigint {
         return this.l1BlockNumber;
     }
 
-    public advanceBlock() {
+    public async advanceBlock() {
         this.l1BlockNumber++;
     }
 

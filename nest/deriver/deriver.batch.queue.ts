@@ -17,8 +17,9 @@ export class BatchQueue {
                 return DataStatus.EOF;
             } else if (next === DataStatus.NotEnoughData) {
                 return DataStatus.NotEnoughData;
+            } else if (next === DataStatus.ProcessingData) {
+                return DataStatus.ProcessingData;
             } else {
-
                 this.batches.push(next as Batch);
             }
         }

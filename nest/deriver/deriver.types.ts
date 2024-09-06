@@ -1,6 +1,7 @@
 export enum DataStatus {
     EOF,
     NotEnoughData,
+    ProcessingData
 }
 
 export type ChannelID = Uint8Array;

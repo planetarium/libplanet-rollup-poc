@@ -13,7 +13,7 @@ export class ChannelBank {
     channelQueue: ChannelID[] = [];
 
     public async nextData(): Promise<Uint8Array | DataStatus> {
-        var data = this.read();
+        var data = await this.read();
         if (data === DataStatus.EOF) {
             var next = await this.frameQueue.nextFrame();
             if (next === DataStatus.EOF) {
@@ -22,15 +22,15 @@ export class ChannelBank {
                 return DataStatus.NotEnoughData;
             } else {
                 var frame = next as Frame;
-                this.ingestFrame(frame);
-                return DataStatus.NotEnoughData;
+                await this.ingestFrame(frame);
+                return DataStatus.ProcessingData;
             }
         }
 
         return data;
     }
 
-    private read(): Uint8Array | DataStatus {
+    private async read(): Promise<Uint8Array | DataStatus> {
         if (this.channelQueue.length === 0) {
             return DataStatus.EOF;
         }
@@ -51,7 +51,7 @@ export class ChannelBank {
         return DataStatus.EOF;
     }
 
-    private ingestFrame(frame: Frame) {
+    private async ingestFrame(frame: Frame) {
         var channel = this.channels.get(this.channelIdToHexKey(frame.id));
         if (!channel) {
             channel = new Channel(frame.id);

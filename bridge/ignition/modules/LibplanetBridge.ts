@@ -5,9 +5,8 @@ const BridgeModule = buildModule('LibplanetBridge', (m) => {
   const oracle = m.contract("LibplanetOutputOracle", [owner]);
   const portal = m.contract('LibplanetPortal', [oracle]);
   const bridge = m.contract('LibplanetBridge', [portal]);
-  const messegner = m.contract('LibplanetCrossChainMessenger', [bridge]);
 
-  return { portal, bridge, messegner };
+  return { portal, bridge };
 });
 
 export default BridgeModule;

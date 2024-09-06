@@ -18,7 +18,8 @@ export class ProposerService {
 
     private readonly logger = new Logger(ProposerService.name);
 
-    private readonly TIME_INTERVAL = this.configService.get('proposer.timeInterval', 10000);
+    private readonly TIME_INTERVAL = this.configService.get('proposer.time_interval', 10000);
+    private readonly MAX_INVALID_SANITY_COUNT = this.configService.get('proposer.invalid_sanity_count', 5000);
 
     proposing: boolean = false;
     sequencerDown: boolean = false;
@@ -53,7 +54,7 @@ export class ProposerService {
 
             if(!this.deriverService.checkDeriveInit()
                 || (this.deriverService.checkSanity() 
-                && this.deriverService.getLatestBlockIndex() == this.latestProposedBlockIndex)) {
+                && this.deriverService.getLatestBlockIndex() <= this.latestProposedBlockIndex)) {
                 this.logger.log("Proposing delayed: no new block");
                 continue;
             }
@@ -62,10 +63,8 @@ export class ProposerService {
                 || (this.deriverService.getLatestBlockIndex() < this.latestProposedBlockIndex)) {
                 this.logger.log("Proposing delayed: recovering batch datas");
                 this.invalidSanityCount++;
-                if(this.invalidSanityCount > 100) {
-                    this.logger.log("Failed to recover batch datas");
-                    this.deriverService.derivateStop();
-                    this.sequencerDown = true;
+                if(this.invalidSanityCount > this.MAX_INVALID_SANITY_COUNT) {
+                    this.sequencerIsDown("Failed to recover batch datas");
                 }
                 continue;
             }
@@ -77,10 +76,13 @@ export class ProposerService {
                 continue;
             } else {
                 var blocksInfo = res as BlocksInfo;
+
+                if(this.latestProposedBlockIndex < blocksInfo.oldestBlockIndex) {
+                    this.sequencerIsDown("Failed to propose: invalid block range");
+                }
+
                 if(!await this.checkBlocksSanity(blocksInfo.blocks)) {
-                    this.logger.log("Failed to check blocks sanity");
-                    this.deriverService.derivateStop();
-                    this.sequencerDown = true;
+                    this.sequencerIsDown("Failed to check blocks sanity");
                 }
                 var outputRootInfo = await this.ncRpcService.getOutputRootProposal(blocksInfo.latestBlockIndex);
                 await this.outputRootProposeManager.proposeOutputRoot(outputRootInfo);
@@ -90,6 +92,12 @@ export class ProposerService {
         }
 
         this.logger.log("Proposing stopped");
+    }
+
+    private sequencerIsDown(log: string) {
+        this.logger.log(log);
+        this.deriverService.derivateStop();
+        this.sequencerDown = true;
     }
 
     public getProposingStatus(): boolean {

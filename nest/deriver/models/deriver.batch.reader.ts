@@ -7,7 +7,7 @@ export class BatchReader{
         this.data = data;
     }
 
-    public nextBatch(): Batch | DataStatus {
+    public async nextBatch(): Promise<Batch | DataStatus> {
         if (this.data.length < 4) {
             return DataStatus.EOF;
         }

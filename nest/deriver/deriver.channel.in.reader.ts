@@ -18,15 +18,17 @@ export class ChannelInReader {
                 return DataStatus.EOF;
             } else if (next === DataStatus.NotEnoughData) {
                 return DataStatus.NotEnoughData;
+            } else if (next === DataStatus.ProcessingData) {
+                return DataStatus.ProcessingData;
             } else {
                 this.batchReader = new BatchReader(next as Uint8Array);
             }
         }
 
-        var batch = this.batchReader.nextBatch();
+        var batch = await this.batchReader.nextBatch();
         if (batch === DataStatus.EOF) {
             this.batchReader = undefined;
-            return DataStatus.NotEnoughData;
+            return DataStatus.ProcessingData;
         }
 
         return batch;
