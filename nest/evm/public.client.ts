@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Chain, createPublicClient, getContract, http, ChainContract, Address } from 'viem';
-import { mothership, opSepolia, localhost } from './chains';
+import { ChainManager } from './evm.chains';
 import { ConfigService } from '@nestjs/config';
 import { abi as bridgeAbi } from './abi/LibplanetBridge';
 import { abi as portalAbi } from './abi/LibplanetPortal';
@@ -10,12 +10,19 @@ import { abi as outputOracleAbi } from './abi/LibplanetOutputOracle';
 export class PublicClientManager {
   constructor(
     private readonly configure: ConfigService,
+    private readonly chainManger: ChainManager,
   ) {}
 
   private readonly logger = new Logger(PublicClientManager.name);
 
-  private readonly chain = this.getChain(this.configure.get('wallet.chain', 'localhost'));
+  private readonly chain = this.chainManger.getChain();
   private readonly client = this.getClient();
+
+  public async getSafeBlock() {
+    return await this.client.getBlock({
+      blockTag: 'safe',
+    });
+  }
 
   public async getBlock(blockNumber: bigint) {
     return await this.client.getBlock({
@@ -42,10 +49,12 @@ export class PublicClientManager {
 
   public async getLatestOutputRoots() {
     const interval = 100n;
+    const minimalBlockIndex = BigInt((this.chain.contracts?.libplanetOutputOracle as ChainContract).blockCreated || 0); 
+
     var toBlockIndex = await this.client.getBlockNumber();
     var fromBlockIndex = toBlockIndex > interval ? toBlockIndex - interval : 0n as bigint;
 
-    while(toBlockIndex > 0n) {
+    while(toBlockIndex > minimalBlockIndex) {
       const logs = await this.client.getContractEvents({
         address: (this.chain.contracts?.libplanetOutputOracle as ChainContract).address,
         abi: outputOracleAbi,
@@ -59,16 +68,18 @@ export class PublicClientManager {
       }
 
       toBlockIndex = fromBlockIndex;
-      fromBlockIndex = toBlockIndex > interval ? toBlockIndex - interval : 0n;
+      fromBlockIndex = toBlockIndex - minimalBlockIndex > interval ? toBlockIndex - interval : minimalBlockIndex;
     }
   }
 
   public async getLatestOutputRootBlockIndex() {
     const interval = 10n;
+    const minimalBlockIndex = BigInt((this.chain.contracts?.libplanetOutputOracle as ChainContract).blockCreated || 0); 
+
     var toBlockIndex = await this.client.getBlockNumber();
     var fromBlockIndex = toBlockIndex > interval ? toBlockIndex - interval : 0n as bigint;
 
-    while(toBlockIndex > 0n) {
+    while(toBlockIndex > minimalBlockIndex) {
       const logs = await this.client.getContractEvents({
         address: (this.chain.contracts?.libplanetOutputOracle as ChainContract).address,
         abi: outputOracleAbi,
@@ -82,7 +93,7 @@ export class PublicClientManager {
       }
 
       toBlockIndex = fromBlockIndex;
-      fromBlockIndex = toBlockIndex > interval ? toBlockIndex - interval : 0n;
+      fromBlockIndex = toBlockIndex - minimalBlockIndex > interval ? toBlockIndex - interval : minimalBlockIndex;
     }
   }
 
@@ -149,19 +160,6 @@ export class PublicClientManager {
     outputOracleContract.watchEvent.OutputProposed({}, {
       onLogs: event.onOutputProposed,
     });
-  }
-
-  private getChain(chain: string): Chain {
-    switch (chain) {
-      case 'mothership':
-        return mothership;
-      case 'opSepolia':
-        return opSepolia;
-      case 'localhost':
-        return localhost(this.configure);
-      default:
-        throw new Error('Invalid chain');
-    }
   }
 
   private getClient() {

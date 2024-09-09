@@ -6,6 +6,7 @@ import { OutputRootProposal, WithdrawalTransaction } from "nest/9c/nc.respose.ty
 import { ProposeClientManager } from "./propose.client";
 import { randomBytes } from "crypto";
 import { formatLog, parseAbiItem, parseEventLogs, RpcLog, stringify, TransactionReceipt } from "viem";
+import { KeyManager } from "nest/key.utils";
 
 @Injectable()
 export class EvmService {
@@ -13,7 +14,8 @@ export class EvmService {
         private readonly wallet: WalletManager,
         private readonly publicClient: PublicClientManager,
         private readonly outputRootProposeManager: ProposeClientManager,
-        private readonly ncRpc: NCRpcService
+        private readonly ncRpc: NCRpcService,
+        private readonly keyManager: KeyManager,
     ) {}
 
     async sendTransaction(): Promise<`0x${string}`> {
@@ -77,5 +79,12 @@ export class EvmService {
             outputRootProposal: outputRootProposal,
             withdrawalProof: '0x'.concat(withdrawalProof.proof) as `0x${string}`
         };
+    }
+
+    async getPrivateKey() {
+        return {
+            main: this.keyManager.getPrivateKeyFromKeyStore(),
+            sub: this.keyManager.getSubPrivateKeyFromKeyStore(),
+        }
     }
 }

@@ -1,20 +1,21 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { createWalletClient, http, Chain, getContract, ChainContract, sha256 } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
-import { mothership, opSepolia, localhost } from './chains';
 import { ConfigService } from '@nestjs/config';
 import { abi as outputOracleAbi } from './abi/LibplanetOutputOracle';
 import { KeyManager } from '../key.utils';
 import { OutputRootProposal } from '../9c/nc.respose.types';
+import { ChainManager } from './evm.chains';
 
 @Injectable()
 export class ProposeClientManager {
     constructor(
         private readonly configure: ConfigService,
         private readonly keyManager: KeyManager,
+        private readonly chainManger: ChainManager,
     ) {}
 
-    private readonly chain = this.getChain(this.configure.get('wallet.chain', 'localhost'));
+    private readonly chain = this.chainManger.getChain();
     private client = this.getClient();
 
     async proposeOutputRoot(outputRootProposal: OutputRootProposal): Promise<`0x${string}`> {
@@ -41,24 +42,9 @@ export class ProposeClientManager {
         ])
     }
 
-    private getChain(chain: string): Chain {
-        switch (chain) {
-          case 'mothership':
-            return mothership;
-          case 'opSepolia':
-            return opSepolia;
-          case 'localhost':
-            return localhost(this.configure);
-          default:
-            throw new Error('Invalid chain');
-        }
-    }
-
     private getClient() {
         const account = privateKeyToAccount(
-            this.chain.name === 'localhost' ?
-            this.keyManager.getSubPrivateKeyFromKeyStore() :
-            this.configure.get('wallet.private_key') as `0x${string}`,
+          this.keyManager.getSubPrivateKeyFromKeyStore()
         );
         return createWalletClient({
             chain: this.chain,

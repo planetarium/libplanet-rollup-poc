@@ -52,23 +52,30 @@ export class ProposerService {
                 await this.outputRootProposeManager.proposeOutputRoot(outputRootInfo);
             }
 
-            if(!this.deriverService.checkDeriveInit()
-                || (this.deriverService.checkSanity() 
-                && this.deriverService.getLatestBlockIndex() <= this.latestProposedBlockIndex)) {
+            if(!this.deriverService.checkDeriveInit()) {
                 this.logger.log("Proposing delayed: no new block");
                 continue;
             }
-            
-            if(!this.deriverService.checkSanity()
-                || (this.deriverService.getLatestBlockIndex() < this.latestProposedBlockIndex)) {
+
+            var deriverBlockSanity = this.deriverService.checkSanity();
+
+            if(!deriverBlockSanity) {
                 this.logger.log("Proposing delayed: recovering batch datas");
+                this.deriverService.deleteUntilBlockIndex(this.latestProposedBlockIndex);
                 this.invalidSanityCount++;
-                if(this.invalidSanityCount > this.MAX_INVALID_SANITY_COUNT) {
-                    this.sequencerIsDown("Failed to recover batch datas");
-                }
                 continue;
             }
-            this.invalidSanityCount = 0;
+
+            if(this.deriverService.getOldestBlockIndex() > this.latestProposedBlockIndex + 1n) {
+                this.logger.log("Proposing delayed: invalid block range");
+                this.invalidSanityCount++;
+                continue;
+            }
+
+            if(this.deriverService.getLatestBlockIndex() <= this.latestProposedBlockIndex) {
+                this.logger.log("Proposing delayed: no new block");
+                continue;
+            }
             
             var res = this.deriverService.getBlocks();
             if (res === DataStatus.NotEnoughData) {
@@ -77,17 +84,22 @@ export class ProposerService {
             } else {
                 var blocksInfo = res as BlocksInfo;
 
-                if(this.latestProposedBlockIndex < blocksInfo.oldestBlockIndex) {
-                    this.sequencerIsDown("Failed to propose: invalid block range");
-                }
-
                 if(!await this.checkBlocksSanity(blocksInfo.blocks)) {
                     this.sequencerIsDown("Failed to check blocks sanity");
                 }
+
+                this.invalidSanityCount = 0;
                 var outputRootInfo = await this.ncRpcService.getOutputRootProposal(blocksInfo.latestBlockIndex);
                 await this.outputRootProposeManager.proposeOutputRoot(outputRootInfo);
                 this.latestProposedBlockIndex = blocksInfo.latestBlockIndex;
                 this.logger.log(`Proposed output root from L2 block ${outputRootInfo.blockIndex}`);
+            }
+
+            if(this.invalidSanityCount > this.MAX_INVALID_SANITY_COUNT) {
+                this.sequencerIsDown("Failed to recover batch datas");
+                continue;
+            } else if (this.sequencerDown) {
+                this.sequencerIsUp("Recovered batch datas");
             }
         }
 
@@ -98,6 +110,12 @@ export class ProposerService {
         this.logger.log(log);
         this.deriverService.derivateStop();
         this.sequencerDown = true;
+    }
+
+    private sequencerIsUp(log: string) {
+        this.logger.log(log);
+        this.deriverService.derivateStart();
+        this.sequencerDown = false;
     }
 
     public getProposingStatus(): boolean {

@@ -9,7 +9,7 @@ export class DataSource {
     ) {}
 
     batcherAddress: Address = this.configure.get('batcher_address') as Address;
-    batchInboxAddress: Address = this.configure.get('local_contract_address.libplanet_batch_inbox') as Address;
+    batchInboxAddress: Address = this.configure.get('libplanet_batch_inbox') as Address;
 
     public async openData(block: Block): Promise<Uint8Array[]> {
         var datas: Uint8Array[] = [];

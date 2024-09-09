@@ -54,7 +54,7 @@ export class AppService {
             const outputRoot = await this.ncRpcService.getOutputRootProposal(1n);
             await this.proposeClientManager.proposeOutputRoot(outputRoot);
         } catch (e) {
-            return "Failed to propose output root";
+            return "Failed to propose output root\n" + e;
         }
 
         return true;

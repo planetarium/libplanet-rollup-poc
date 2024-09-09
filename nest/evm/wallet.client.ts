@@ -1,24 +1,24 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { createWalletClient, http, Chain, getContract, ChainContract, Address, sha256 } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
-import { mothership, opSepolia, localhost } from './chains';
 import { ConfigService } from '@nestjs/config';
 import { abi as portalAbi } from './abi/LibplanetPortal';
 import { abi as bridgeAbi } from './abi/LibplanetBridge';
-import { abi as outputOracleAbi } from './abi/LibplanetOutputOracle';
 import { KeyManager } from '../key.utils';
 import { OutputRootProposal, WithdrawalTransaction } from '../9c/nc.respose.types';
+import { ChainManager } from './evm.chains';
 
 @Injectable()
 export class WalletManager {
   constructor(
-    private configure: ConfigService,
-    private keyManager: KeyManager,
+    private readonly configure: ConfigService,
+    private readonly keyManager: KeyManager,
+    private readonly chainManger: ChainManager,
   ) {}
 
   private readonly logger = new Logger(WalletManager.name);
 
-  private readonly chain = this.getChain(this.configure.get('wallet.chain', 'localhost'));
+  private readonly chain = this.chainManger.getChain();
   private client = this.getMainClient();
 
   public getCurrentAddress() {
@@ -34,7 +34,7 @@ export class WalletManager {
 
   async batchTransaction(payload: `0x${string}`): Promise<`0x${string}`> {
     return await this.client.sendTransaction({
-      to: this.configure.get('local_contract_address.libplanet_batch_inbox') as `0x${string}`,
+      to: this.configure.get('libplanet_batch_inbox') as `0x${string}`,
       data: payload,
     });
   }
@@ -92,28 +92,13 @@ export class WalletManager {
     ]);
   }
 
-  private getChain(chain: string): Chain {
-    switch (chain) {
-      case 'mothership':
-        return mothership;
-      case 'opSepolia':
-        return opSepolia;
-      case 'localhost':
-        return localhost(this.configure);
-      default:
-        throw new Error('Invalid chain');
-    }
-  }
-
   public switchClient(client: 'main' | 'sub') {
     this.client = client === 'main' ? this.getMainClient() : this.getSubClient();
   }
 
   private getMainClient() {
     const account = privateKeyToAccount(
-      this.chain.name === 'localhost' ?
-      this.keyManager.getPrivateKeyFromKeyStore() :
-      this.configure.get('wallet.private_key') as `0x${string}`,
+      this.keyManager.getPrivateKeyFromKeyStore()
     );
     return createWalletClient({
       chain: this.chain,
@@ -124,9 +109,7 @@ export class WalletManager {
 
   private getSubClient() {
     const account = privateKeyToAccount(
-      this.chain.name === 'localhost' ?
-      this.keyManager.getSubPrivateKeyFromKeyStore() :
-      this.configure.get('wallet.private_key') as `0x${string}`,
+      this.keyManager.getSubPrivateKeyFromKeyStore()
     );
     return createWalletClient({
       chain: this.chain,

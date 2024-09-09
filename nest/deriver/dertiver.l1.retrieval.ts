@@ -36,6 +36,10 @@ export class L1Retrieval {
 
     private async nextL1Block(): Promise<Block | DataStatus> {
         try {
+            // var finalized = await this.publicClientManager.getSafeBlock();
+            // if (this.l1BlockNumber >= finalized.number) {
+            //     return DataStatus.EOF;
+            // }
             var block = await this.publicClientManager.getBlock(this.l1BlockNumber);
             return block;
         } catch (e) {

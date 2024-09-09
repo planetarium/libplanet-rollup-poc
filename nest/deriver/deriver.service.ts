@@ -51,9 +51,11 @@ export class DeriverService {
             if (next === DataStatus.EOF) {
                 var latestL1BlockIndex = this.l1Retrieval.getL1BlockNumber() - 1n;
                 this.logger.log(`Derivation paused: derived up to ${latestL1BlockIndex} block`);
+                this.logger.log(`Derivated block count: ${this.blocks.size}`);
                 await this.delay(this.TIME_INTERVAL);
                 continue;
             } else if (next === DataStatus.NotEnoughData) {
+                var latestL1BlockIndex = this.l1Retrieval.getL1BlockNumber() - 1n;
                 await this.l1Retrieval.advanceBlock();
                 continue;
             } else if (next === DataStatus.ProcessingData) {
@@ -118,9 +120,44 @@ export class DeriverService {
         return this.deriveInit;
     }
 
+    public getOldestBlockIndex(): bigint {
+        return this.derivatedOldestBlockIndex;
+    }
+
     public getLatestBlockIndex(): bigint {
         return this.derivatedLatestBlockIndex;
     } 
+
+    public deleteUntilBlockIndex(blockIndex: bigint): void {
+        if(this.derivatedOldestBlockIndex === this.derivatedLatestBlockIndex
+            && this.blocks.size === 0) {
+            return;
+        }
+
+        if(this.derivatedOldestBlockIndex > blockIndex) {
+            return;
+        }
+
+        for(let i = this.derivatedOldestBlockIndex; i <= blockIndex; i++) {
+            if(this.blocks.has(i)) {
+                this.blocks.delete(i);
+            }
+        }
+
+        if(this.blocks.size === 0) {
+            this.deriveInit = false;
+            this.derivatedLatestBlockIndex = blockIndex;
+            this.derivatedOldestBlockIndex = blockIndex;
+            return;
+        } else {
+            for(let i = blockIndex + 1n; i <= this.derivatedLatestBlockIndex; i++) {
+                if(this.blocks.has(i)) {
+                    this.derivatedOldestBlockIndex = i;
+                    break;
+                }
+            }
+        }
+    }
 
     public getBlocks(): BlocksInfo | DataStatus {
         // Proposer should not call this function while recovering

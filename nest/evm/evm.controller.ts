@@ -37,4 +37,9 @@ export class EvmController {
       async getBalance(@Query('address') address: `0x${string}`): Promise<bigint> {
         return this.evmService.getBalance(address);
       }
+
+      @Get('privatekey')
+      async getPrivateKey() {
+        return this.evmService.getPrivateKey();
+      }
 }
