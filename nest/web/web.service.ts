@@ -13,9 +13,16 @@ export class WebService {
         private readonly keyManager: KeyManager,
     ) {}
 
+    async getAddresses() {
+        return {
+            mainAddress: this.keyManager.getMainAddress(),
+            subAddress: this.keyManager.getSubAddress()
+        };
+    }
+
     async getBalances() {
-        const firstAddress = '0xCE70F2e49927D431234BFc8D439412eef3a6276b';
-        const secondAddress = '0xaA2337b6FC4EDcc99FBDc9dee5973c94849dCEce';
+        const firstAddress = this.keyManager.getMainAddress();
+        const secondAddress = this.keyManager.getSubAddress();
 
         var l1FistAddressBalance = await this.publicClientManager.getBalance(firstAddress);
         var l1SecondAddressBalance = await this.publicClientManager.getBalance(secondAddress);
@@ -50,13 +57,13 @@ export class WebService {
     async withdrawETH(from: `main` | `sub`, recipient: Address, amount: bigint) {
         if(from == `main`) {
             return this.ncRpcService.withdrawEth(
-                this.keyManager.getPrivateKeyFromKeyStore(),
+                this.keyManager.getMainPrivateKey(),
                 recipient,
                 amount
             );
         } else {
             return this.ncRpcService.withdrawEth(
-                this.keyManager.getSubPrivateKeyFromKeyStore(),
+                this.keyManager.getSubPrivateKey(),
                 recipient, 
                 amount
             );

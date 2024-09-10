@@ -55,13 +55,13 @@ export class DeriverService {
         this.deriving = true;
 
         var check = this.l1Retrieval.getL1BlockNumber();
-        this.log(`Derivation started from block ${check}`);
+        this.log(`Derivation started from L2 ${check} block`);
 
         while (this.deriving) {
             var next = await this.batchQueue.nextBlock();
             if (next === DataStatus.EOF) {
                 var latestL1BlockIndex = this.l1Retrieval.getL1BlockNumber() - 1n;
-                this.log(`Derivation paused: derived up to ${latestL1BlockIndex} block`);
+                this.log(`Derivation paused: derived up to L2 ${latestL1BlockIndex} block`);
                 this.log(`Derivated block count: ${this.blocks.size}`);
                 await this.delay(this.TIME_INTERVAL);
                 continue;

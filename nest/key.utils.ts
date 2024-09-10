@@ -1,34 +1,43 @@
 import { Injectable } from "@nestjs/common";
 import { ConfigService } from '@nestjs/config';
-
-const os = require("os");
-const path = require("path");
-const fs = require("fs");
-const keythereum = require("keythereum");
+import { toHex } from "viem";
+import { secp256k1 } from '@noble/curves/secp256k1'
+import { publicKeyToAddress } from "viem/utils";
+import { privateKeyToAddress } from "viem/accounts";
 
 @Injectable()
 export class KeyManager {
     constructor(private configure: ConfigService) {}
 
-    public getPrivateKeyFromKeyStore(): `0x${string}` {
-        return this.exportPrivateKeyFromKeyStore(
-          this.configure.get('wallet.keystore.main.path', ''),
-          this.configure.get('wallet.keystore.main.password', ''),
-        );
+    public getBatcherPrivateKey(): `0x${string}` {
+        return this.configure.get('wallet.batcher_private_key', '0x');
     }
 
-    public getSubPrivateKeyFromKeyStore(): `0x${string}` {
-        return this.exportPrivateKeyFromKeyStore(
-          this.configure.get('wallet.keystore.sub.path', ''),
-          this.configure.get('wallet.keystore.sub.password', ''),
-        );
+    public getBatcherAddress(): `0x${string}` {
+        return privateKeyToAddress(this.getBatcherPrivateKey());
     }
 
-    private exportPrivateKeyFromKeyStore(keyStorePathFromHome: string, password: string): `0x${string}` {
-        const HOME = os.homedir();
-        const KEYSTORE = path.join(HOME, keyStorePathFromHome);
-        const keyObject = JSON.parse(fs.readFileSync(KEYSTORE, "utf8"));
-        const privateKey = keythereum.recover(password, keyObject).toString("hex");
-        return '0x'.concat(privateKey) as `0x${string}`;
+    public getProposerPrivateKey(): `0x${string}` {
+        return this.configure.get('wallet.proposer_private_key', '0x');
+    }
+
+    public getProposerAddress(): `0x${string}` {
+        return privateKeyToAddress(this.getProposerPrivateKey());
+    }
+
+    public getMainPrivateKey(): `0x${string}` {
+        return this.configure.get('wallet.main_private_key', '0x');
+    }
+
+    public getMainAddress(): `0x${string}` {
+        return privateKeyToAddress(this.getMainPrivateKey());
+    }
+
+    public getSubPrivateKey(): `0x${string}` {
+        return this.configure.get('wallet.sub_private_key', '0x');
+    }
+
+    public getSubAddress(): `0x${string}` {
+        return privateKeyToAddress(this.getSubPrivateKey());
     }
 }

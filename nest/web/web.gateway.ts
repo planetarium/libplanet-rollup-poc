@@ -123,7 +123,7 @@ export class WebGateway
                 l2Timestamp: outputRootInfo?.l1Timestamp
             });
             this.sendWithdrawLog(socket, 'You need to wait for the withdrawal transaction to be included in the next output root to prove it.');
-            this.sendWithdrawLog(socket, 'If you want to propose the output root quickly, you can send bulk transactions.');
+            this.sendWithdrawLog(socket, 'If you want to propose the output root quickly, you can send bulk transactions. See Utils tab.');
 
             await this.delay(5000);
             await this.updateBalances(socket, this.ON_WITHDRAW_LOG);
@@ -228,7 +228,7 @@ export class WebGateway
     ) {
         try {
             this.sendBulkLog(socket, "- L3 Libplanet Process -");
-            for(let i=0; i<100; i++){
+            for(let i=0; i<20; i++){
                 await this.ncRpcService.sendSimpleTransaction(randomBytes(16384).toString('hex'));
                 this.sendBulkLog(socket, `Bulk transaction ${i} requested to L3`);
             }

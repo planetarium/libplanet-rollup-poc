@@ -3,9 +3,8 @@ import { WalletManager } from "./wallet.client";
 import { PublicClientManager } from "./public.client";
 import { NCRpcService } from "nest/9c/nc.rpc.service";
 import { OutputRootProposal, WithdrawalTransaction } from "nest/9c/nc.respose.types";
-import { ProposeClientManager } from "./propose.client";
+import { ProposerClientManager } from "./proposer.client";
 import { randomBytes } from "crypto";
-import { formatLog, parseAbiItem, parseEventLogs, RpcLog, stringify, TransactionReceipt } from "viem";
 import { KeyManager } from "nest/key.utils";
 
 @Injectable()
@@ -13,13 +12,17 @@ export class EvmService {
     constructor(
         private readonly wallet: WalletManager,
         private readonly publicClient: PublicClientManager,
-        private readonly outputRootProposeManager: ProposeClientManager,
+        private readonly outputRootProposeManager: ProposerClientManager,
         private readonly ncRpc: NCRpcService,
         private readonly keyManager: KeyManager,
     ) {}
 
     async sendTransaction(): Promise<`0x${string}`> {
         return this.wallet.sendTransaction('0x'.concat(randomBytes(32).toString('hex')) as `0x${string}`);
+    }
+
+    async sendEth(to: `0x${string}`, amount: bigint): Promise<`0x${string}`> {
+        return this.outputRootProposeManager.sendTransaction(to, amount);
     }
 
     async depositETH(recipient: `0x${string}`, amount: bigint) {
@@ -83,8 +86,8 @@ export class EvmService {
 
     async getPrivateKey() {
         return {
-            main: this.keyManager.getPrivateKeyFromKeyStore(),
-            sub: this.keyManager.getSubPrivateKeyFromKeyStore(),
+            main: this.keyManager.getMainPrivateKey(),
+            sub: this.keyManager.getSubPrivateKey(),
         }
     }
 }

@@ -3,7 +3,7 @@ import { WalletManager } from "./evm/wallet.client";
 import { NCRpcService } from "./9c/nc.rpc.service";
 import { PublicClientManager } from "./evm/public.client";
 import { KeyManager } from "./key.utils";
-import { ProposeClientManager } from "./evm/propose.client";
+import { ProposerClientManager } from "./evm/proposer.client";
 import { BatcherService } from "./batcher/batcher.service";
 import { DeriverService } from "./deriver/deriver.service";
 import { ProposerService } from "./proposer/proposer.service";
@@ -13,7 +13,7 @@ export class AppService {
     constructor(
         private readonly walletManager: WalletManager,
         private readonly publicClientManager: PublicClientManager,
-        private readonly proposeClientManager: ProposeClientManager,
+        private readonly proposeClientManager: ProposerClientManager,
         private readonly ncRpcService: NCRpcService,
         private readonly keyManager: KeyManager,
         private readonly batcherService: BatcherService,

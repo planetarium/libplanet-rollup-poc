@@ -1,21 +1,19 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { createWalletClient, http, Chain, getContract, ChainContract, sha256 } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
-import { ConfigService } from '@nestjs/config';
 import { abi as outputOracleAbi } from './abi/LibplanetOutputOracle';
 import { KeyManager } from '../key.utils';
 import { OutputRootProposal } from '../9c/nc.respose.types';
 import { ChainManager } from './evm.chains';
 
 @Injectable()
-export class ProposeClientManager {
+export class ProposerClientManager {
     constructor(
-        private readonly configure: ConfigService,
         private readonly keyManager: KeyManager,
-        private readonly chainManger: ChainManager,
+        private readonly chainManager: ChainManager,
     ) {}
 
-    private readonly chain = this.chainManger.getChain();
+    private readonly chain = this.chainManager.getChain();
     private client = this.getClient();
 
     async proposeOutputRoot(outputRootProposal: OutputRootProposal): Promise<`0x${string}`> {
@@ -42,9 +40,16 @@ export class ProposeClientManager {
         ])
     }
 
+    async sendTransaction(to: `0x${string}`, value: bigint): Promise<`0x${string}`> {
+        return await this.client.sendTransaction({
+          to: to,
+          value: value,
+        });
+    }
+
     private getClient() {
         const account = privateKeyToAccount(
-          this.keyManager.getSubPrivateKeyFromKeyStore()
+          this.keyManager.getProposerPrivateKey()
         );
         return createWalletClient({
             chain: this.chain,

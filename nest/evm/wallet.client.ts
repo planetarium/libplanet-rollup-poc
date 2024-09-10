@@ -32,13 +32,6 @@ export class WalletManager {
     });
   }
 
-  async batchTransaction(payload: `0x${string}`): Promise<`0x${string}`> {
-    return await this.client.sendTransaction({
-      to: this.configure.get('libplanet_batch_inbox') as `0x${string}`,
-      data: payload,
-    });
-  }
-
   async depositETH(recipient: Address, amount: bigint): Promise<`0x${string}`> {
     const bridgeContract = getContract({
       address: (this.chain.contracts?.libplanetBridge as ChainContract).address,
@@ -98,7 +91,7 @@ export class WalletManager {
 
   private getMainClient() {
     const account = privateKeyToAccount(
-      this.keyManager.getPrivateKeyFromKeyStore()
+      this.keyManager.getMainPrivateKey()
     );
     return createWalletClient({
       chain: this.chain,
@@ -109,7 +102,7 @@ export class WalletManager {
 
   private getSubClient() {
     const account = privateKeyToAccount(
-      this.keyManager.getSubPrivateKeyFromKeyStore()
+      this.keyManager.getSubPrivateKey()
     );
     return createWalletClient({
       chain: this.chain,

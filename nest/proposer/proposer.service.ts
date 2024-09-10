@@ -3,7 +3,7 @@ import { ConfigService } from "@nestjs/config";
 import { NCRpcService } from "nest/9c/nc.rpc.service";
 import { DeriverService } from "nest/deriver/deriver.service";
 import { Block, BlocksInfo, DataStatus } from "nest/deriver/deriver.types";
-import { ProposeClientManager } from "nest/evm/propose.client";
+import { ProposerClientManager } from "nest/evm/proposer.client";
 import { PublicClientManager } from "nest/evm/public.client";
 
 @Injectable()
@@ -12,7 +12,7 @@ export class ProposerService {
         private readonly deriverService: DeriverService,
         private readonly ncRpcService: NCRpcService,
         private readonly publicClientManager: PublicClientManager,
-        private readonly outputRootProposeManager: ProposeClientManager,
+        private readonly outputRootProposeManager: ProposerClientManager,
         private readonly configService: ConfigService,
     ) {}
 
@@ -103,7 +103,7 @@ export class ProposerService {
                 var outputRootInfo = await this.ncRpcService.getOutputRootProposal(blocksInfo.latestBlockIndex);
                 await this.outputRootProposeManager.proposeOutputRoot(outputRootInfo);
                 this.latestProposedBlockIndex = blocksInfo.latestBlockIndex;
-                this.log(`Proposed output root from L2 block ${outputRootInfo.blockIndex}`);
+                this.log(`Proposed output root from L3 block ${outputRootInfo.blockIndex}`);
             }
 
             if(this.invalidSanityCount > this.MAX_INVALID_SANITY_COUNT) {

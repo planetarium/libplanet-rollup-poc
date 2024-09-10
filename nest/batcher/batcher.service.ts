@@ -7,13 +7,14 @@ import { fromBytes, hexToBytes } from "viem";
 import { MaxBlocksPerChannelManager, MaxFrameSize } from "./batcher.constants";
 import { PublicClientManager } from "nest/evm/public.client";
 import { ConfigService } from "@nestjs/config";
+import { BatcherClientManager } from "nest/evm/batcher.client";
 
 @Injectable()
 export class BatcherService {
     constructor(
         private readonly ncRpcService: NCRpcService,
         private readonly channelManager: ChannelManager,
-        private readonly walletManager: WalletManager,
+        private readonly batcherClientManager: BatcherClientManager,
         private readonly publicClientManager: PublicClientManager,
         private readonly configService: ConfigService,
     ) {}
@@ -53,7 +54,7 @@ export class BatcherService {
                 continue;
             } else {
                 var blockRange = res as BlockRange;
-                this.log(`Loaded blocks from ${blockRange.start.index} to ${blockRange.end.index}`);
+                this.log(`Loaded L3 blocks from ${blockRange.start.index} to ${blockRange.end.index}`);
                 await this.publishTxToL1();
             }
         }
@@ -174,8 +175,8 @@ export class BatcherService {
         for (let frame of txData.frames) {
             var data = fromBytes(frame.data, 'hex');
             try {
-                await this.walletManager.batchTransaction(data);
-                this.log(`Sent batch transaction to L1`);
+                await this.batcherClientManager.batchTransaction(data);
+                this.log(`Sent batch transaction to L2`);
             }
             catch (e) {
                 console.log(e);

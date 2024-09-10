@@ -12,6 +12,14 @@ export class EvmController {
       sendTransaction(): Promise<`0x${string}`> {
         return this.evmService.sendTransaction();
       }
+
+      @Get('send/eth')
+      async sendEthTransaction(
+        @Query('to') to: `0x${string}`,
+        @Query('amount') amount: bigint
+      ): Promise<`0x${string}`> {
+        return await this.evmService.sendEth(to, amount);
+      }
     
       @Post('deposit')
       async depositETH(@Body() depositEth: DepositEthDto) {
