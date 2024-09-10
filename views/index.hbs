@@ -28,8 +28,11 @@
             <li class="nav-item" id="hm-w">
                 <a class="nav-link" href="#">Withdraw</a>
             </li>
-            <li class="nav-item" id="hm-v">
-                <a class="nav-link" href="#">Verify</a>
+            <li class="nav-item" id="hm-u">
+                <a class="nav-link" href="#">Utils</a>
+            </li>
+            <li class="nav-item" id="hm-l">
+                <a class="nav-link" href="#">Logs</a>
             </li>
             </ul>
         </div>
@@ -97,6 +100,7 @@
             <ul class="nav nav-tabs card-header-tabs">
                 <li class="nav-item">
                 <a class="nav-link active" href="#">Deposit</a>
+                </li>
             </ul>
         </div>
 
@@ -261,65 +265,79 @@
         </div>
     </div>
 
-    <div class="card d-none" id="c-v">
+    <div class="card d-none" id="c-u">
         <div class="card-header">
             <ul class="nav nav-tabs card-header-tabs">
                 <li class="nav-item">
-                <a class="nav-link active" href="#" id="cv-hm-sb">Submit Batch</a>
-                <li class="nav-item">
-                <a class="nav-link" href="#" id="cv-hm-d">Derivate</a>
+                <a class="nav-link active" href="#">Send Bulk</a>
+                </li>
             </ul>
         </div>
 
-        <div class="card-body" id="cv-cb-sb">
-            <form id="cv-sbf">
-                <dev class="row mx-0 align-items-end">
-                    <h4 class="mb-0">Parameters</h4>
-                    <button type="button" class="btn btn-light ml-auto" id="cv-sbs">Try it out</button>
-                </dev>
-                <hr>
-                <div class="form-group" id="cv-sbp">
-                    <div class="row mr-2">
-                        <label for="cv-sbp-s" class="col-2 col-form-label">stop</label>
-                        <div class="col-10">
-                            <input type="text" class="form-control" name="stop" id="cv-sbp-s" placeholder="3000">
-                            <small class="form-text text-muted">The index of L3 block to stop to submit at.</small>    
-                        </div>
-                    </div>
-                </div>
-            </form>
-
-            <h4 class="mt-5">Responses</h4>
+        <div class="card-body" id="cu-cb-s">
+            <dev class="row mx-0 align-items-end">
+                <h4 class="mb-0">Responses</h4>
+                <button type="button" class="btn btn-light ml-auto" id="cu-ss">Try it out</button>
+            </dev>
             <hr>
             <div class="card bg-dark mb-2">
-                <div class="card-body" id="cv-sbr-cb"></div>
-            </div>
-        </div>
-        <div class="card-body d-none" id="cv-cb-d">
-            <form id="cv-df">
-                <dev class="row mx-0 align-items-end">
-                    <h4 class="mb-0">Parameters</h4>
-                    <button type="button" class="btn btn-light ml-auto" id="cv-ds">Try it out</button>
-                </dev>
-                <hr>
-                <div class="form-group" id="cv-dp">
-                    <div class="row mr-2">
-                        <label for="cv-dp-s" class="col-2 col-form-label">start</label>
-                        <div class="col-10">
-                            <input type="text" class="form-control" name="start" id="cv-dp-s" placeholder="28000">
-                            <small class="form-text text-muted">The index of L2 block to start to derivate from.</small>
-                        </div>
-                    </div>
-                </div>
-            </form>
-
-            <h4 class="mt-5">Responses</h4>
-            <hr>
-            <div class="card bg-dark mb-2">
-                <div class="card-body" id="cv-dr-cb"></div>
+                <div class="card-body" id="cu-sr-cb"></div>
             </div>
         </div>
     </div>
+
+    <div class="card d-none" id="c-l">
+        <div class="card-header">
+            <ul class="nav nav-tabs card-header-tabs">
+                <li class="nav-item">
+                <a class="nav-link active" href="#" id="cl-hm-b">Batcher</a>
+                </li>
+                <li class="nav-item">
+                <a class="nav-link" href="#" id="cl-hm-d">Derivater</a>
+                </li>
+                <li class="nav-item">
+                <a class="nav-link" href="#" id="cl-hm-p">Proposer</a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="card-body" id="cl-cb-b">
+            <dev class="row mx-0 align-items-end">
+                <h4 class="mb-0">Log</h4>
+                <button type="button" class="btn btn-light ml-auto" id="cl-bs">Start</button>
+                <button type="button" class="btn btn-light ml-2" id="cl-bc">Clear</button>
+            </dev>
+            <hr>
+            <div class="card bg-dark mb-2">
+                <div class="card-body" id="cl-br-cb"></div>
+            </div>
+        </div>
+
+        <div class="card-body d-none" id="cl-cb-d">
+            <dev class="row mx-0 align-items-end">
+                <h4 class="mb-0">Log</h4>
+                <button type="button" class="btn btn-light ml-auto" id="cl-ds">Start</button>
+                <button type="button" class="btn btn-light ml-2" id="cl-dc">Clear</button>
+            </dev>
+            <hr>
+            <div class="card bg-dark mb-2">
+                <div class="card-body" id="cl-dr-cb"></div>
+            </div>
+        </div>
+
+        <div class="card-body d-none" id="cl-cb-p">
+            <dev class="row mx-0 align-items-end">
+                <h4 class="mb-0">Log</h4>
+                <button type="button" class="btn btn-light ml-auto" id="cl-ps">Start</button>
+                <button type="button" class="btn btn-light ml-2" id="cl-pc">Clear</button>
+            </dev>
+            <hr>
+            <div class="card bg-dark mb-2">
+                <div class="card-body" id="cl-pr-cb"></div>
+            </div>
+        </div>
+    </div>
+    
     </main>
 
     <div style="height: 50px;"></div>

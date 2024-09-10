@@ -3,13 +3,15 @@ const getElementById = (id) => document.getElementById(id) || null;
 // Initializing
 const headerMenuDeposit = getElementById('hm-d');
 const headerMenuWithdraw = getElementById('hm-w');
-const headerMenuBatchSubmit = getElementById('hm-v');
-const headerMenus = [headerMenuDeposit, headerMenuWithdraw, headerMenuBatchSubmit];
+const headerMenuUtils = getElementById('hm-u');
+const headerMenuLogs = getElementById('hm-l');
+const headerMenus = [headerMenuDeposit, headerMenuWithdraw, headerMenuUtils, headerMenuLogs];
 
 const cardDeposit = getElementById('c-d');
 const cardWithdraw = getElementById('c-w');
-const cardBatchSubmit = getElementById('c-v');
-const cards = [cardDeposit, cardWithdraw, cardBatchSubmit];
+const cardUtils = getElementById('c-u');
+const cardLogs = getElementById('c-l');
+const cards = [cardDeposit, cardWithdraw, cardUtils, cardLogs];
 
 headerMenuDeposit.addEventListener('click', () => {
     toggleMenu(0);
@@ -19,9 +21,13 @@ headerMenuWithdraw.addEventListener('click', () => {
     toggleMenu(1);
     toggleCard(1);
 });
-headerMenuBatchSubmit.addEventListener('click', () => {
+headerMenuUtils.addEventListener('click', () => {
     toggleMenu(2);
     toggleCard(2);
+});
+headerMenuLogs.addEventListener('click', () => {
+    toggleMenu(3);
+    toggleCard(3);
 });
 
 const toggleMenu = (index) => {
@@ -87,26 +93,33 @@ const toggleCwCardBody = (index) => {
     });
 }
 
-const cvHeaderMenuSubmitBatch = getElementById('cv-hm-sb');
-const cvHeaderMenuDerivate = getElementById('cv-hm-d');
-const cvHeaderMenus = [cvHeaderMenuSubmitBatch, cvHeaderMenuDerivate];
+const clHeaderMenuBatcher = getElementById('cl-hm-b');
+const clHeaderMenuDerivater = getElementById('cl-hm-d');
+const clHeaderMenuProposer = getElementById('cl-hm-p');
+const clHeaderMenus = [clHeaderMenuBatcher, clHeaderMenuDerivater, clHeaderMenuProposer];
 
-const cvCardBodySubmitBatch = getElementById('cv-cb-sb');
-const cvCardBodyDerivate = getElementById('cv-cb-d');
-const cvCardBodies = [cvCardBodySubmitBatch, cvCardBodyDerivate];
+const clCardBodyBatcher = getElementById('cl-cb-b');
+const clCardBodyDerivater = getElementById('cl-cb-d');
+const clCardBodyProposer = getElementById('cl-cb-p');
+const clCardBodies = [clCardBodyBatcher, clCardBodyDerivater, clCardBodyProposer];
 
-cvHeaderMenuSubmitBatch.addEventListener('click', () => {
-    toggleCvMenu(0);
-    toggleCvCardBody(0);
+clHeaderMenuBatcher.addEventListener('click', () => {
+    toggleClMenu(0);
+    toggleClCardBody(0);
 });
 
-cvHeaderMenuDerivate.addEventListener('click', () => {
-    toggleCvMenu(1);
-    toggleCvCardBody(1);
+clHeaderMenuDerivater.addEventListener('click', () => {
+    toggleClMenu(1);
+    toggleClCardBody(1);
 });
 
-const toggleCvMenu = (index) => {
-    cvHeaderMenus.forEach((menu, i) => {
+clHeaderMenuProposer.addEventListener('click', () => {
+    toggleClMenu(2);
+    toggleClCardBody(2);
+});
+
+const toggleClMenu = (index) => {
+    clHeaderMenus.forEach((menu, i) => {
         if (i === index) {
             menu.classList.add('active');
         } else {
@@ -115,8 +128,8 @@ const toggleCvMenu = (index) => {
     });
 }
 
-const toggleCvCardBody = (index) => {
-    cvCardBodies.forEach((card, i) => {
+const toggleClCardBody = (index) => {
+    clCardBodies.forEach((card, i) => {
         if (i === index) {
             card.classList.remove('d-none');
         } else {
@@ -176,13 +189,20 @@ const cwFinalizeForm = getElementById('cw-ff');
 const cwFinalizeSubmitButton = getElementById('cw-fs');
 const cwFinalizeResponseCardBody = getElementById('cw-fr-cb');
 
-const cvSubmitBatchForm = getElementById('cv-sbf');
-const cvSubmitBatchSubmitButton = getElementById('cv-sbs');
-const cvSubmitBatchResponseCardBody = getElementById('cv-sbr-cb');
+const cuSendBulkSubmitButton = getElementById('cu-ss');
+const cuSendBulkResponseCardBody = getElementById('cu-sr-cb');
 
-const cvDerivateForm = getElementById('cv-df');
-const cvDerivateSubmitButton = getElementById('cv-ds');
-const cvDerivateResponseCardBody = getElementById('cv-dr-cb');
+const clBatcherStartButton = getElementById('cl-bs');
+const clBatcherClearButton = getElementById('cl-bc');
+const clBatcherResponseCardBody = getElementById('cl-br-cb');
+
+const clDerivaterStartButton = getElementById('cl-ds');
+const clDerivaterClearButton = getElementById('cl-dc');
+const clDerivaterResponseCardBody = getElementById('cl-dr-cb');
+
+const clProposerStartButton = getElementById('cl-ps');
+const clProposerClearButton = getElementById('cl-pc');
+const clProposerResponseCardBody = getElementById('cl-pr-cb');
 
 const init = () => {
     attachQueryLogsToForm(
@@ -218,19 +238,32 @@ const init = () => {
     );
 
     attachQueryLogsToForm(
-        cvSubmitBatchForm, 
-        cvSubmitBatchSubmitButton, 
-        cvSubmitBatchResponseCardBody, 
-        'onSubmitBatchRequested', 
-        'onSubmitBatchLog'
+        null,
+        cuSendBulkSubmitButton,
+        cuSendBulkResponseCardBody,
+        'onBulkRequested',
+        'onBulkLog'
     );
 
-    attachQueryLogsToForm(
-        cvDerivateForm, 
-        cvDerivateSubmitButton, 
-        cvDerivateResponseCardBody, 
-        'onDerivateRequested', 
-        'onDerivateLog'
+    attachGeneralLogs(
+        clBatcherStartButton,
+        clBatcherClearButton,
+        clBatcherResponseCardBody,
+        'onBatcherLog'
+    );
+
+    attachGeneralLogs(
+        clDerivaterStartButton,
+        clDerivaterClearButton,
+        clDerivaterResponseCardBody,
+        'onDerivaterLog'
+    );
+
+    attachGeneralLogs(
+        clProposerStartButton,
+        clProposerClearButton,
+        clProposerResponseCardBody,
+        'onProposerLog'
     );
 }
 
@@ -239,14 +272,21 @@ const attachQueryLogsToForm = (
     form, submitButton, responseCardBody, socketEmitEvent, socketOnEvent
 ) => {
     submitButton.addEventListener('click', (e) => {
-        const formData = new FormData(form);
-        const data = formDataToJson(formData);
-        if (!data) {
-            return;
+        if(socketEmitEvent){
+            if(form) {
+                const formData = new FormData(form);
+                const data = formDataToJson(formData);
+                if (!data) {
+                    return;
+                }
+    
+                socket.emit(socketEmitEvent, data);
+            } else {
+                socket.emit(socketEmitEvent, null);
+            }
         }
     
         responseCardBody.innerHTML = '';
-        socket.emit(socketEmitEvent, data);
     });
     socket.on(socketOnEvent, (text) => {
         var elem = responseCardBody;
@@ -254,6 +294,31 @@ const attachQueryLogsToForm = (
             addPreElem(elem, balancesToText(text));
         } else {
             addPreElem(elem, text);
+        }
+    });
+}
+
+const attachGeneralLogs = (
+    startButton, clearButton, responseCardBody, socketOnEvent
+) => {
+    startButton.addEventListener('click', (e) => {
+        if (startButton.innerText === 'Start') {
+            startButton.innerText = 'Stop';
+        } else if (startButton.innerText === 'Stop') {
+            startButton.innerText = 'Start';
+        }
+    });
+    clearButton.addEventListener('click', (e) => {
+        responseCardBody.innerHTML = '';
+    });
+    socket.on(socketOnEvent, (text) => {
+        if(startButton.innerText === 'Stop') {
+            var elem = responseCardBody;
+            if (typeof text === 'object') {
+                addPreElem(elem, balancesToText(text));
+            } else {
+                addPreElem(elem, text);
+            }
         }
     });
 }

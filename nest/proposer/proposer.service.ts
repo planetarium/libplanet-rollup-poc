@@ -18,6 +18,17 @@ export class ProposerService {
 
     private readonly logger = new Logger(ProposerService.name);
 
+    private webLog?: (log: any) => void;
+    public setWebLog(logger: (log: any) => void) {
+        this.webLog = logger;
+    }
+    private log(log: any) {
+        this.logger.log(log);
+        if (this.webLog) {
+            this.webLog(log);
+        }
+    }
+
     private readonly TIME_INTERVAL = this.configService.get('proposer.time_interval', 10000);
     private readonly MAX_INVALID_SANITY_COUNT = this.configService.get('proposer.invalid_sanity_count', 5000);
 
@@ -42,7 +53,7 @@ export class ProposerService {
 
         this.proposing = true;
 
-        this.logger.log("Proposing started");
+        this.log("Proposing started");
 
         while(this.proposing) {
             await this.delay(this.TIME_INTERVAL);
@@ -53,33 +64,33 @@ export class ProposerService {
             }
 
             if(!this.deriverService.checkDeriveInit()) {
-                this.logger.log("Proposing delayed: no new block");
+                this.log("Proposing delayed: no new block");
                 continue;
             }
 
             var deriverBlockSanity = this.deriverService.checkSanity();
 
             if(!deriverBlockSanity) {
-                this.logger.log("Proposing delayed: recovering batch datas");
+                this.log("Proposing delayed: recovering batch datas");
                 this.deriverService.deleteUntilBlockIndex(this.latestProposedBlockIndex);
                 this.invalidSanityCount++;
                 continue;
             }
 
             if(this.deriverService.getOldestBlockIndex() > this.latestProposedBlockIndex + 1n) {
-                this.logger.log("Proposing delayed: invalid block range");
+                this.log("Proposing delayed: invalid block range");
                 this.invalidSanityCount++;
                 continue;
             }
 
             if(this.deriverService.getLatestBlockIndex() <= this.latestProposedBlockIndex) {
-                this.logger.log("Proposing delayed: no new block");
+                this.log("Proposing delayed: no new block");
                 continue;
             }
             
             var res = this.deriverService.getBlocks();
             if (res === DataStatus.NotEnoughData) {
-                this.logger.log("Proposing delayed: not enough data");
+                this.log("Proposing delayed: not enough data");
                 continue;
             } else {
                 var blocksInfo = res as BlocksInfo;
@@ -92,7 +103,7 @@ export class ProposerService {
                 var outputRootInfo = await this.ncRpcService.getOutputRootProposal(blocksInfo.latestBlockIndex);
                 await this.outputRootProposeManager.proposeOutputRoot(outputRootInfo);
                 this.latestProposedBlockIndex = blocksInfo.latestBlockIndex;
-                this.logger.log(`Proposed output root from L2 block ${outputRootInfo.blockIndex}`);
+                this.log(`Proposed output root from L2 block ${outputRootInfo.blockIndex}`);
             }
 
             if(this.invalidSanityCount > this.MAX_INVALID_SANITY_COUNT) {
@@ -103,17 +114,17 @@ export class ProposerService {
             }
         }
 
-        this.logger.log("Proposing stopped");
+        this.log("Proposing stopped");
     }
 
     private sequencerIsDown(log: string) {
-        this.logger.log(log);
+        this.log(log);
         this.deriverService.derivateStop();
         this.sequencerDown = true;
     }
 
     private sequencerIsUp(log: string) {
-        this.logger.log(log);
+        this.log(log);
         this.deriverService.derivateStart();
         this.sequencerDown = false;
     }

@@ -55,7 +55,7 @@ export class EvmService {
         return this.publicClient.getBalance(address);
     }
 
-    private async getWithdrawalTransactionProofInfos(txId: string): Promise<{ 
+    async getWithdrawalTransactionProofInfos(txId: string): Promise<{ 
         withdrawalTransaction: WithdrawalTransaction; 
         l2OutputIndex: bigint; 
         outputRootProposal: OutputRootProposal; 

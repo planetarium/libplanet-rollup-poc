@@ -16,6 +16,17 @@ export class DeriverService {
 
     private readonly logger = new Logger(DeriverService.name);
 
+    private webLog?: (log: any) => void;
+    public setWebLog(logger: (log: any) => void) {
+        this.webLog = logger;
+    }
+    private log(log: any) {
+        this.logger.log(log);
+        if (this.webLog) {
+            this.webLog(log);
+        }
+    }
+
     private readonly TIME_INTERVAL = this.configService.get('deriver.time_interval', 10000);
 
     deriving: boolean = false;
@@ -44,14 +55,14 @@ export class DeriverService {
         this.deriving = true;
 
         var check = this.l1Retrieval.getL1BlockNumber();
-        this.logger.log(`Derivation started from block ${check}`);
+        this.log(`Derivation started from block ${check}`);
 
         while (this.deriving) {
             var next = await this.batchQueue.nextBlock();
             if (next === DataStatus.EOF) {
                 var latestL1BlockIndex = this.l1Retrieval.getL1BlockNumber() - 1n;
-                this.logger.log(`Derivation paused: derived up to ${latestL1BlockIndex} block`);
-                this.logger.log(`Derivated block count: ${this.blocks.size}`);
+                this.log(`Derivation paused: derived up to ${latestL1BlockIndex} block`);
+                this.log(`Derivated block count: ${this.blocks.size}`);
                 await this.delay(this.TIME_INTERVAL);
                 continue;
             } else if (next === DataStatus.NotEnoughData) {
@@ -66,7 +77,7 @@ export class DeriverService {
             }
         }
 
-        this.logger.log(`Derivation stopped`);
+        this.log(`Derivation stopped`);
     }
 
     public getDerivingStatus(): boolean {

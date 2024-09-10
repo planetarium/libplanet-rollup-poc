@@ -2,12 +2,15 @@ import { Injectable } from "@nestjs/common";
 import { NCRpcService } from "nest/9c/nc.rpc.service";
 import { PublicClientManager } from "nest/evm/public.client";
 import { WalletManager } from "nest/evm/wallet.client";
+import { KeyManager } from "nest/key.utils";
+import { Address } from "viem";
 
 @Injectable()
 export class WebService {
     constructor(
         private readonly publicClientManager: PublicClientManager,
         private readonly ncRpcService: NCRpcService,
+        private readonly keyManager: KeyManager,
     ) {}
 
     async getBalances() {
@@ -42,5 +45,21 @@ export class WebService {
             l1Timestamp: res.l1Timestamp?.toString(),
         }
         return outputRootInfo;
+    }
+
+    async withdrawETH(from: `main` | `sub`, recipient: Address, amount: bigint) {
+        if(from == `main`) {
+            return this.ncRpcService.withdrawEth(
+                this.keyManager.getPrivateKeyFromKeyStore(),
+                recipient,
+                amount
+            );
+        } else {
+            return this.ncRpcService.withdrawEth(
+                this.keyManager.getSubPrivateKeyFromKeyStore(),
+                recipient, 
+                amount
+            );
+        }
     }
 }

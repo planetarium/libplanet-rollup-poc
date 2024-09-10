@@ -20,6 +20,17 @@ export class BatcherService {
 
     private readonly logger = new Logger(BatcherService.name);
 
+    private webLog?: (log: any) => void;
+    public setWebLog(logger: (log: any) => void) {
+        this.webLog = logger;
+    }
+    private log(log: any) {
+        this.logger.log(log);
+        if (this.webLog) {
+            this.webLog(log);
+        }
+    }
+
     private readonly TIME_INTERVAL = this.configService.get('batcher.time_interval', 10000);
 
     lastStoredBlock: BlockID | undefined;
@@ -32,22 +43,22 @@ export class BatcherService {
 
         this.batching = true;
 
-        this.logger.log("Batching started");
+        this.log("Batching started");
 
         while(this.batching) {
             var res = await this.loadBlocksIntoState(MaxBlocksPerChannelManager);
             if (res === DataStatus.NotEnoughData) {
-                this.logger.log("Batching paused: not enough data");
+                this.log("Batching paused: not enough data");
                 await this.delay(this.TIME_INTERVAL);
                 continue;
             } else {
                 var blockRange = res as BlockRange;
-                this.logger.log(`Loaded blocks from ${blockRange.start.index} to ${blockRange.end.index}`);
+                this.log(`Loaded blocks from ${blockRange.start.index} to ${blockRange.end.index}`);
                 await this.publishTxToL1();
             }
         }
 
-        this.logger.log("Batching stopped");
+        this.log("Batching stopped");
     }
 
     public getBatchingStatus(): boolean {
@@ -164,7 +175,7 @@ export class BatcherService {
             var data = fromBytes(frame.data, 'hex');
             try {
                 await this.walletManager.batchTransaction(data);
-                this.logger.log(`Sent batch transaction to L1`);
+                this.log(`Sent batch transaction to L1`);
             }
             catch (e) {
                 console.log(e);

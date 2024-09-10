@@ -12,6 +12,6 @@ import { ChainManager } from "./evm.chains";
     imports: [NCModule],
     controllers: [EvmController],
     providers: [WalletManager, PublicClientManager, ProposeClientManager, EvmService, KeyManager, ChainManager],
-    exports: [WalletManager, PublicClientManager, ProposeClientManager],
+    exports: [WalletManager, PublicClientManager, ProposeClientManager, EvmService],
 })
 export class EvmModule {}

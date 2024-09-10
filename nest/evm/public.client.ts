@@ -48,7 +48,7 @@ export class PublicClientManager {
   }
 
   public async getLatestOutputRoots() {
-    const interval = 100n;
+    const interval = 1000n;
     const minimalBlockIndex = BigInt((this.chain.contracts?.libplanetOutputOracle as ChainContract).blockCreated || 0); 
 
     var toBlockIndex = await this.client.getBlockNumber();
@@ -73,7 +73,7 @@ export class PublicClientManager {
   }
 
   public async getLatestOutputRootBlockIndex() {
-    const interval = 10n;
+    const interval = 100n;
     const minimalBlockIndex = BigInt((this.chain.contracts?.libplanetOutputOracle as ChainContract).blockCreated || 0); 
 
     var toBlockIndex = await this.client.getBlockNumber();
