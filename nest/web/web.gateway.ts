@@ -90,6 +90,7 @@ export class WebGateway
             this.sendDepositLog(socket, 'Waiting for minting...');
             await this.delay(5000);
             await this.updateBalances(socket, this.ON_DEPOSIT_LOG);
+            this.sendDepositLog(socket, 'We can\'t check the minting status here so updated L3 balance could be not reflected.');
         } catch(e) {
             this.sendDepositLog(socket, 'Error: ' + e);
         }
