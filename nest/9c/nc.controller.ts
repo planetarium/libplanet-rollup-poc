@@ -28,4 +28,14 @@ export class NCController {
       await this.RPCService.sendSimpleTransaction(randomBytes(16384).toString('hex'));
     }
   }
+
+  @Get('outputroot')
+  async getOutputRoot() {
+    var outputProposal = await this.RPCService.getOutputRootProposal();
+    return {
+      blockIndex: Number(outputProposal.blockIndex),
+      stateRootHash: outputProposal.stateRootHash,
+      storageRootHash: outputProposal.storageRootHash,
+    }
+  }
 }

@@ -64,13 +64,13 @@ const mothershipTestnet = (configure: ConfigService) => {
     },
     rpcUrls: {
       default: {
-        http: ['http://node-1.testnet.holesky.tests.mothership-pla.net'],
+        http: [configure.get('url.mothership_testnet.rpc') ?? ''],
       },
     },
     blockExplorers: {
       default: {
         name: 'Explorer',
-        url: 'http://k8s-holeskyt-blocksco-d9df52ff7a-4a659d4af5aab826.elb.us-east-2.amazonaws.com/',
+        url: configure.get('url.mothership_testnet.explorer') ?? '',
       },
     },
     contracts: {
@@ -149,7 +149,7 @@ const localhost = (configure: ConfigService) => {
     rpcUrls: {
       default: {
         // todo: it seems process.env.LOCAL_RPC_URL is not working at here
-        http: [process.env.LOCAL_RPC_URL ?? 'http://localhost:8545'],
+        http: [configure.get('url.localhost.rpc') ?? 'http://localhost:8545'],
       },
     },
     contracts: {
