@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { KeyManager } from "nest/key.utils";
 import { ChainManager } from "./evm.chains";
 import { privateKeyToAccount } from "viem/accounts";
-import { createWalletClient, http } from "viem";
+import { Address, createWalletClient, http } from "viem";
 import { ConfigService } from "@nestjs/config";
 
 @Injectable()
@@ -15,10 +15,15 @@ export class BatcherClientManager {
 
     private readonly chain = this.chainManager.getChain();
     private client = this.getClient();
+    batchInboxAddress: Address = this.chain.name === 'mothership_testnet' 
+        ? this.configure.get('contracts.mothership_testnet.libplanet_batch_inbox') as Address
+        : this.chain.name === 'localhost'  
+        ? this.configure.get('contracts.localhost.libplanet_batch_inbox') as Address
+        : '0x'
 
     async batchTransaction(payload: `0x${string}`): Promise<`0x${string}`> {
         return await this.client.sendTransaction({
-          to: this.configure.get('libplanet_batch_inbox') as `0x${string}`,
+          to: this.batchInboxAddress,
           data: payload,
         });
     }

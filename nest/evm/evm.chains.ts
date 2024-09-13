@@ -154,16 +154,16 @@ const localhost = (configure: ConfigService) => {
     },
     contracts: {
       libplanetPortal: {
-        address: configure.get('contracts.local.libplanet_portal.address'),
-        blockCreated: configure.get('contracts.local.libplanet_portal.block_created'),
+        address: configure.get('contracts.localhost.libplanet_portal.address'),
+        blockCreated: configure.get('contracts.localhost.libplanet_portal.block_created'),
       },
       libplanetBridge: {
-        address: configure.get('contracts.local.libplanet_bridge.address'),
-        blockCreated: configure.get('contracts.local.libplanet_bridge.block_created'),
+        address: configure.get('contracts.localhost.libplanet_bridge.address'),
+        blockCreated: configure.get('contracts.localhost.libplanet_bridge.block_created'),
       },
       libplanetOutputOracle: {
-        address: configure.get('contracts.local.libplanet_output_oracle.address'),
-        blockCreated: configure.get('contracts.local.libplanet_output_oracle.block_created'),
+        address: configure.get('contracts.localhost.libplanet_output_oracle.address'),
+        blockCreated: configure.get('contracts.localhost.libplanet_output_oracle.block_created'),
       },
     },
   });

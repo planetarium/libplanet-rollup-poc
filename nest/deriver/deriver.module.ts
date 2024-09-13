@@ -7,6 +7,7 @@ import { FrameQueue } from "./deriver.frame.queue";
 import { ChannelBank } from "./deriver.channel.bank";
 import { ChannelInReader } from "./deriver.channel.in.reader";
 import { BatchQueue } from "./deriver.batch.queue";
+import { KeyManager } from "nest/key.utils";
 
 @Module({
     imports: [EvmModule],
@@ -18,6 +19,7 @@ import { BatchQueue } from "./deriver.batch.queue";
         ChannelBank,
         ChannelInReader,
         BatchQueue,
+        KeyManager,
     ],
     exports: [L1Retrieval, ChannelInReader, DeriverService],
 })
