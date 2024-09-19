@@ -36,7 +36,14 @@ export class WebController {
         @Body() body: { private_key: string }, 
         @Session() session: Record<string, any>
     ) {
-        session.private_key = body.private_key;
+        try {
+            var privateKey = body.private_key as `0x${string}`;
+            privateKeyToAddress(privateKey);
+            session.private_key = body.private_key;
+        } catch {
+            session.private_key = undefined;
+        }
+        
         return res.redirect('/web');
     }
 }

@@ -54,19 +54,24 @@ export class DeriverService {
 
         this.deriving = true;
 
-        var check = this.l1Retrieval.getL1BlockNumber();
-        this.log(`Derivation started from L2 ${check} block`);
+        var latestL1BlockIndex = this.l1Retrieval.getL1BlockNumber();
+        this.log(`Derivation started from L2 ${latestL1BlockIndex} block`);
 
         while (this.deriving) {
             var next = await this.batchQueue.nextBlock();
+            latestL1BlockIndex = this.l1Retrieval.getL1BlockNumber();
+
             if (next === DataStatus.EOF) {
-                var latestL1BlockIndex = this.l1Retrieval.getL1BlockNumber() - 1n;
                 this.log(`Derivation paused: derived up to L2 ${latestL1BlockIndex} block`);
-                this.log(`Derivated block count: ${this.blocks.size}`);
+                if(this.blocks.size > 0) {
+                    this.log(`Derivated block count: ${this.blocks.size}`);
+                }
                 await this.delay(this.TIME_INTERVAL);
                 continue;
             } else if (next === DataStatus.NotEnoughData) {
-                var latestL1BlockIndex = this.l1Retrieval.getL1BlockNumber() - 1n;
+                if(latestL1BlockIndex % 100n === 0n) {
+                    this.log(`Derivating: derived up to L2 ${latestL1BlockIndex} block`);
+                }
                 await this.l1Retrieval.advanceBlock();
                 continue;
             } else if (next === DataStatus.ProcessingData) {
