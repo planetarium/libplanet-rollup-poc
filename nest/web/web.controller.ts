@@ -13,8 +13,7 @@ export class WebController {
     @Get()
     @Render('index')
     async view(@Session() session: Record<string, any>) {
-        //var outputRootInfo = await this.webService.getLatestOutputRoots();
-        var outputRootInfo = null; // for test purpose
+        var outputRootInfo = await this.webService.getLatestOutputRoots();
 
         if(session.private_key) {
             var address = privateKeyToAddress(session.private_key);
