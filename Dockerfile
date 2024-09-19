@@ -31,6 +31,7 @@ FROM deps AS build
 
 # Copy the rest of the source files into the image.
 COPY . .
+COPY ./config/nest.docker.yaml ./config/nest.yaml
 # Run the build script.
 RUN yarn run build
 
