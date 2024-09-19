@@ -138,6 +138,23 @@ const toggleClCardBody = (index) => {
     });
 }
 
+const addressInputForm = getElementById('ai-f');
+const addressInputGuest1Button = getElementById('ai-g1-b');
+const addressInputGuest2Button = getElementById('ai-g2-b');
+const addressInputConfirmButton = getElementById('ai-c-b');
+
+addressInputGuest1Button.addEventListener('click', (e) => {
+    addressInputForm.elements['private_key'].value = '0xd0e75dfba50305d01e7214d2277da32ea231ddae1ef6f177513e0cac297a8c8b';
+    addressInputForm.submit();
+});
+addressInputGuest2Button.addEventListener('click', (e) => {
+    addressInputForm.elements['private_key'].value = '0x16ece39bc45c3355f50684eda4363c76d4e1f5e5a37a0c0989d734cb6257c37b';
+    addressInputForm.submit();
+});
+addressInputConfirmButton.addEventListener('click', (e) => {
+    addressInputForm.submit();
+});
+
 // socket setup
 const socket = io('/rollup');
 

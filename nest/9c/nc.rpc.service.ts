@@ -113,7 +113,7 @@ export class NCRpcService {
       mutation {
         transactionMutation {
           mintWETH(
-            privateKey: "${this.keyManager.getBatcherPrivateKey().slice(2)}",
+            privateKey: "f4023cf709f9ab8a59f6b9866b476ee9e3cb4c6c7a5e7fba296cb5ab832b4c1a",
             recipient: "${recipient.slice(2)}",
             amount: ${amount}
           )

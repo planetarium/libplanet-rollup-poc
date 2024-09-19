@@ -1,7 +1,7 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Inject, Injectable, Logger, Session } from "@nestjs/common";
 import { ConnectedSocket, MessageBody, OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage, WebSocketGateway } from "@nestjs/websockets";
 import { PublicClientManager } from "nest/evm/public.client";
-import { WalletManager } from "nest/evm/wallet.client";
+import { MainWalletManager } from "nest/evm/main.wallet.client";
 import { Socket } from "socket.io";
 import { parseAbiItem, parseEventLogs, stringify, TransactionReceipt } from "viem";
 import { WebService } from "./web.service";
@@ -11,6 +11,8 @@ import { randomBytes } from "crypto";
 import { BatcherService } from "nest/batcher/batcher.service";
 import { DeriverService } from "nest/deriver/deriver.service";
 import { ProposerService } from "nest/proposer/proposer.service";
+import cookieParser from "cookie-parser";
+import { SESSION_SECRET, SESSION_STORE } from "nest/session.const";
 
 @WebSocketGateway({ namespace: 'rollup' })
 export class WebGateway 
@@ -18,13 +20,14 @@ export class WebGateway
 {
     constructor(
         private readonly webService: WebService,
-        private readonly walletManager: WalletManager,
+        private readonly walletManager: MainWalletManager,
         private readonly publicClientManager: PublicClientManager,
         private readonly evmService: EvmService,
         private readonly ncRpcService: NCRpcService,
         private readonly batcherService: BatcherService,
         private readonly deriverService: DeriverService,
         private readonly proposerService: ProposerService,
+        @Inject(SESSION_STORE) private readonly sessionStore: any,
     ) {
         this.register();
         this.batcherService.setWebLog(this.sendBatcherLog.bind(this));
@@ -62,9 +65,11 @@ export class WebGateway
     @SubscribeMessage('onDepositRequested')
     async onDepositRequested(
         @ConnectedSocket() socket: Socket,
-        @MessageBody() data: any
+        @MessageBody() data: any,
     ) {
-        var from: `main` | `sub` = data.from;
+        var session = await this.getSessionFromSocket(socket);
+
+        var from = "main" as `main` | `sub`;
         var recipient = data.recipient;
         var amount = data.amount ? BigInt(data.amount) : BigInt(0);
 
@@ -303,5 +308,25 @@ export class WebGateway
 
     private async delay(ms: number) {
         return new Promise( resolve => setTimeout(resolve, ms) );
+    }
+
+    private async getSessionFromSocket(socket: Socket) {
+        const sessionCookie = socket.handshake.headers.cookie!.split('; ')
+            .find(row => row.startsWith('connect.sid='))!
+            .split('=')[1];
+
+        const sessionId = cookieParser.signedCookie(
+            decodeURIComponent(sessionCookie),
+            SESSION_SECRET
+        );
+
+        return await new Promise((resolve, reject) => {
+            this.sessionStore.get(sessionId, (err: any, session: any) => {
+                if (err) {
+                    return reject(err);
+                }
+                return resolve(session);
+            });
+        });
     }
 }

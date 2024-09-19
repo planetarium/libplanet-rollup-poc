@@ -1,5 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { WalletManager } from "./evm/wallet.client";
+import { MainWalletManager } from "./evm/main.wallet.client";
 import { NCRpcService } from "./9c/nc.rpc.service";
 import { PublicClientManager } from "./evm/public.client";
 import { KeyManager } from "./key.utils";
@@ -11,7 +11,7 @@ import { ProposerService } from "./proposer/proposer.service";
 @Injectable()
 export class AppService {
     constructor(
-        private readonly walletManager: WalletManager,
+        private readonly walletManager: MainWalletManager,
         private readonly publicClientManager: PublicClientManager,
         private readonly proposeClientManager: ProposerClientManager,
         private readonly ncRpcService: NCRpcService,

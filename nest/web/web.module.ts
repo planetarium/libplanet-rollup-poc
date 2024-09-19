@@ -8,6 +8,7 @@ import { KeyManager } from "nest/key.utils";
 import { BatcherModule } from "nest/batcher/batcher.module";
 import { DeriverModule } from "nest/deriver/deriver.module";
 import { ProposerModule } from "nest/proposer/proposer.module";
+import { SessionModule } from "nest/session.module";
 
 @Module({
     imports: [
@@ -16,6 +17,7 @@ import { ProposerModule } from "nest/proposer/proposer.module";
         BatcherModule,
         DeriverModule,
         ProposerModule,
+        SessionModule,
     ],
     controllers: [WebController],
     providers: [WebService, WebGateway, KeyManager],

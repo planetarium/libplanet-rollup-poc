@@ -1,5 +1,5 @@
 import { Module } from "@nestjs/common";
-import { WalletManager } from "./wallet.client";
+import { MainWalletManager } from "./main.wallet.client";
 import { PublicClientManager } from "./public.client";
 import { KeyManager } from "../key.utils";
 import { NCModule } from "nest/9c/nc.module";
@@ -12,7 +12,7 @@ import { BatcherClientManager } from "./batcher.client";
 @Module({
     imports: [NCModule],
     controllers: [EvmController],
-    providers: [WalletManager, PublicClientManager, ProposerClientManager, EvmService, KeyManager, ChainManager, BatcherClientManager],
-    exports: [WalletManager, PublicClientManager, ProposerClientManager, EvmService, BatcherClientManager],
+    providers: [MainWalletManager, PublicClientManager, ProposerClientManager, EvmService, KeyManager, ChainManager, BatcherClientManager],
+    exports: [MainWalletManager, PublicClientManager, ProposerClientManager, EvmService, BatcherClientManager],
 })
 export class EvmModule {}

@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { NCRpcService } from "nest/9c/nc.rpc.service";
 import { PublicClientManager } from "nest/evm/public.client";
-import { WalletManager } from "nest/evm/wallet.client";
+import { MainWalletManager } from "nest/evm/main.wallet.client";
 import { KeyManager } from "nest/key.utils";
 import { Address } from "viem";
 
@@ -35,6 +35,18 @@ export class WebService {
             l1SecondAddressBalance: l1SecondAddressBalance.toString(),
             l2FirstAddressBalance: l2FirstAddressBalance.toString(),
             l2SecondAddressBalance: l2SecondAddressBalance.toString()
+        };
+
+        return res;
+    }
+
+    async getBalance(address: Address) {
+        var l2Balance = await this.publicClientManager.getBalance(address);
+        var l3Balance = await this.ncRpcService.getWethBalance(address);
+
+        var res = {
+            l2Balance: l2Balance.toString(),
+            l3Balance: l3Balance.toString()
         };
 
         return res;

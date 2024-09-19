@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { WalletManager } from "./wallet.client";
+import { MainWalletManager } from "./main.wallet.client";
 import { PublicClientManager } from "./public.client";
 import { NCRpcService } from "nest/9c/nc.rpc.service";
 import { OutputRootProposal, WithdrawalTransaction } from "nest/9c/nc.respose.types";
@@ -10,7 +10,7 @@ import { KeyManager } from "nest/key.utils";
 @Injectable()
 export class EvmService {
     constructor(
-        private readonly wallet: WalletManager,
+        private readonly wallet: MainWalletManager,
         private readonly publicClient: PublicClientManager,
         private readonly outputRootProposeManager: ProposerClientManager,
         private readonly ncRpc: NCRpcService,
