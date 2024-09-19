@@ -13,6 +13,8 @@ import { DeriverService } from "nest/deriver/deriver.service";
 import { ProposerService } from "nest/proposer/proposer.service";
 import cookieParser from "cookie-parser";
 import { SESSION_SECRET, SESSION_STORE } from "nest/session.const";
+import { WalletClientManager } from "nest/evm/wallet.client";
+import { privateKeyToAddress } from "viem/accounts";
 
 @WebSocketGateway({ namespace: 'rollup' })
 export class WebGateway 
@@ -20,8 +22,9 @@ export class WebGateway
 {
     constructor(
         private readonly webService: WebService,
-        private readonly walletManager: MainWalletManager,
+        private readonly mainWalletManager: MainWalletManager,
         private readonly publicClientManager: PublicClientManager,
+        private readonly walletClientManager: WalletClientManager,
         private readonly evmService: EvmService,
         private readonly ncRpcService: NCRpcService,
         private readonly batcherService: BatcherService,
@@ -67,17 +70,15 @@ export class WebGateway
         @ConnectedSocket() socket: Socket,
         @MessageBody() data: any,
     ) {
-        var session = await this.getSessionFromSocket(socket);
+        var session = await this.getSessionFromSocket(socket) as any;
 
-        var from = "main" as `main` | `sub`;
+        var from = session.private_key as `0x${string}`;
         var recipient = data.recipient;
         var amount = data.amount ? BigInt(data.amount) : BigInt(0);
 
         try {
             this.sendDepositLog(socket, "- L2 Mothership Process -");
-            await this.walletManager.switchClient(from);
-            var txHash = await this.walletManager.depositETH(recipient, amount);
-            await this.walletManager.switchClient('main');
+            var txHash = await this.walletClientManager.depositETH(from, recipient, amount);
             this.sendDepositLog(socket, "Deposit ETH requested");
             this.sendDepositLog(socket, "Tx Hash: " + txHash);
             this.sendDepositLog(socket, 'Waiting for deposit event...');
@@ -111,7 +112,9 @@ export class WebGateway
         @ConnectedSocket() socket: Socket,
         @MessageBody() data: any
     ) {
-        var from: `main` | `sub` = data.from;
+        var session = await this.getSessionFromSocket(socket) as any;
+
+        var from = session.private_key as `0x${string}`;
         var recipient = data.recipient;
         var amount = data.amount ? BigInt(data.amount) : BigInt(0);
 
@@ -158,7 +161,7 @@ export class WebGateway
             this.sendProveLog(socket, withdrawalTransactionProofInfos);
 
             this.sendProveLog(socket, "- L2 Mothership Process -");
-            var txHash = await this.walletManager.proveWithdrawalTransaction(
+            var txHash = await this.mainWalletManager.proveWithdrawalTransaction(
                 withdrawalTransactionProofInfos.withdrawalTransaction,
                 withdrawalTransactionProofInfos.l2OutputIndex,
                 withdrawalTransactionProofInfos.outputRootProposal,
@@ -202,7 +205,7 @@ export class WebGateway
             this.sendFinalizeLog(socket, withdrawalTransaction);
 
             this.sendFinalizeLog(socket, "- L2 Mothership Process -");
-            var txHash = await this.walletManager.finalizeWithdrawalTransaction(withdrawalTransaction);
+            var txHash = await this.mainWalletManager.finalizeWithdrawalTransaction(withdrawalTransaction);
             this.sendFinalizeLog(socket, "Finalize withdrawal requested to L2");
             this.sendFinalizeLog(socket, "Tx Hash: " + txHash);
             this.sendFinalizeLog(socket, 'Waiting for withdrawal finalized event...');
@@ -270,16 +273,13 @@ export class WebGateway
     }
 
     private async updateBalances(socket: Socket, socketLog?: string) {
-        var balances = await this.webService.getBalances();
+        var session = await this.getSessionFromSocket(socket) as any;
+        var privateKey = session.private_key as `0x${string}`;
+        var address = privateKeyToAddress(privateKey);
+        var balances = await this.webService.getBalance(address);
         if(socketLog) {
             socket.emit(socketLog, 'Balances updated');
-            var balancesForWeb = {
-                l2FirstAddressBalance: balances.l1FirstAddressBalance,
-                l3FirstAddressBalance: balances.l2FirstAddressBalance,
-                l2SecondAddressBalance: balances.l1SecondAddressBalance,
-                l3SecondAddressBalance: balances.l2SecondAddressBalance,
-            }
-            socket.emit(socketLog, balancesForWeb);
+            socket.emit(socketLog, balances);
         }
 
         socket.emit('onBalancesUpdated', balances);

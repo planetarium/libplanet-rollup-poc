@@ -178,15 +178,11 @@ socket.on('onOutputProposed', (data) => {
     l1TimestampText.value = data.l1Timestamp;
 })
 
-const firstAddressL1BalanceText = getElementById('fa-l1-b');
-const firstAddressL2BalanceText = getElementById('fa-l2-b');
-const secondAddressL1BalanceText = getElementById('sa-l1-b');
-const secondAddressL2BalanceText = getElementById('sa-l2-b');
+const l2BalanceText = getElementById('l2-b-t');
+const l3BalanceText = getElementById('l3-b-t');
 socket.on('onBalancesUpdated', (data) => {
-    firstAddressL1BalanceText.value = data.l1FirstAddressBalance;
-    firstAddressL2BalanceText.value = data.l2FirstAddressBalance;
-    secondAddressL1BalanceText.value = data.l1SecondAddressBalance;
-    secondAddressL2BalanceText.value = data.l2SecondAddressBalance;
+    l2BalanceText.value = data.l2Balance;
+    l3BalanceText.value = data.l3Balance;
 });
 
 // socket request
@@ -350,16 +346,12 @@ const addPreElem = (elem, text) => {
 const balancesToText = (balances) => {
     balanceLogData = {
         before: {
-            l2FirstAddressBalance: firstAddressL1BalanceText.value,
-            l3FirstAddressBalance: firstAddressL2BalanceText.value,
-            l2SecondAddressBalance: secondAddressL1BalanceText.value,
-            l3SecondAddressBalance: secondAddressL2BalanceText.value,
+            l2Balance: l2BalanceText.value,
+            l3Balance: l3BalanceText.value,
         },
         after: {
-            l2FirstAddressBalance: balances.l2FirstAddressBalance,
-            l3FirstAddressBalance: balances.l3FirstAddressBalance,
-            l2SecondAddressBalance: balances.l2SecondAddressBalance,
-            l3SecondAddressBalance: balances.l3SecondAddressBalance,
+            l2Balance: balances.l2Balance,
+            l3Balance: balances.l3Balance,
         }
     }
 

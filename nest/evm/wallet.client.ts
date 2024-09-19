@@ -1,16 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { createWalletClient, http, Chain, getContract, ChainContract, Address, sha256 } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
-import { abi as portalAbi } from './abi/LibplanetPortal';
 import { abi as bridgeAbi } from './abi/LibplanetBridge';
-import { KeyManager } from '../key.utils';
-import { OutputRootProposal, WithdrawalTransaction } from '../9c/nc.respose.types';
 import { ChainManager } from './evm.chains';
 
 @Injectable()
 export class WalletClientManager {
   constructor(
-    private readonly keyManager: KeyManager,
     private readonly chainManger: ChainManager,
   ) {}
 

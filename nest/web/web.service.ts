@@ -66,19 +66,11 @@ export class WebService {
         return outputRootInfo;
     }
 
-    async withdrawETH(from: `main` | `sub`, recipient: Address, amount: bigint) {
-        if(from == `main`) {
-            return this.ncRpcService.withdrawEth(
-                this.keyManager.getMainPrivateKey(),
-                recipient,
-                amount
-            );
-        } else {
-            return this.ncRpcService.withdrawEth(
-                this.keyManager.getSubPrivateKey(),
-                recipient, 
-                amount
-            );
-        }
+    async withdrawETH(from: `0x${string}`, recipient: Address, amount: bigint) {
+        return this.ncRpcService.withdrawEth(
+            from,
+            recipient,
+            amount
+        );
     }
 }
