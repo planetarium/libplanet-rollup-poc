@@ -94,7 +94,7 @@ export class WebGateway
             this.sendDepositLog(socket, '- L3 Libplanet Prcess -');
             this.sendDepositLog(socket, `Minting ${event.amount} WETH to ${event.to} will be requested`);
             this.sendDepositLog(socket, 'Waiting for minting...');
-            await this.delay(5000);
+            await this.delay(10000);
             await this.updateBalances(socket, this.ON_DEPOSIT_LOG);
             this.sendDepositLog(socket, 'We can\'t check the minting status here so updated L3 balance could be not reflected.');
         } catch(e) {
