@@ -52,7 +52,8 @@ export class AppService {
 
         try {
             const outputRoot = await this.ncRpcService.getOutputRootProposal(1n);
-            await this.proposeClientManager.proposeOutputRoot(outputRoot);
+            var txHash =await this.proposeClientManager.proposeOutputRoot(outputRoot);
+            await this.publicClientManager.waitForTransactionReceipt(txHash);
         } catch (e) {
             return "Failed to propose output root\n" + e;
         }
@@ -93,7 +94,38 @@ export class AppService {
         return true;
     }
 
-    private register() {
+    private async register() {
+        this.logger.log("Checking initialization");
+        var initialized = await this.checkInitialized();
+        if(initialized === true) {
+            this.logger.log("Initialization check passed");
+            var res = await this.startRollup();
+            if(res === true) {
+                this.logger.log("Rollup started");
+            } else {
+                this.logger.error("Failed to start rollup");
+                this.logger.error(res);
+            }
+        } else {
+            this.logger.error("Failed to initialize");
+            this.logger.error(initialized);
+            var res = await this.initialize();
+            if(res === true) {
+                this.logger.log("Initialized");
+                await this.startRollup();
+                if(res === true) {
+                    this.logger.log("Rollup started");
+                } else {
+                    this.logger.error("Failed to start rollup");
+                    this.logger.error(res);
+                }
+
+            } else {
+                this.logger.error("Failed to initialize");
+                this.logger.error(res);
+            }
+        }
+
         this.publicClientManager.watchEvmEvents({
             onEthDeposited: async (logs) => {
                 for (const log of logs) {
