@@ -1,13 +1,15 @@
-import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { WalletManager } from './wallet.client';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import configuration from './config/configuration';
 import { NCModule } from './9c/nc.module';
-import { PublicClientManager } from './public.client';
-import { RollupCronService } from './rollup.cron';
-import { KeyManager } from './key.utils';
 import { AppService } from './app.service';
+import { BatcherModule } from './batcher/batcher.module';
+import { EvmModule } from './evm/evm.module';
+import { KeyManager } from './key.utils';
+import { DeriverModule } from './deriver/deriver.module';
+import { ProposerModule } from './proposer/proposer.module';
+import { AppController } from './app.controller';
+import { WebModule } from './web/web.module';
 
 @Module({
   imports: [
@@ -16,9 +18,13 @@ import { AppService } from './app.service';
       isGlobal: true,
     }),
     NCModule,
+    EvmModule,
+    BatcherModule,
+    DeriverModule,
+    ProposerModule,
+    WebModule,
   ],
   controllers: [AppController],
-  providers: [WalletManager, PublicClientManager, RollupCronService, KeyManager, AppService],
-  //providers: [WalletManager, PublicClientManager, KeyManager, AppService],
+  providers: [AppService, KeyManager],
 })
 export class AppModule {}

@@ -13,7 +13,18 @@ const config: HardhatUserConfig = {
   networks: {
     mothership: {
       url: process.env.MOTHERSHIP_RPC_URL,
-      accounts: [process.env.PRIVATE_KEY ?? ''],
+      accounts: [
+        process.env.BATCHER_PRIVATE_KEY ?? '',
+        process.env.PROPOSER_PRIVATE_KEY ?? ''
+      ],
+    },
+    mothership_testnet: {
+      url: process.env.MOTHERSHIP_TESTNET_RPC_URL,
+      chainId: 16777215,
+      accounts: [
+        process.env.BATCHER_PRIVATE_KEY ?? '',
+        process.env.PROPOSER_PRIVATE_KEY ?? ''
+      ],
     },
     localhost: {
       url: process.env.LOCAL_RPC_URL,

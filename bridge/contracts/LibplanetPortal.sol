@@ -11,9 +11,10 @@ contract LibplanetPortal {
     mapping(address => bool) public provenWithdrawals;
     mapping(address => bool) public finalizedWithdrawals;
 
-    event DepositETH(address from, address to, uint256 amount);
-    event WithdrawNCG(address from, address to, uint256 amount);
-    event WithdrawETH(address from, address to, uint256 amount);
+    event EthDeposited(
+        address indexed from, 
+        address indexed to, 
+        uint256 indexed amount);
 
     event WithdrawalProven(
         address indexed withdrawalHash,
@@ -38,16 +39,8 @@ contract LibplanetPortal {
         address to,
         uint256 amount
     ) public payable {
-        //Doesn't it need to check msg.value?
-        emit DepositETH(from, to, amount);
-    }
-
-    function withdrawETH(
-        address from,
-        address to,
-        uint256 amount
-    ) public {
-        emit WithdrawETH(from, to, amount);
+        require(msg.value == amount, "Invalid amount");
+        emit EthDeposited(from, to, amount);
     }
 
     function proveWithdrawalTransaction(
