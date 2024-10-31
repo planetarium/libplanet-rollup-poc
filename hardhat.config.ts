@@ -15,6 +15,10 @@ const config: HardhatUserConfig = {
       url: process.env.MOTHERSHIP_RPC_URL,
       accounts: [process.env.PRIVATE_KEY ?? ''],
     },
+    localhost: {
+      url: process.env.LOCAL_RPC_URL,
+      chainId: 12345
+    },
   },
 };
 

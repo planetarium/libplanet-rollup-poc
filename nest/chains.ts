@@ -1,4 +1,5 @@
 import { defineChain } from 'viem';
+import { ConfigService } from '@nestjs/config';
 
 export const mothership = defineChain({
   id: 17000133712,
@@ -17,6 +18,14 @@ export const mothership = defineChain({
     default: {
       name: 'Explorer',
       url: 'https://explorer.holesky.tests.mothership-pla.net',
+    },
+  },
+  contracts: {
+    libplanetPortal: {
+      address: '0x5F0641fAa5bd2364F0992fD7721975A7f604D5c5',
+    },
+    libplanetBridge: {
+      address: '0x13D12eE50497944666D0C9140c3cc12b6E80376b',
     },
   },
 });
@@ -67,3 +76,31 @@ export const opSepolia = defineChain({
   },
   testnet: true,
 });
+
+export const localhost = (configure: ConfigService) => {
+  return defineChain({
+    id: 12345,
+    name: 'localhost',
+    nativeCurrency: {
+      decimals: 18,
+      name: 'Geth Ether',
+      symbol: 'ETH',
+    },
+    rpcUrls: {
+      default: {
+        http: [process.env.LOCAL_RPC_URL ?? 'http://localhost:8000'],
+      },
+    },
+    contracts: {
+      libplanetPortal: {
+        address: configure.get('local_contract_address.libplanet_portal'),
+      },
+      libplanetBridge: {
+        address: configure.get('local_contract_address.libplanet_bridge'),
+      },
+      transactionParser: {
+        address: configure.get('local_contract_address.transaction_parser'),
+      }
+    },
+  });
+}

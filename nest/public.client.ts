@@ -1,8 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Chain, createPublicClient, getContract, http } from 'viem';
-import { mothership, opSepolia } from './chains';
+import { Chain, createPublicClient, getContract, http, ChainContract } from 'viem';
+import { mothership, opSepolia, localhost } from './chains';
 import { ConfigService } from '@nestjs/config';
 import { abi as portalAbi } from './abi/LibplanetPortal';
+import { abi as txParserAbi } from './abi/TransactionParser';
+import { json } from 'stream/consumers';
 
 @Injectable()
 export class PublicClientManager {
@@ -12,20 +14,40 @@ export class PublicClientManager {
 
   private readonly logger = new Logger(PublicClientManager.name);
 
+  private readonly chain = this.GetChain(this.configure.get('wallet.chain', 'localhost'));
+  private readonly client = this.GetClient();
+
   public GetPortalContract() {
     return getContract({
-      address: '0x5F0641fAa5bd2364F0992fD7721975A7f604D5c5',
+      address: (this.chain.contracts?.libplanetPortal as ChainContract).address,
       abi: portalAbi,
-      client: this.GetClient(),
+      client: this.client,
+    });
+  }
+
+  public GetTxParserContract() {
+    return getContract({
+      address: (this.chain.contracts?.transactionParser as ChainContract).address,
+      abi: txParserAbi,
+      client: this.client,
     });
   }
 
   private Register() {
-    const contract = this.GetPortalContract();
-    contract.watchEvent.DepositETH({
+    const portalContract = this.GetPortalContract();
+    const txParserContract = this.GetTxParserContract();
+    portalContract.watchEvent.DepositETH({
       onLogs: (logs) => {
         for (const log of logs) {
           this.logger.debug(`Received deposit event: ${log}`);
+        }
+      },
+    });
+    txParserContract.watchEvent.TransactionParsed({
+      onLogs: (logs) => {
+        for (const log of logs) {
+          this.logger.debug(`Received parsed tx event: ${log}`);
+          this.logger.debug(log.args.transaction);
         }
       },
     });
@@ -37,6 +59,8 @@ export class PublicClientManager {
         return mothership;
       case 'opSepolia':
         return opSepolia;
+      case 'localhost':
+        return localhost(this.configure);
       default:
         throw new Error('Invalid chain');
     }
@@ -44,7 +68,7 @@ export class PublicClientManager {
 
   private GetClient() {
     return createPublicClient({
-      chain: this.GetChain(this.configure.get('wallet.chain', 'mothership')),
+      chain: this.chain,
       transport: http(),
     });
   }

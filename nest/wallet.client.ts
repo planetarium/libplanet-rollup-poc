@@ -1,9 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { createWalletClient, http, Chain, getContract } from 'viem';
+import { createWalletClient, http, Chain, getContract, ChainContract } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
-import { opSepolia, mothership } from './chains';
+import { mothership, opSepolia, localhost } from './chains';
 import { ConfigService } from '@nestjs/config';
 import { abi as bridgeAbi } from './abi/LibplanetBridge';
+import { abi as txParserAbi } from './abi/TransactionParser';
+import { exportPrivateKeyFromKeyStore } from './key.utils';
 
 @Injectable()
 export class WalletManager {
@@ -11,23 +13,26 @@ export class WalletManager {
 
   private readonly logger = new Logger(WalletManager.name);
 
+  private readonly chain = this.GetChain(this.configure.get('wallet.chain', 'localhost'));
+  private readonly client = this.GetClient();
+
   async sendTransaction(payload: `0x${string}`): Promise<`0x${string}`> {
-    return this.GetClient().sendTransaction({
-      to: this.GetClient().account.address,
+    return this.client.sendTransaction({
+      to: this.client.account.address,
       data: payload,
     });
   }
 
   async depositETH(amount: number): Promise<`0x${string}`> {
     const bridgeContract = getContract({
-      address: `0x13D12eE50497944666D0C9140c3cc12b6E80376b`,
+      address: (this.chain.contracts?.libplanetBridge as ChainContract).address,
       abi: bridgeAbi,
-      client: this.GetClient(),
+      client: this.client,
     });
     return bridgeContract.write.depositETH(
       [
-        `0x2B4405b5a70cD162DBa3544e1B4a1Cf12Fd2e7d8`,
-        `0x99DF57BF45240C8a87615B0C884007501395d526`,
+        this.client.account.address,
+        (this.chain.contracts?.libplanetPortal as ChainContract).address,
         BigInt(amount),
       ],
       {
@@ -36,15 +41,13 @@ export class WalletManager {
     );
   }
 
-  private GetClient() {
-    const account = privateKeyToAccount(
-      this.configure.get('wallet.private_key') as `0x${string}`,
-    );
-    return createWalletClient({
-      chain: this.GetChain(this.configure.get('wallet.chain', 'mothership')),
-      account: account,
-      transport: http(),
+  async parseTx(serializedPayload: `0x${string}`): Promise<`0x${string}`> {
+    const txParserContract = getContract({
+      address: (this.chain.contracts?.transactionParser as ChainContract).address,
+      abi: txParserAbi,
+      client: this.GetClient(),
     });
+    return txParserContract.write.parseTransactionFromSerializedPayload([serializedPayload], {});
   }
 
   private GetChain(chain: string): Chain {
@@ -53,8 +56,26 @@ export class WalletManager {
         return mothership;
       case 'opSepolia':
         return opSepolia;
+      case 'localhost':
+        return localhost(this.configure);
       default:
         throw new Error('Invalid chain');
     }
+  }
+
+  private GetClient() {
+    const account = privateKeyToAccount(
+      this.chain.name === 'localhost' ?
+      exportPrivateKeyFromKeyStore(
+        this.configure.get('wallet.keystore.path', ''),
+        this.configure.get('wallet.keystore.password', ''),
+      ) :
+      this.configure.get('wallet.private_key') as `0x${string}`,
+    );
+    return createWalletClient({
+      chain: this.chain,
+      account: account,
+      transport: http(),
+    });
   }
 }
