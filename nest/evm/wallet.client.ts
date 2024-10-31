@@ -41,7 +41,7 @@ export class WalletClientManager {
     );
   }
 
-  private getClient(privateKey: `0x${string}`) {
+  public getClient(privateKey: `0x${string}`) {
     const account = privateKeyToAccount(privateKey);
     return createWalletClient({
       chain: this.chain,

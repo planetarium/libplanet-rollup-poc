@@ -84,10 +84,10 @@ export class EvmService {
         };
     }
 
-    async getPrivateKey() {
+    async getAddress() {
         return {
-            main: this.keyManager.getMainPrivateKey(),
-            sub: this.keyManager.getSubPrivateKey(),
+            main: this.keyManager.getMainAddress(),
+            sub: this.keyManager.getSubAddress(),
         }
     }
 }

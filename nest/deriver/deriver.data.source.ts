@@ -12,10 +12,9 @@ export class DataSource {
 
     batcherAddress: Address = this.keyManager.getBatcherAddress();
     chain: string = this.configure.get('wallet.chain') as string;
-    batchInboxAddress: Address = this.chain === 'mothership_testnet' 
-        ? this.configure.get('contracts.mothership_testnet.libplanet_batch_inbox') as Address
-        : this.chain === 'localhost'  
-        ? this.configure.get('contracts.localhost.libplanet_batch_inbox') as Address
+    batchInboxAddress: Address = 
+        this.chain === 'mothership_testnet' ? this.configure.get('contracts.mothership_testnet.libplanet_batch_inbox') as Address
+        : this.chain === 'localhost' ? this.configure.get('contracts.localhost.libplanet_batch_inbox') as Address
         : '0x'
 
     public async openData(block: Block): Promise<Uint8Array[]> {

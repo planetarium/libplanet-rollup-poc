@@ -46,8 +46,8 @@ export class EvmController {
         return this.evmService.getBalance(address);
       }
 
-      @Get('privatekey')
-      async getPrivateKey() {
-        return this.evmService.getPrivateKey();
+      @Get('address')
+      async getAddress() {
+        return this.evmService.getAddress();
       }
 }
