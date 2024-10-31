@@ -1,5 +1,35 @@
-wallet:
-  private_key: '0x{hex}'
-  chain: 'mothership'
-9c:
-  rpc: 'https://{9c-rpc-url}/graphql'
+evm:
+  chain: 'local_geth'
+  mothership_testnet:
+    chain_id: 16777215
+    url:
+      rpc: 'http://node-1.v8-dev.us-east-2.testnet.holesky.tests.mothership-pla.net/'
+      explorer: 'http://explorer.testnet.holesky.tests.mothership-pla.net/'
+    contracts:
+      fault_dispute_game_factory:
+        address: '0xb7cb9748041c2Bca28F4FD138202c56F90DB27d5'
+        block_created: 0
+    private_key:
+      main: '0x00'
+  local_geth:
+    chain_id: 12345
+    url:
+      rpc: 'http://localhost:8000'
+      explorer: 'http://localhost:5001/graphql'
+    contracts:
+      fault_dispute_game_factory:
+        address: '0x1Cc8F75491A3fcd6722f5f39876D4264A36E8D31'
+        block_created: 0
+      anchor_state_registry:
+        address: '0xe1E6679E0f0D1177a75a46293e4af0a9ACbD3A5B'
+        block_created: 0
+    addresses:
+      batch_inbox: '0xfF00000000000000000000000000000000000011'
+    private_key:
+      main: '0x00'
+      batcher: '0x00'
+
+libplanet:
+  console:
+    graphql:
+      url: 'http://127.0.0.1:5001/graphql'
