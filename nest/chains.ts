@@ -100,7 +100,10 @@ export const localhost = (configure: ConfigService) => {
       },
       transactionParser: {
         address: configure.get('local_contract_address.transaction_parser'),
-      }
+      },
+      hackAndSlashParser: {
+        address: configure.get('local_contract_address.hack_and_slash_parser'),
+      },
     },
   });
 }

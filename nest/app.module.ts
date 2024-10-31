@@ -16,6 +16,7 @@ import { RollupCronService } from './rollup.cron';
     NCModule,
   ],
   controllers: [AppController],
-  providers: [WalletManager, PublicClientManager, RollupCronService],
+  //providers: [WalletManager, PublicClientManager, RollupCronService],
+  providers: [WalletManager, PublicClientManager],
 })
 export class AppModule {}

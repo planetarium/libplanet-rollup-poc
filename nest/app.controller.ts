@@ -21,4 +21,10 @@ export class AppController {
     var serializedPayload = Buffer.from(parseTransaction.serializedPayload, 'utf-8').toString('hex');
     return this.wallet.parseTx('0x'.concat(serializedPayload) as `0x${string}`);
   }
+
+  @Post('parse/has')
+  async parseHackAndSlash(@Body() parseTransaction: ParseTransactionDto): Promise<`0x${string}`> {
+    var serializedPayload = Buffer.from(parseTransaction.serializedPayload, 'utf-8').toString('hex');
+    return this.wallet.parseHackAndSlash('0x'.concat(serializedPayload) as `0x${string}`);
+  }
 }
