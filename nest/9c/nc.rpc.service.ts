@@ -1,10 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { GraphQLClientService } from './graphql.client';
 import { gql } from 'graphql-request';
+import { BlockStruct, BlockWithTransactionsStruct, OutputRootProposal, TransactionResult, TransactionWorldProof, WithdrawalTransaction } from './nc.respose.models';
+import { Address } from 'viem';
+import { KeyManager } from 'nest/key.utils';
 
 @Injectable()
 export class NCRpcService {
-  constructor(private readonly graphqlClient: GraphQLClientService) {}
+  constructor(
+    private readonly graphqlClient: GraphQLClientService,
+    private readonly keyManager: KeyManager,
+  ) {}
 
   async getBlocks(): Promise<BlockStruct[]> {
     const res = await this.graphqlClient.query(gql`
@@ -33,11 +39,12 @@ export class NCRpcService {
     return result;
   }
 
-  async getTransactions(): Promise<TransactionStruct[]> {
+  async getTransactions(): Promise<BlockWithTransactionsStruct> {
     const res = await this.graphqlClient.explorerQuery(gql`
       query	{
         blockQuery {
           blocks(desc: true, limit: 1) {
+            index
             transactions {
               serializedPayload
             }
@@ -46,10 +53,13 @@ export class NCRpcService {
       }
     `);
 
-    const result: TransactionStruct[] = [];
+    const result: BlockWithTransactionsStruct = {
+      index: res.blockQuery.blocks[0].index,
+      transactions: []
+    };
     res.blockQuery.blocks[0].transactions.forEach(
       (transaction: { serializedPayload: string }) => {
-        result.push({
+        result.transactions.push({
           serializedPayload: transaction.serializedPayload,
         });
       },
@@ -57,14 +67,215 @@ export class NCRpcService {
 
     return result;
   }
+
+  async sendSimpleTransactionToLocalNetwork(simpleString: string): Promise<string> {
+    const res = await this.graphqlClient.localExplorerQuery(gql`
+      mutation {
+        transactionMutation {
+          simpleStringStage(simpleString: "${simpleString}")
+        }
+      }
+    `);
+
+    return res.transactionMutation.simpleStringStage;
+  }
+
+  async getTxResultsFromLocalNetwork(limit: number): Promise<TransactionResult[]> {
+    const txIdsRes = await this.graphqlClient.localExplorerQuery(gql`
+      query {
+        transactionQuery {
+          transactions (limit: ${limit}, desc: true) {
+            id
+          }
+        }
+      }
+    `);
+    
+    const txResultList: TransactionResult[] = [];
+    for (const tx of txIdsRes.transactionQuery.transactions) {
+      const txResultsRes = await this.graphqlClient.localExplorerQuery(gql`
+        query {
+          transactionQuery {
+            transactionResult(txId: "${tx.id}") {
+              txStatus
+              blockIndex
+              blockHash
+              inputState
+              outputState
+            }
+          }
+        }
+      `);
+
+      txResultList.push({
+        txId: tx.id,
+        txStatus: txResultsRes.transactionQuery.transactionResult.txStatus,
+        blockIndex: BigInt(txResultsRes.transactionQuery.transactionResult.blockIndex),
+        blockHash: txResultsRes.transactionQuery.transactionResult.blockHash,
+        inputState: txResultsRes.transactionQuery.transactionResult.inputState,
+        outputState: txResultsRes.transactionQuery.transactionResult.outputState,
+      });
+    }
+
+    return txResultList;
+  }
+
+  async getTxWorldProofsFromLocalNetwork(limit: number): Promise<TransactionWorldProof[]> {
+    const txIdsRes = await this.graphqlClient.localExplorerQuery(gql`
+      query {
+        transactionQuery {
+          transactions (limit: ${limit}, desc: true) {
+            id
+          }
+        }
+      }
+    `);
+    
+    const txWorldProofList: TransactionWorldProof[] = [];
+    for (const tx of txIdsRes.transactionQuery.transactions) {
+      const txWorldProofRes = await this.graphqlClient.localExplorerQuery(gql`
+        query {
+          transactionQuery {
+            transactionWorldProof(
+              txId: "${tx.id}",
+            ) {
+              stateRootHash
+              proof {
+                hex
+              }
+              key
+              value {
+                hex
+              }
+            }
+          }
+        }
+      `);
+
+      txWorldProofList.push({
+        txId: tx.id,
+        stateRootHash: txWorldProofRes.transactionQuery.transactionWorldProof.stateRootHash,
+        proof: txWorldProofRes.transactionQuery.transactionWorldProof.proof.hex,
+        key: txWorldProofRes.transactionQuery.transactionWorldProof.key,
+        value: txWorldProofRes.transactionQuery.transactionWorldProof.value.hex,
+      });
+    }
+
+    return txWorldProofList;
+  }
+
+  async mintWethToLocalNetwork(recipient: Address, amount: bigint): Promise<boolean> {
+    const res = await this.graphqlClient.localExplorerQuery(gql`
+      mutation {
+        transactionMutation {
+          mintWETH(
+            privateKey: "${this.toHex(this.keyManager.getPrivateKeyFromKeyStore())}",
+            recipient: "${this.toHex(recipient)}",
+            amount: ${amount}
+          )
+        }
+      }
+    `);
+
+    if(res.transactionMutation.mintWETH === "success") {
+      return true;
+    }
+
+    return false;
+  }
+
+  async withdrawEthToLocalNetwork(privateKey: `0x${string}`, recipient: Address, amount: bigint): Promise<string> {
+    const res = await this.graphqlClient.localExplorerQuery(gql`
+      mutation {
+        transactionMutation {
+          withdrawETH(
+            privateKey: "${this.toHex(privateKey)}",
+            recipient: "${this.toHex(recipient)}",
+            amount: ${amount}
+          )
+        }
+      }
+    `);
+
+    return res.transactionMutation.withdrawETH;
+  }
+
+  async getOutputRootProposalFromLocalNetwork(index?: bigint | undefined): Promise<OutputRootProposal> {
+    const arg = index === undefined ? '' : `(index: ${index})`;
+
+    const res = await this.graphqlClient.localExplorerQuery(gql`
+      query {
+        stateQuery {
+          outputRoot ${arg} {
+            blockIndex
+            stateRootHash
+            storageRootHash
+          }
+        }
+      }
+    `);
+
+    if (res === null || res.stateQuery === null || res.stateQuery.outputRoot === null) {
+      throw new Error('Failed to get output root proposal');
+    }
+
+    return {
+      blockIndex: BigInt(res.stateQuery.outputRoot.blockIndex),
+      stateRootHash: res.stateQuery.outputRoot.stateRootHash,
+      storageRootHash: res.stateQuery.outputRoot.storageRootHash,
+    };
+  }
+
+  async getBlockIndexWithTxIdFromLocalNetwork(txId: string): Promise<bigint> {
+    const res = await this.graphqlClient.localExplorerQuery(gql`
+      query {
+        transactionQuery {
+          transactionResult(
+            txId: "${txId}"
+          ) {
+            blockIndex
+          }
+        }
+      }
+    `);
+
+    return BigInt(res.transactionQuery.transactionResult.blockIndex);
+  }
+
+  async getWithdrawalProofFromLocalNetwork(storageRootHash: string, txId: string): Promise<{withdrawalInfo: WithdrawalTransaction, proof: string}> {
+    const res = await this.graphqlClient.localExplorerQuery(gql`
+      query {
+        stateQuery {
+          withdrawalProof(
+            storageRootHash: "${storageRootHash}",
+            txId: "${txId}"
+          ) {
+            withdrawalInfo {
+              nonce
+              from
+              to
+              amount
+            }
+            proof {
+              hex
+            }
+          }
+        }
+      }
+    `);
+
+    return {
+      withdrawalInfo: {
+        nonce: BigInt(res.stateQuery.withdrawalProof.withdrawalInfo.nonce),
+        from: res.stateQuery.withdrawalProof.withdrawalInfo.from,
+        to: res.stateQuery.withdrawalProof.withdrawalInfo.to,
+        amount: BigInt(res.stateQuery.withdrawalProof.withdrawalInfo.amount),
+      },
+      proof: res.stateQuery.withdrawalProof.proof.hex,
+    };
+  }
+
+  toHex(address: `0x${string}`): string {
+    return address.slice(2);
+  }
 }
-
-export type BlockStruct = {
-  index: number;
-  hash: string;
-  miner: string;
-};
-
-export type TransactionStruct = {
-  serializedPayload: string;
-};

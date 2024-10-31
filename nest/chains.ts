@@ -79,7 +79,7 @@ export const opSepolia = defineChain({
 
 export const localhost = (configure: ConfigService) => {
   return defineChain({
-    id: 12345,
+    id: 12346,
     name: 'localhost',
     nativeCurrency: {
       decimals: 18,
@@ -98,11 +98,8 @@ export const localhost = (configure: ConfigService) => {
       libplanetBridge: {
         address: configure.get('local_contract_address.libplanet_bridge'),
       },
-      transactionParser: {
-        address: configure.get('local_contract_address.transaction_parser'),
-      },
-      hackAndSlashParser: {
-        address: configure.get('local_contract_address.hack_and_slash_parser'),
+      libplanetOutputOracle: {
+        address: configure.get('local_contract_address.libplanet_output_oracle'),
       },
     },
   });

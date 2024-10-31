@@ -1,30 +1,40 @@
-import { Controller, Get, Post, Body } from '@nestjs/common';
-import { WalletManager } from './wallet.client';
-import { ParseTransactionDto } from './dto/parse-transaction.dto';
+import { Controller, Get, Post, Body, Query } from '@nestjs/common';
+import { DepositEthDto } from './dto/deposit-eth.dto';
+import { AppService } from './app.service';
 
-@Controller()
+@Controller('/geth')
 export class AppController {
-  constructor(private readonly wallet: WalletManager) {}
+  constructor(
+    private readonly appService: AppService
+  ) {}
 
   @Get('send')
-  async sendTransaction(): Promise<`0x${string}`> {
-    return this.wallet.sendTransaction('0xdeadbeef');
+  sendTransaction(): Promise<`0x${string}`> {
+    return this.appService.sendTransaction();
   }
 
-  @Get('deposit')
-  async depositETH(): Promise<`0x${string}`> {
-    return this.wallet.depositETH(10000);
+  @Post('deposit')
+  async depositETH(@Body() depositEth: DepositEthDto): Promise<`0x${string}`> {
+    return this.appService.depositETH(depositEth.recipient, depositEth.amount);
   }
 
-  @Post('parse/tx')
-  async parseTransaction(@Body() parseTransaction: ParseTransactionDto): Promise<`0x${string}`> {
-    var serializedPayload = Buffer.from(parseTransaction.serializedPayload, 'utf-8').toString('hex');
-    return this.wallet.parseTx('0x'.concat(serializedPayload) as `0x${string}`);
+  @Get('propose/outputroot')
+  async proposeOutputRoot(): Promise<`0x${string}`> {
+    return this.appService.proposeOutputRoot();
   }
 
-  @Post('parse/has')
-  async parseHackAndSlash(@Body() parseTransaction: ParseTransactionDto): Promise<`0x${string}`> {
-    var serializedPayload = Buffer.from(parseTransaction.serializedPayload, 'utf-8').toString('hex');
-    return this.wallet.parseHackAndSlash('0x'.concat(serializedPayload) as `0x${string}`);
+  @Get('prove/withdrawal')
+  async proveWithdrawal(@Query('txId') txId: string): Promise<`0x${string}`> {
+    return this.appService.proveWithdrawal(txId);
+  }
+
+  @Get('finalize/withdrawal')
+  async finalizeWithdrawal(@Query('txId') txId: string): Promise<`0x${string}`> {
+    return this.appService.finalizeWithdrawal(txId);
+  }
+
+  @Get('balance')
+  async getBalance(@Query('address') address: `0x${string}`): Promise<bigint> {
+    return this.appService.getBalance(address);
   }
 }

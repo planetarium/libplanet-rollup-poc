@@ -17,7 +17,7 @@ const config: HardhatUserConfig = {
     },
     localhost: {
       url: process.env.LOCAL_RPC_URL,
-      chainId: 12345
+      chainId: 12346
     },
   },
 };
