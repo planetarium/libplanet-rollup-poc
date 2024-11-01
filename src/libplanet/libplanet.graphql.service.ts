@@ -29,7 +29,7 @@ export class LibplanetGraphQLService {
     };
   }
 
-  async getBlockWithIndex(index: bigint) {
+  async getBlockByIndex(index: bigint) {
     const res = await this.graphqlClient.query(gql`
       query {
         blockQuery {
@@ -51,6 +51,20 @@ export class LibplanetGraphQLService {
       txHash: res.blockQuery.block.transactionHash as string,
       transactions: res.blockQuery.block.transactions
     };
+  }
+
+  async getBlockTimestampByIndex(index: bigint) {
+    const res = await this.graphqlClient.query(gql`
+      query {
+        blockQuery {
+          block(index: ${Number(index)}) {
+            timestamp
+          }
+        }
+      }
+    `);
+
+    return res.blockQuery.block.timestamp
   }
 
   async getOutputProposal(index?: bigint | undefined) {

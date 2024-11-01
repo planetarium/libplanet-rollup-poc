@@ -8,6 +8,6 @@ import { LibplanetService } from "./libplanet.service";
   imports: [],
   controllers: [LibplanetController],
   providers: [GraphQLClientManager, LibplanetGraphQLService, LibplanetService],
-  exports: [LibplanetGraphQLService]
+  exports: [LibplanetGraphQLService, LibplanetService]
 })
 export class LibplanetModule {}

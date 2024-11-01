@@ -21,4 +21,33 @@ export class EvmPublicService {
       hash: hash,
     });
   }
+
+  public async getBlockByNumber(blockNumber: bigint) {
+    return await this.client.getBlock({
+      blockNumber: blockNumber,
+    });
+  }
+
+  public async findBlockByTimestamp(timestamp: bigint) {
+    let startBlock = 0n;
+    let endBlock = await this.client.getBlockNumber();
+    let currentBlock = await this.getBlockByNumber(startBlock);
+
+    while(startBlock <= endBlock) {
+      const midBlock = (startBlock + endBlock) / 2n;
+      const midBlockData = (await this.getBlockByNumber(midBlock))
+      const midBlockTimestamp = midBlockData.timestamp;
+
+      if (midBlockTimestamp > timestamp) {
+        endBlock = midBlock - 1n;
+      } else {
+        if (midBlockTimestamp > currentBlock.timestamp) {
+          currentBlock = midBlockData;
+        }
+        startBlock = midBlock + 1n;
+      }
+    }
+
+    return currentBlock;
+  }
 }
