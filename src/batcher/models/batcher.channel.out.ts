@@ -25,8 +25,7 @@ export class ChannelOut {
             return { isFull: true };
         }
 
-        // todo: maybe need to use a better encoding
-        var encoded = Buffer.from((stringify(batch)));
+        var encoded = this.encodeBatch(batch);
 
         if (this.encodingLength + encoded.length > MaxEncodingBytesPerChannel) {
             this.closed = true;
@@ -69,6 +68,45 @@ export class ChannelOut {
         }
     }
 
+    private encodeBatch(batch: Batch): Uint8Array {
+        var data = new Uint8Array(0);
+        const hashData = Buffer.from(batch.hash);
+        data = new Uint8Array([...data, ...hashData]);
+        const indexData = this.bigintToUint8Array(batch.index);
+        data = new Uint8Array([...data, ...indexData]);
+        if(batch.transactions.length == 0) {
+            const endData = Buffer.from([0]);
+            data = new Uint8Array([...data, ...endData]);
+            return data;
+        }
+        const txHashData = Buffer.from(batch.txHash);
+        data = new Uint8Array([...data, ...txHashData]);
+        for (const tx of batch.transactions) {
+            const txLengthData = this.numberToUint8Array(tx.length);
+            data = new Uint8Array([...data, ...txLengthData]);
+            const txData = Buffer.from(tx);
+            data = new Uint8Array([...data, ...txData]);
+        }
+
+        return data;
+    }
+
+    private numberToUint8Array(value: number): Uint8Array {
+        const data = new Uint8Array(4);
+        for (let i = 0; i < 4; i++) {
+            data[i] = (value >> 8 * (3 - i)) & 0xff;
+        }
+        return data;
+    }
+
+    private bigintToUint8Array(value: bigint): Uint8Array {
+        const data = new Uint8Array(8);
+        for (let i = 0; i < 8; i++) {
+            data[i] = Number((value >> BigInt(8 * (7 - i))) & BigInt(0xff));
+        }
+        return data;
+    }
+
     private MarshalFrame(frame: Frame): Uint8Array {
         var data = new Uint8Array(0);
         data = new Uint8Array([...data, ...frame.id]);
@@ -78,7 +116,7 @@ export class ChannelOut {
         frameNumberBytes[1] = frame.frameNumber & 0xff;
         data = new Uint8Array([...data, ...frameNumberBytes]);
 
-        const  dataLength = frame.data.length;
+        const dataLength = frame.data.length;
         const dataLengthBytes = new Uint8Array(4);
         dataLengthBytes[0] = (dataLength >> 24) & 0xff;
         dataLengthBytes[1] = (dataLength >> 16) & 0xff;

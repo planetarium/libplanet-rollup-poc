@@ -19,7 +19,7 @@ export class BatcherService {
         private readonly clientFactory: EvmClientFactory,
         private readonly keyUtils: KeyUtils,
     ) {
-        //this.batchStart();
+        this.batchStart();
     }
 
     private readonly logger = new Logger(BatcherService.name);
