@@ -5,8 +5,6 @@ import { fromBytes, hexToBytes } from "viem";
 import { MaxBlocksPerChannelManager, MaxFrameSize } from "./batcher.constants";
 import { ConfigService } from "@nestjs/config";
 import { LibplanetGraphQLService } from "src/libplanet/libplanet.graphql.service";
-import { EvmContractManager } from "src/evm/evm.contracts";
-import { EvmClientFactory } from "src/evm/evm.client.factory";
 import { KeyUtils } from "src/utils/utils.key";
 import { EvmService } from "src/evm/evm.service";
 
@@ -18,9 +16,7 @@ export class BatcherService {
         private readonly libplanetGraphQlService: LibplanetGraphQLService,
         private readonly evmService: EvmService,
         private readonly keyUtils: KeyUtils,
-    ) {
-        this.batchStart();
-    }
+    ) {}
 
     private readonly logger = new Logger(BatcherService.name);
 

@@ -8,6 +8,7 @@ import { LibplanetModule } from './libplanet/libplanet.module';
 import { ChallengerModule } from './challenger/challenger.module';
 import { BatcherModule } from './batcher/batcher.module';
 import { DeriverModule } from './deriver/deriver.module';
+import { PreoracleModule } from './preoracle/preoracle.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { DeriverModule } from './deriver/deriver.module';
     ChallengerModule,
     BatcherModule,
     DeriverModule,
+    PreoracleModule,
   ],
   controllers: [AppController],
   providers: [AppService],

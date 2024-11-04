@@ -9,9 +9,14 @@ import { BatchQueue } from "./deriver.batch.queue";
 import { KeyUtils } from "src/utils/utils.key";
 import { EvmModule } from "src/evm/evm.module";
 import { LibplanetModule } from "src/libplanet/libplanet.module";
+import { PreoracleModule } from "src/preoracle/preoracle.module";
 
 @Module({
-    imports: [LibplanetModule, EvmModule],
+    imports: [
+        LibplanetModule,
+        EvmModule,
+        PreoracleModule,
+    ],
     providers: [
         DeriverService,
         L1Retrieval,
