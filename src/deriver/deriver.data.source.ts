@@ -20,11 +20,13 @@ export class DataSource {
             var txData = tx as Transaction;
             if(txData.from.toLowerCase() === this.batcherAddress.toLowerCase()
                 && txData.to?.toLowerCase() === this.batchInboxAddress.toLowerCase()) {
-                const data = Uint8Array.from(Buffer.from(txData.input.slice(2), 'hex'));
+                const dataString = txData.input.slice(2);
+                const dataBuffer = Buffer.from(dataString, 'hex');
+                const data = Uint8Array.from(dataBuffer);
                 datas.push(data);
                 await this.preoracleService.postBatchTransaction({
                     transactionHash: txData.hash,
-                    data: data,
+                    data: dataString,
                 })
             }
         }

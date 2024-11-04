@@ -1,9 +1,10 @@
 export type BatchTransaction = {
   transactionHash: string;
-  data: Uint8Array;
+  data: string;
 }
 
 export type BlockIndex = {
+  l2BlockNumber: number;
   startingTransactionHash: string;
   startingDataIndex: number;
   endingTransactionHash: string;

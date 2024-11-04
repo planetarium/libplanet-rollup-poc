@@ -1,5 +1,10 @@
 import { Injectable } from "@nestjs/common";
-import { BatchTransaction } from "./preoracle.types";
+import { BatchTransaction, BlockIndex } from "./preoracle.types";
+
+type Data = {
+  batch_transactions: BatchTransaction[];
+  block_indices: BlockIndex[];
+}
 
 @Injectable()
 export class PreoracleService {
@@ -7,7 +12,7 @@ export class PreoracleService {
 
   public async init() {
     const { JSONFilePreset } = await import("lowdb/node");
-    this.db = await JSONFilePreset('db.json', { batch_transactions: [], block_indices: [] });
+    this.db = await JSONFilePreset<Data>('db.json', { batch_transactions: [], block_indices: [] });
     return;
   }
 
@@ -17,6 +22,9 @@ export class PreoracleService {
   }
 
   public async postBatchTransaction(batchTransacion: BatchTransaction) {
+    if(this.getBatchTransactionByHash(batchTransacion.transactionHash)) {
+      return false;
+    }
     await this.db.update(({ batch_transactions }) => batch_transactions.push(batchTransacion));
     return true;
   }
