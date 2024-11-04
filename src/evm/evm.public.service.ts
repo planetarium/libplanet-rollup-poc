@@ -25,6 +25,7 @@ export class EvmPublicService {
   public async getBlockByNumber(blockNumber: bigint) {
     return await this.client.getBlock({
       blockNumber: blockNumber,
+      includeTransactions: true,
     });
   }
 

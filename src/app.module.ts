@@ -7,6 +7,7 @@ import { EvmModule } from './evm/evm.module';
 import { LibplanetModule } from './libplanet/libplanet.module';
 import { ChallengerModule } from './challenger/challenger.module';
 import { BatcherModule } from './batcher/batcher.module';
+import { DeriverModule } from './deriver/deriver.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { BatcherModule } from './batcher/batcher.module';
     LibplanetModule,
     ChallengerModule,
     BatcherModule,
+    DeriverModule,
   ],
   controllers: [AppController],
   providers: [AppService],

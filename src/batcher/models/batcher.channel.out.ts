@@ -74,11 +74,13 @@ export class ChannelOut {
         data = new Uint8Array([...data, ...hashData]);
         const indexData = this.bigintToUint8Array(batch.index);
         data = new Uint8Array([...data, ...indexData]);
+
         if(batch.transactions.length == 0) {
             const endData = Buffer.from([0]);
             data = new Uint8Array([...data, ...endData]);
             return data;
         }
+
         const txHashData = Buffer.from(batch.txHash);
         data = new Uint8Array([...data, ...txHashData]);
         for (const tx of batch.transactions) {
@@ -87,7 +89,7 @@ export class ChannelOut {
             const txData = Buffer.from(tx);
             data = new Uint8Array([...data, ...txData]);
         }
-
+        
         return data;
     }
 

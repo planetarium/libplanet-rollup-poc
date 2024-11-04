@@ -22,21 +22,28 @@ export class BatchReader{
         var batchData = this.data.slice(0, batchLength);
         this.data = this.data.slice(batchLength);
 
-        var batchString = Buffer.from(batchData).toString();
-        var batch = JSON.parse(batchString);
-        batch.index = BigInt(batch.index);
+        var batch = this.decodeBatch(batchData);
         batch = batch as Batch;
 
         return batch;
     }
 
     private decodeBatch(data: Uint8Array): Batch {
-        const hash = Buffer.from(data.slice(0, 32));
-        data = data.slice(32);
+        const hash = Buffer.from(data.slice(0, 64));
+        data = data.slice(64);
         const index = this.uint8ArrayToBigint(data.slice(0, 8));
         data = data.slice(8);
-        const txHash = Buffer.from(data.slice(0, 32));
-        data = data.slice(32);
+        if (data[0] == 0) {
+            data = data.slice(1);
+            return {
+                hash: hash.toString(),
+                index: index,
+                txHash: "",
+                transactions: []
+            }
+        }
+        const txHash = Buffer.from(data.slice(0, 64));
+        data = data.slice(64);
         const transactions: Uint8Array[] = [];
         while (data.length > 0) {
             const txLength = this.uint8ArrayToNumber(data.slice(0, 4));

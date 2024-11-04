@@ -14,7 +14,9 @@ export class DeriverService {
         private readonly configService: ConfigService,
         private readonly evmService: EvmService,
         private readonly libplanetService: LibplanetService,
-    ) {}
+    ) {
+        this.deriveStart();
+    }
 
     private readonly logger = new Logger(DeriverService.name);
     
@@ -30,7 +32,7 @@ export class DeriverService {
     derivatedLatestBlockIndex: bigint = 0n;
     derivatedOldestBlockIndex: bigint = 0n;
 
-    public async derivateStart() {
+    public async deriveStart() {
 
         if(this.deriving){
             throw new Error("Already deriving");
