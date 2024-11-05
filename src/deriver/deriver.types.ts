@@ -4,13 +4,31 @@ export enum DataStatus {
     ProcessingData
 }
 
+export type BatchTransaction = {
+    transactionHash: string;
+    data: Uint8Array;
+  }
+
 export type ChannelID = Uint8Array;
+
+export type ChannelData = {
+    data: Uint8Array;
+    frameInfos: FrameInfo[];
+}
+
+export type FrameInfo = {
+    transactionHash: string;
+    dataLength: number;
+}
 
 export type Frame = {
     id: ChannelID;
     frameNumber: number;
     data: Uint8Array;
     isLast: boolean;
+
+    transactionHash: string;
+    dataLength: number;
 }
 
 export type Batch = {

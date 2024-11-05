@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { DataStatus } from "./deriver.types";
+import { BatchTransaction, DataStatus } from "./deriver.types";
 import { Block, BlockNotFoundError } from "viem";
 import { DataSource } from "./deriver.data.source";
 import { EvmService } from "src/evm/evm.service";
@@ -12,9 +12,9 @@ export class L1Retrieval {
     ) {}
 
     l1BlockNumber: bigint = 0n;
-    datas: Uint8Array[] = [];
+    datas: BatchTransaction[] = [];
 
-    public async nextData(): Promise<Uint8Array | DataStatus> {
+    public async nextData(): Promise<BatchTransaction | DataStatus> {
         if (this.datas.length === 0) {
             var next = await this.nextL1Block();
             if (next === DataStatus.EOF) {
@@ -28,7 +28,7 @@ export class L1Retrieval {
         }
 
         if (this.datas.length > 0) {
-            return this.datas.shift() as Uint8Array;
+            return this.datas.shift() as BatchTransaction;
         } else {
             return DataStatus.NotEnoughData;
         }

@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { L1Retrieval } from "./dertiver.l1.retrieval";
-import { DataStatus, Frame } from "./deriver.types";
+import { Batch, BatchTransaction, DataStatus, Frame } from "./deriver.types";
 
 @Injectable()
 export class FrameQueue {
@@ -18,7 +18,7 @@ export class FrameQueue {
             } else if (next === DataStatus.NotEnoughData) {
                 return DataStatus.NotEnoughData;
             } else {
-                var data = next as Uint8Array;
+                var data = next as BatchTransaction;
                 this.frames.push(this.unmarshalFrame(data));
 
                 // todo: maybe there would be a better way to handle this
@@ -35,7 +35,8 @@ export class FrameQueue {
         }
     }
 
-    private unmarshalFrame(input: Uint8Array): Frame {
+    private unmarshalFrame(batchTransaction: BatchTransaction): Frame {
+        var input = batchTransaction.data;
         var dataLength = input.length;
         var id = input.slice(0, 16);
         var buffer = Buffer.from(input.slice(16, 18));
@@ -47,7 +48,10 @@ export class FrameQueue {
             id: id,
             frameNumber: frameNumber,
             data: data,
-            isLast: isLast
+            isLast: isLast,
+
+            transactionHash: batchTransaction.transactionHash,
+            dataLength: dataLength,
         }
     }
 }

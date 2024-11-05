@@ -1,4 +1,4 @@
-import { ChannelID, Frame } from "../deriver.types";
+import { ChannelData, ChannelID, Frame, FrameInfo } from "../deriver.types";
 
 export class Channel {
     id: ChannelID;
@@ -47,12 +47,13 @@ export class Channel {
         return true;
     }
 
-    public reader(): Uint8Array {
+    public reader(): ChannelData {
         if (!this.isReady()) {
             throw new Error("Channel is not ready");
         }
     
         var data: Uint8Array[] = [];
+        var frameInfos: FrameInfo[] = [];
         for (var i = 0; i <= this.endFrameNumber; i++) {
             var frame = this.inputs.get(i);
             if (!frame) {
@@ -60,8 +61,15 @@ export class Channel {
             }
     
             data.push(frame.data);
+            frameInfos.push({
+                transactionHash: frame.transactionHash,
+                dataLength: frame.dataLength,
+            });
         }
     
-        return new Uint8Array(data.flatMap(a => Array.from(a)));
+        return {
+            data: new Uint8Array(data.flatMap(a => Array.from(a))),
+            frameInfos: frameInfos,
+        };
     }
 }

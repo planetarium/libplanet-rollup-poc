@@ -1,10 +1,22 @@
-import { Batch, DataStatus } from "../deriver.types";
+import { PreoracleService } from "src/preoracle/preoracle.service";
+import { Batch, ChannelData, DataStatus, FrameInfo } from "../deriver.types";
 
 export class BatchReader{
+    private readonly preoracleService: PreoracleService;
+
     data: Uint8Array;
+    frameInfos: FrameInfo[] = [];
+
+    currentIndex: number = 0;
+    currentFrameNumber: number = 0;
     
-    constructor(data: Uint8Array){
-        this.data = data;
+    constructor(
+        preoracleService: PreoracleService,
+        channelData: ChannelData,
+    ){
+        this.preoracleService = preoracleService;
+        this.data = channelData.data;
+        this.frameInfos = channelData.frameInfos;
     }
 
     public async nextBatch(): Promise<Batch | DataStatus> {
@@ -14,6 +26,7 @@ export class BatchReader{
 
         var batchLengthBytes = Buffer.from(this.data.slice(0, 4));
         this.data = this.data.slice(4);
+        var startingL1BatchIndex = this.getL1BatchIndex(4);
         var batchLength = batchLengthBytes.readUInt32BE(0);
         if (this.data.length < batchLength) {
             throw new Error("BatchReader: nextBatch: not enough data");
@@ -21,11 +34,46 @@ export class BatchReader{
 
         var batchData = this.data.slice(0, batchLength);
         this.data = this.data.slice(batchLength);
+        var endingL1BatchIndex = this.getL1BatchIndex(batchLength);
 
         var batch = this.decodeBatch(batchData);
         batch = batch as Batch;
 
+        await this.preoracleService.postBlockIndex({
+            l2BlockNumber: Number(batch.index),
+            startingTransactionHash: startingL1BatchIndex.l1transactionHash,
+            startingDataIndex: startingL1BatchIndex.l1transactionIndex,
+            endingTransactionHash: endingL1BatchIndex.l1transactionHash,
+            endingDataIndex: endingL1BatchIndex.l1transactionIndex,
+        })
+
         return batch;
+    }
+
+    private getL1BatchIndex(index: number): {
+        l1transactionHash: string;
+        l1transactionIndex: number;
+    } {
+        this.currentIndex += index;
+        const frameDataLength = this.frameInfos[this.currentFrameNumber].dataLength;
+        var l1transactionHash = "";
+        var l1transactionIndex = 0;
+
+
+        if (this.currentIndex >= frameDataLength) {
+            this.currentIndex -= frameDataLength;
+            this.currentFrameNumber++;
+            l1transactionHash = this.frameInfos[this.currentFrameNumber].transactionHash;
+            l1transactionIndex = this.currentIndex;
+        } else {
+            l1transactionHash = this.frameInfos[this.currentFrameNumber].transactionHash;
+            l1transactionIndex = this.currentIndex;
+        }
+
+        return {
+            l1transactionHash: l1transactionHash,
+            l1transactionIndex: l1transactionIndex
+        };
     }
 
     private decodeBatch(data: Uint8Array): Batch {

@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { FrameQueue } from "./deriver.frame.queue";
-import { ChannelID, DataStatus, Frame } from "./deriver.types";
+import { ChannelData, ChannelID, DataStatus, Frame } from "./deriver.types";
 import { Channel } from "./models/deriver.channel";
 
 @Injectable()
@@ -12,7 +12,7 @@ export class ChannelBank {
     channels: Map<string, Channel> = new Map();
     channelQueue: ChannelID[] = [];
 
-    public async nextData(): Promise<Uint8Array | DataStatus> {
+    public async nextData(): Promise<ChannelData | DataStatus> {
         var data = await this.read();
         if (data === DataStatus.EOF) {
             var next = await this.frameQueue.nextFrame();
@@ -30,7 +30,7 @@ export class ChannelBank {
         return data;
     }
 
-    private async read(): Promise<Uint8Array | DataStatus> {
+    private async read(): Promise<ChannelData | DataStatus> {
         if (this.channelQueue.length === 0) {
             return DataStatus.EOF;
         }

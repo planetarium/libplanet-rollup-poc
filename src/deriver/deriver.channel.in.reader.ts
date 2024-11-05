@@ -1,12 +1,14 @@
 import { Injectable } from "@nestjs/common";
 import { ChannelBank } from "./deriver.channel.bank";
 import { BatchReader } from "./models/deriver.batch.reader";
-import { Batch, DataStatus } from "./deriver.types";
+import { Batch, ChannelData, DataStatus } from "./deriver.types";
+import { PreoracleService } from "src/preoracle/preoracle.service";
 
 @Injectable()
 export class ChannelInReader {
     constructor(
         private readonly channelBank: ChannelBank,
+        private readonly preoracleService: PreoracleService,
     ) {}
 
     batchReader?: BatchReader
@@ -21,7 +23,7 @@ export class ChannelInReader {
             } else if (next === DataStatus.ProcessingData) {
                 return DataStatus.ProcessingData;
             } else {
-                this.batchReader = new BatchReader(next as Uint8Array);
+                this.batchReader = new BatchReader(this.preoracleService, next as ChannelData);
             }
         }
 

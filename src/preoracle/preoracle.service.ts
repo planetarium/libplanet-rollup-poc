@@ -13,6 +13,7 @@ export class PreoracleService {
   public async init() {
     const { JSONFilePreset } = await import("lowdb/node");
     this.db = await JSONFilePreset<Data>('db.json', { batch_transactions: [], block_indices: [] });
+
     return;
   }
 
@@ -26,6 +27,19 @@ export class PreoracleService {
       return false;
     }
     await this.db.update(({ batch_transactions }) => batch_transactions.push(batchTransacion));
+    return true;
+  }
+
+  public getBlockIndexByL2BlockNumber(l2BlockNumber: number) {
+    const { block_indices } = this.db.data;
+    return block_indices.find((index) => index.l2BlockNumber === l2BlockNumber);
+  }
+
+  public async postBlockIndex(blockIndex: BlockIndex) {
+    if(this.getBlockIndexByL2BlockNumber(blockIndex.l2BlockNumber)) {
+      return false;
+    }
+    await this.db.update(({ block_indices }) => block_indices.push(blockIndex));
     return true;
   }
 }
