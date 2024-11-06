@@ -1,8 +1,9 @@
 import { Module } from "@nestjs/common";
 import { PreoracleService } from "./preoracle.service";
+import { LibplanetModule } from "src/libplanet/libplanet.module";
 
 @Module({
-  imports: [],
+  imports: [LibplanetModule],
   providers: [PreoracleService],
   exports: [PreoracleService],
 })

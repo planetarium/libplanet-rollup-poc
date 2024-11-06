@@ -17,6 +17,6 @@ export class AppService {
     await this.preoracleService.init();
 
     //this.batcherService.batchStart();
-    this.deriverService.deriveStart();
+    //this.deriverService.deriveStart();
   }
 }

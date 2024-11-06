@@ -23,4 +23,14 @@ export class LibplanetService {
     const timestamp = Math.floor(date.getTime() / 1000);
     return BigInt(timestamp);
   }
+
+  public async getBlockByIndex(index: bigint) {
+    const block = await this.graphQlService.getBlockByIndex(index);
+    return {
+      hash: block.hash,
+      index: block.index,
+      txHash: block.txHash,
+      transactions: block.transactions
+    };
+  }
 }

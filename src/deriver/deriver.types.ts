@@ -45,6 +45,21 @@ export type Block = {
     transactions: Transaction[];
 }
 
+export function compareBlock(a: Block, b: Block): boolean {
+    var isEqual = true;
+    isEqual = isEqual && a.hash === b.hash;
+    isEqual = isEqual && a.index === b.index;
+    isEqual = isEqual && a.txHash === b.txHash;
+    isEqual = isEqual && a.transactions.length === b.transactions.length;
+    if(a.transactions.length > 0) {
+        for(var i = 0; i < a.transactions.length; i++) {
+            isEqual = isEqual && a.transactions[i].serializedPayload === b.transactions[i].serializedPayload;
+        }
+    }
+
+    return isEqual;
+}
+
 export type Transaction = {
     serializedPayload: string;
 }
