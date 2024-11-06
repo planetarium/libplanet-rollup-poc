@@ -64,3 +64,4 @@ bridge/ignition/deployments
 bridge/typechain-types
 
 db.json
+.db.json.tmp
