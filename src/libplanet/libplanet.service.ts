@@ -33,4 +33,12 @@ export class LibplanetService {
       transactions: block.transactions
     };
   }
+
+  public async getOutputRootInfoByBlockIndex(index: bigint) {
+    const outputRoot = await this.graphQlService.getOutputProposal(index);
+    return {
+      root: outputRoot.outputRoot,
+      l2BlockNumber: outputRoot.blockIndex
+    }
+  }
 }

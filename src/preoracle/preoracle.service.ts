@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { BatchTransaction, BlockIndex } from "./preoracle.types";
 import { Batch, Block, compareBlock } from "src/deriver/deriver.types";
 import { LibplanetService } from "src/libplanet/libplanet.service";
+import { ConfigService } from "@nestjs/config";
 
 type Data = {
   batch_transactions: BatchTransaction[];
@@ -11,6 +12,7 @@ type Data = {
 @Injectable()
 export class PreoracleService {
   constructor(
+    private readonly configService: ConfigService,
     private readonly libplanetService: LibplanetService,
   ) {}
 
@@ -23,7 +25,7 @@ export class PreoracleService {
     const { JSONFilePreset } = await import("lowdb/node");
     this.db = await JSONFilePreset<Data>('db.json', { batch_transactions: [], block_indices: [] });
 
-    await this.dbSanityCheck();
+    //await this.dbSanityCheck();
 
     return;
   }
@@ -34,6 +36,10 @@ export class PreoracleService {
   }
 
   public async postBatchTransaction(batchTransacion: BatchTransaction) {
+    if(!this.configService.get('challenger.enabled')) {
+      return false;
+    }
+
     if(this.getBatchTransactionByHash(batchTransacion.transactionHash)) {
       return false;
     }
@@ -52,6 +58,10 @@ export class PreoracleService {
   }
 
   public async postBlockIndex(blockIndex: BlockIndex) {
+    if(!this.configService.get('challenger.enabled')) {
+      return false;
+    }
+
     if(this.getBlockIndexByL2BlockNumber(blockIndex.l2BlockNumber)) {
       return false;
     }
@@ -113,9 +123,6 @@ export class PreoracleService {
       const block = this.batchToBlock(batch);
       
       const comparedBlock = await this.libplanetService.getBlockByIndex(block.index);
-      if(!comparedBlock.txHash) {
-        comparedBlock.txHash = "";
-      }
       if(!compareBlock(block, comparedBlock)) {
         throw new Error('Block data not matched');
       }

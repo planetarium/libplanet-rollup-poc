@@ -39,7 +39,10 @@ export class DeriverService {
         if(l1OutputBlockIndex === 0n) {
             const anchor = await this.evmService.getAnchor();
             const latestAnchorTimestamp = await this.libplanetService.getBlockTimestampByIndex(anchor.l2BlockNumber);
-            const l1StartingBlockNumber = await this.evmService.findBlockIndexByTimestamp(latestAnchorTimestamp);
+            const l1latestAnchorBlockNumber = await this.evmService.findBlockIndexByTimestamp(latestAnchorTimestamp);
+            const anchorContractDeployedBlockNumber = BigInt(this.evmService.getAnchorContractDeployedBlockNumber());
+            const l1StartingBlockNumber = l1latestAnchorBlockNumber > anchorContractDeployedBlockNumber 
+                ? l1latestAnchorBlockNumber : anchorContractDeployedBlockNumber;
             if (l1StartingBlockNumber === undefined) {
                 throw new Error("Failed to get latest output root block index");
             }
@@ -85,7 +88,7 @@ export class DeriverService {
         return this.deriving;
     }
 
-    public derivateStop() {
+    public deriveStop() {
         this.deriving = false;
     }
 

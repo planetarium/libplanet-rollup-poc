@@ -6,11 +6,11 @@ export class BatchReader{
 
     private readonly FRAME_INFO_LENGTH = 23;
 
-    data: Uint8Array;
-    frameInfos: FrameInfo[] = [];
+    private data: Uint8Array;
+    private frameInfos: FrameInfo[] = [];
 
-    currentIndex: number = 0;
-    currentFrameNumber: number = 0;
+    private currentIndex: number = 0;
+    private currentFrameNumber: number = 0;
     
     constructor(
         preoracleService: PreoracleService,
@@ -47,7 +47,7 @@ export class BatchReader{
             startingDataIndex: startingL1BatchIndex.l1transactionIndex,
             endingTransactionHash: endingL1BatchIndex.l1transactionHash,
             endingDataIndex: endingL1BatchIndex.l1transactionIndex,
-        })
+        });
 
         return batch;
     }

@@ -49,6 +49,12 @@ export function compareBlock(a: Block, b: Block): boolean {
     var isEqual = true;
     isEqual = isEqual && a.hash === b.hash;
     isEqual = isEqual && a.index === b.index;
+    if(!a.txHash) {
+        a.txHash = "";
+    }
+    if(!b.txHash) {
+        b.txHash = "";
+    }
     isEqual = isEqual && a.txHash === b.txHash;
     isEqual = isEqual && a.transactions.length === b.transactions.length;
     if(a.transactions.length > 0) {

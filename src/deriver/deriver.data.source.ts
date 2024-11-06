@@ -31,7 +31,7 @@ export class DataSource {
                 await this.preoracleService.postBatchTransaction({
                     transactionHash: txData.hash,
                     data: dataString,
-                })
+                });
             }
         }
         return datas;

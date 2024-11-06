@@ -9,6 +9,7 @@ import { ChallengerModule } from './challenger/challenger.module';
 import { BatcherModule } from './batcher/batcher.module';
 import { DeriverModule } from './deriver/deriver.module';
 import { PreoracleModule } from './preoracle/preoracle.module';
+import { ProposerModule } from './proposer/proposer.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { PreoracleModule } from './preoracle/preoracle.module';
     ChallengerModule,
     BatcherModule,
     DeriverModule,
+    ProposerModule,
     PreoracleModule,
   ],
   controllers: [AppController],
