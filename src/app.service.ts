@@ -33,6 +33,6 @@ export class AppService {
     this.deriverService.deriveStart();
     this.proposerService.proposeStart();
 
-    // this.challengerService.init();
+    this.challengerService.init();
   }
 }

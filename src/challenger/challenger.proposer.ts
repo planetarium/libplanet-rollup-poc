@@ -26,11 +26,12 @@ export class ChallengerPropser {
 
   private initialized: boolean = false;
 
+  private readonly logEnabled = this.configService.get('proposer.debug', false);
   private readonly logger = new Logger(ChallengerPropser.name);
 
   private log(log: any) {
-    if(this.configService.get('proposer.debug', false)) {
-      this.log(log);
+    if(this.logEnabled) {
+      this.logger.log(log);
     }
   }
 
@@ -66,7 +67,7 @@ export class ChallengerPropser {
       latestValidAnchor.l2BlockNumber
     ])
     const gameAddress = fromHex(game[0], 'number');
-    if(gameAddress === 0) {
+    if(gameAddress != 0) {
       this.log(`Game already exists`);
       return;
     }

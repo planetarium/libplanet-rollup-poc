@@ -16,10 +16,11 @@ export class DeriverService {
         private readonly libplanetService: LibplanetService,
     ) {}
 
+    private readonly logEnabled = this.configService.get('deriver.debug', false);
     private readonly logger = new Logger(DeriverService.name);
     
     private log(log: any) {
-        if(this.configService.get('deriver.debug', false)) {
+        if(this.logEnabled) {
             this.logger.log(log);
         }
     }

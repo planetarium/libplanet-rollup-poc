@@ -15,10 +15,11 @@ export class ProposerService {
         private readonly deriverService: DeriverService,
     ) {}
 
+    private readonly logEnabled = this.configService.get('proposer.debug', false);
     private readonly logger = new Logger(ProposerService.name);
     
     private log(log: any) {
-        if(this.configService.get('proposer.debug', false)) {
+        if(this.logEnabled) {
             this.logger.log(log);
         }
     }
@@ -93,6 +94,7 @@ export class ProposerService {
                 continue;
             } else {
                 var blocksInfo = res as BlocksInfo;
+                blocksInfo.blocks = this.removeUnecessaryBlocks(blocksInfo.blocks, this.latestProposedBlockIndex);
 
                 if(!await this.checkBlocksSanity(blocksInfo.blocks)) {
                     this.sequencerIsDown("Failed to check blocks sanity");
@@ -135,6 +137,10 @@ export class ProposerService {
 
     public proposeStop() {
         this.proposing = false;
+    }
+
+    private removeUnecessaryBlocks(blocks: Block[], latestBlockIndex: bigint): Block[] {
+        return blocks.filter(block => block.index > latestBlockIndex);
     }
 
     private async checkBlocksSanity(blocks: Block[]): Promise<boolean> {
