@@ -10,10 +10,10 @@ const FaultProofModule = buildModule('FaultProofModule', (m) => {
         }
     ]);
     
-    const maxGameDepth = m.getParameter('_maxGameDepth', 10n);
-    const splitDepth = m.getParameter('_splitDepth', 5n);
-    const maxClockDuration = m.getParameter('_maxClockDuration', 3600n);
-    const clockExtension = m.getParameter('_clockExtension', 300n);
+    const maxGameDepth = m.getParameter('_maxGameDepth', 30n);
+    const splitDepth = m.getParameter('_splitDepth', 11n);
+    const maxClockDuration = m.getParameter('_maxClockDuration', 600n);
+    const clockExtension = m.getParameter('_clockExtension', 30n);
     
     const faultDisputeGame = m.contract("FaultDisputeGame", [
         maxGameDepth, splitDepth, maxClockDuration, clockExtension, anchorStateRegistry

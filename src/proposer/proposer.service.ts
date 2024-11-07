@@ -18,7 +18,9 @@ export class ProposerService {
     private readonly logger = new Logger(ProposerService.name);
     
     private log(log: any) {
-        this.logger.log(log);
+        if(this.configService.get('proposer.debug', false)) {
+            this.logger.log(log);
+        }
     }
 
     private readonly TIME_INTERVAL = this.configService.get('proposer.time_interval', 10000);
@@ -32,6 +34,10 @@ export class ProposerService {
     private invalidSanityCount: number = 0;
 
     private latestValidOutputRootInfo: OutputRootInfo | undefined = undefined;
+
+    public getLatestValidOutputRootInfo(): OutputRootInfo | undefined {
+        return this.latestValidOutputRootInfo;
+    }
 
     public async proposeStart(): Promise<void> {
         if (this.proposing) {

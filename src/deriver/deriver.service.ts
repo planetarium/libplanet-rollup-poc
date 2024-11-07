@@ -19,7 +19,9 @@ export class DeriverService {
     private readonly logger = new Logger(DeriverService.name);
     
     private log(log: any) {
-        this.logger.log(log);
+        if(this.configService.get('deriver.debug', false)) {
+            this.logger.log(log);
+        }
     }
 
     private readonly TIME_INTERVAL = this.configService.get('deriver.time_interval', 10000);

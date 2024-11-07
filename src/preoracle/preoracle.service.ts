@@ -25,7 +25,8 @@ export class PreoracleService {
     const { JSONFilePreset } = await import("lowdb/node");
     this.db = await JSONFilePreset<Data>('db.json', { batch_transactions: [], block_indices: [] });
 
-    //await this.dbSanityCheck();
+    // // for testing purpose
+    // await this.dbSanityCheck();
 
     return;
   }
@@ -69,6 +70,7 @@ export class PreoracleService {
     return true;
   }
 
+  // for testing purpose
   private async dbSanityCheck() {
     const blockIndicesNumber = this.countBlockIndices();
     for(let i = 1; i <= blockIndicesNumber; i++) {

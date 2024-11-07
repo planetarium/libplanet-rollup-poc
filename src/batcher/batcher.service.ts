@@ -21,7 +21,9 @@ export class BatcherService {
     private readonly logger = new Logger(BatcherService.name);
 
     private log(log: any) {
-        this.logger.log(log);
+        if(this.configService.get('batcher.debug', false)) {
+            this.logger.log(log);
+        }
     }
 
     private readonly TIME_INTERVAL = this.configService.get('batcher.time_interval', 10000);
