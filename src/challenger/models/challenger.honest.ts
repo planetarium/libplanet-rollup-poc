@@ -1,116 +1,160 @@
-import { EvmClientFactory } from "src/evm/evm.client.factory";
-import { EvmContractManager } from "src/evm/evm.contracts";
 import { LibplanetGraphQLService } from "src/libplanet/libplanet.graphql.service";
 import { ClaimData, claimDataWrap, claimId, FaultDisputeGameStatus } from "../challenger.type";
 import { EvmPublicService } from "src/evm/evm.public.service";
-import { getAddress, parseAbiItem, parseEventLogs } from "viem";
+import { parseAbiItem, parseEventLogs } from "viem";
 import { Logger } from "@nestjs/common";
 import { OutputRootProvider } from "./challenger.outputroot.provider";
 import { HonestClaimTracker } from "./honest.claim.tracker";
 import { Position } from "../challenger.position";
-import { max } from "rxjs";
+import { ConfigService } from "@nestjs/config";
+import { FaultDisputeGameBuilder } from "./faultdisputegame.builder";
+import { ClaimResolver } from "./claim.resolver";
 
 export class ChallengerHonest {
   constructor(
-    private readonly clientFactory: EvmClientFactory,
-    private readonly contractManager: EvmContractManager,
+    private readonly configService: ConfigService,
+    private readonly faultDisputeGameBuilder: FaultDisputeGameBuilder,
     private readonly libplanetGraphQlService: LibplanetGraphQLService,
     private readonly evmPublicService: EvmPublicService,
-  ){}
+  ){
+    const disputeGameProxy = this.faultDisputeGameBuilder.build().address;
+    this.CHALLENGER_ID = disputeGameProxy.slice(2, 5);
+    this.logger = new Logger(`ChallengerHonest-${this.CHALLENGER_ID}`);
 
-  private walletClient;
+    this.claimResolver = new ClaimResolver(this.faultDisputeGameBuilder);
+  }
+
+  private readonly CHALLENGER_ID: string;
+  private readonly logger: Logger;
+
+  private readonly logEnabled = this.configService.get('challenger.debug', false);
+  private log(log: any) {
+    if(this.logEnabled) {
+      this.logger.log(log);
+    }
+  }
+
+  private readonly TIME_INTERVAL = this.configService.get('challenger.time_interval', 3000);
+
+  private readonly claimResolver: ClaimResolver;
+
+  private agreedClaims: HonestClaimTracker = new HonestClaimTracker();
 
   private initialized: boolean = false;
 
-  private readonly logger = new Logger(ChallengerHonest.name);
+  private splitDepth: number = 0;
+  private maxDepth: number = 0;
+  private maxClockDuration: bigint = 0n;
 
   public async init() {
     if (this.initialized) {
       throw new Error("Already initialized");
     }
 
-    this.walletClient = await this.clientFactory.newWalletClient();
-    var res = this.evmPublicService.waitForTransactionReceipt(this.walletClient.txHash);
-    const privateKey = this.walletClient.privateKey;
-
-    const faultDisputeGameFactory = this.contractManager.getFaultDisputeGameFactory(privateKey);
-
     this.initialized = true;
+    this.log(`Initialized`);
+
+    const faultDisputeGame = this.faultDisputeGameBuilder.build();
+    const prestateBlockIndex = await faultDisputeGame.read.startingBlockNumber();
+    const poststateBlockIndex = await faultDisputeGame.read.l2BlockNumber();
+    this.splitDepth = Number(await faultDisputeGame.read.splitDepth());
+    this.maxDepth = Number(await faultDisputeGame.read.maxGameDepth());
+    this.maxClockDuration = await faultDisputeGame.read.maxClockDuration();
+    const outputRootProvider = new OutputRootProvider(this.libplanetGraphQlService, prestateBlockIndex, poststateBlockIndex, this.splitDepth);
+
+    const rootClaimData = claimDataWrap(await faultDisputeGame.read.claimData([0n]));
+    const rootClaimAgreed = await this.agreeWithRootClaim(rootClaimData, outputRootProvider);
+
+    if(rootClaimAgreed){
+      this.log(`Root claim is agreed`);
+      const claimData = claimDataWrap(await faultDisputeGame.read.claimData([0n]));
+      this.agreedClaims.addHonestClaim(undefined, claimData);
+    }
 
     while(this.initialized) {
-      await this.delay(3000);
-
-      const gameCount = await faultDisputeGameFactory.read.gameCount();
-      if(gameCount === 0n){
-        continue;
-      }
-      const gameIndex = gameCount - 1n;
-      const gameAtIndex = await faultDisputeGameFactory.read.gameAtIndex([gameIndex]);
-      const proxy = gameAtIndex[1];
-      const faultDisputeGame = this.contractManager.getFaultDisputeGame(proxy, privateKey);
+      await this.delay(this.TIME_INTERVAL);
 
       const status = await faultDisputeGame.read.status() as FaultDisputeGameStatus;
       if(status === FaultDisputeGameStatus.IN_PROGRESS){
-        await this.action(faultDisputeGame);
+        const currentTimestamp = await this.evmPublicService.getLatestBlockTimestamp();
+
+        const claimDataLen = await faultDisputeGame.read.claimDataLen();
+        var claims: ClaimData[] = [];
+        var claimIds = new Map<`0x${string}`, boolean>();
+        for(let i = 0n; i < claimDataLen; i++) {
+          claims.push(claimDataWrap(await faultDisputeGame.read.claimData([i])));
+          claimIds.set(claimId(claims[Number(i)]), true);
+        }
+
+        const resolvedAllClaims = await this.claimResolver.tryResolveAllClaims(claims, currentTimestamp, this.maxClockDuration);
+        if(resolvedAllClaims) {
+          this.log(`All claims resolved`);
+          await faultDisputeGame.write.resolve();
+          continue;
+        } else {
+          this.log(`Not all claims resolved yet`);
+        }
+
+        if(claimDataLen === 1n && rootClaimAgreed) {
+          this.log(`Root claim is agreed and no other claims exist`);
+          continue;
+        }
+
+        await this.action(
+          claims,
+          outputRootProvider
+        );
       } else {
         this.initialized = false;
-        this.logger.log(`Game ${gameIndex} is finished`);
+        this.log(`Game is already resolved`);
+        return;
       }
     }
   }
 
-  private async action(faultDisputeGame: any) {
-    const prestateBlockIndex = await faultDisputeGame.read.startingBlockNumber();
-    const poststateBlockIndex = await faultDisputeGame.read.l2BlockNumber();
-    const splitDepth = await faultDisputeGame.read.splitDepth();
-    const maxDepth = await faultDisputeGame.read.maxGameDepth();
-    const outputRootProvider = new OutputRootProvider(this.libplanetGraphQlService, prestateBlockIndex, poststateBlockIndex, Number(maxDepth));
-
-    const rootClaimAgreed = await this.agreeWithRootClaim(faultDisputeGame, outputRootProvider);
+  private async action(claims: ClaimData[], outputRootProvider: OutputRootProvider) {
+    const faultDisputeGame = this.faultDisputeGameBuilder.build();
 
     var claims: ClaimData[] = [];
     var claimIds = new Map<`0x${string}`, boolean>();
     const claimDataLen = await faultDisputeGame.read.claimDataLen();
-    for(let i = 0; i < claimDataLen; i++){
+    for(let i = 0n; i < claimDataLen; i++) {
       claims.push(claimDataWrap(await faultDisputeGame.read.claimData([i])));
-      claimIds.set(claimId(claims[i]), true);
+      claimIds.set(claimId(claims[Number(i)]), true);
     }
-
-    const agreedClaims = new HonestClaimTracker();
-    if(rootClaimAgreed){
-      agreedClaims.addHonestClaim(undefined, claims[0]);
-    }
+    
     for(let i = 1; i < claims.length; i++){
       const claim = claims[i];
       const depth = claim.position.depth();
-      if(depth == maxDepth){
-        this.step();
-        continue;
+      if(depth === this.maxDepth){
+        await this.step();
       } else {
-        const newClaimData = await this.move(faultDisputeGame, outputRootProvider, i, claim, agreedClaims, claimIds);
-        if(newClaimData !== undefined){
-          agreedClaims.addHonestClaim(claim, newClaimData);
+        if(depth < this.splitDepth){
+          await this.move(outputRootProvider, i, claim, this.agreedClaims, claimIds);
         }
       }
     }
   }
 
-  private step() {
-    this.logger.log('Honest: Step');
+  private async step() {
+    this.log('Honest: Step');
   }
 
   private async move(
-    faultDisputeGame: any,
     outputRootProvider: OutputRootProvider,
     claimDataIndex: number,
     claimData: ClaimData,
     agreedClaims: HonestClaimTracker,
     claimIds: Map<`0x${string}`, boolean>
   ) {
-    const shouldCounter = await this.shouldCounter(faultDisputeGame, claimData, agreedClaims);
+    const faultDisputeGame = this.faultDisputeGameBuilder.build();
+
+    const shouldCounter = await this.shouldCounter(claimData, agreedClaims);
     if(!shouldCounter){
       return;
     }
+
+    this.log(`Honest: need to count ${claimData.position.getValue()}`);
 
     const parentClaimPosition = claimData.position;
     const parentClaim = claimData.claim;
@@ -133,14 +177,14 @@ export class ChallengerHonest {
         clock: 0n,
       } as ClaimData;
 
-      agreedClaims.addHonestClaim(claimData, newClaimData);
+      this.agreedClaims.addHonestClaim(claimData, newClaimData);
       const newClaimId = claimId(newClaimData);
       if(claimIds.has(newClaimId)){
         return;
       }
 
-      txHash = await faultDisputeGame.write.attack([parentClaim, claimDataIndex, claim]);
-      this.logger.log(`Honest: Attack: ${parentClaimPosition.getValue()} ${claimPosition.getValue()}`);
+      txHash = await faultDisputeGame.write.attack([parentClaim, BigInt(claimDataIndex), claim as `0x${string}`]);
+      this.log(`Honest: Attack: ${parentClaimPosition.getValue()} ${claimPosition.getValue()}`);
     } else {
       const claimPosition = parentClaimPosition.defend();
       const claim = await outputRootProvider.get(claimPosition);
@@ -155,14 +199,14 @@ export class ChallengerHonest {
         clock: 0n,
       } as ClaimData;
 
-      agreedClaims.addHonestClaim(claimData, newClaimData);
+      this.agreedClaims.addHonestClaim(claimData, newClaimData);
       const newClaimId = claimId(newClaimData);
       if(claimIds.has(newClaimId)){
         return;
       }
 
-      txHash = await faultDisputeGame.write.defend([parentClaim, claimDataIndex, claim]);
-      this.logger.log(`Honest: Defend: ${parentClaimPosition.getValue()} ${claimPosition.getValue()}`);
+      txHash = await faultDisputeGame.write.defend([parentClaim, BigInt(claimDataIndex), claim as `0x${string}`]);
+      this.log(`Honest: Defend: ${parentClaimPosition.getValue()} ${claimPosition.getValue()}`);
     }
 
     const res = await this.evmPublicService.waitForTransactionReceipt(txHash);
@@ -172,17 +216,18 @@ export class ChallengerHonest {
         abi: [eventAbi],
         logs: res.logs
       })[0].args;
-      //this.logger.log(`Move: ${event.parentIndex} ${event.claim} ${event.claimant}`);
+      this.log(`Move: ${event.parentIndex} ${event.claim} ${event.claimant}`);
     }
 
     return newClaimData;
   }
 
   private async shouldCounter(
-    faultDisputeGame: any,
     claim: ClaimData,
     agreedClaims: HonestClaimTracker
   ) {
+    const faultDisputeGame = this.faultDisputeGameBuilder.build();
+
     if(agreedClaims.isHonest(claim)){
       return false;
     }
@@ -191,7 +236,8 @@ export class ChallengerHonest {
       return true;
     }
 
-    const parentClaimData = await faultDisputeGame.read.claimData([claim.parentIndex]);
+    const parentIndex = BigInt(claim.parentIndex);
+    const parentClaimData = await faultDisputeGame.read.claimData([parentIndex]);
     const parent = claimDataWrap(parentClaimData);
     if(agreedClaims.isHonest(parent)){
       return true;
@@ -202,14 +248,14 @@ export class ChallengerHonest {
       return false;
     }
 
-    const maxDepth = await faultDisputeGame.read.maxGameDepth();
+    const maxDepth = Number(await faultDisputeGame.read.maxGameDepth());
     const honestIdx = counter.position.traceIndex(maxDepth);
     const claimIdx = claim.position.traceIndex(maxDepth);
     return claimIdx <= honestIdx;
   }
 
-  private async agreeWithRootClaim(faultDisputeGame: any, outputRootProvider: OutputRootProvider): Promise<boolean> {
-    const rootClaim = await faultDisputeGame.read.rootClaim();
+  private async agreeWithRootClaim(rootClaimData: ClaimData, outputRootProvider: OutputRootProvider) {
+    const rootClaim = rootClaimData.claim;
     const outputRoot = await outputRootProvider.get(new Position(1n));
 
     return rootClaim === outputRoot;

@@ -22,6 +22,12 @@ export class EvmPublicService {
     });
   }
 
+  public async getLatestBlockTimestamp() {
+    const block = await this.client.getBlock();
+
+    return block.timestamp;
+  }
+
   public async getBlockByNumber(blockNumber: bigint) {
     return await this.client.getBlock({
       blockNumber: blockNumber,

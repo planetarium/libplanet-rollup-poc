@@ -41,4 +41,16 @@ export class LibplanetService {
       l2BlockNumber: outputRoot.blockIndex
     }
   }
+
+  public async sendBulkTransactions() {
+    for(var i = 0; i < 10; i++) {
+      await this.delay(1000);
+      const res = await this.graphQlService.sendSimpleTransaction(randomBytes(8192).toString('hex'));
+      this.logger.log(`Sent transaction ${i} with result ${res.slice(0, 3)}`);
+    }
+  }
+
+  private async delay(ms: number) {
+    return new Promise( resolve => setTimeout(resolve, ms) );
+  }
 }
