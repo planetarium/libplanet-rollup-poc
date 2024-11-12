@@ -1,21 +1,41 @@
+import { EvmPublicService } from "src/evm/evm.public.service";
 import { ClaimData } from "../challenger.type";
 import { ClaimClock } from "../utils/claim.clock";
 import { FaultDisputeGameBuilder } from "./faultdisputegame.builder";
+import { Logger } from "@nestjs/common";
 
 export class ClaimResolver {
   constructor(
     private readonly faultDisputeGameBuilder: FaultDisputeGameBuilder,
-  ) {}
+    private readonly evmPublicService: EvmPublicService,
+  ) {
+    const disputeGameProxy = this.faultDisputeGameBuilder.build().address;
+    this.CHALLENGER_ID = disputeGameProxy.slice(2, 5);
+    this.logger = new Logger(`ClaimResolver-${this.CHALLENGER_ID}`);
+  }
+
+  private readonly CHALLENGER_ID: string;
+  private readonly logger: Logger;
+
+  private readonly TIME_BUFFER = 20n;
 
   public async tryResolveAllClaims(claims: ClaimData[], currentTimestamp: bigint, maxClockDuration: bigint) {
     const claimCount = claims.length;
-    for (let i = claims.length - 1; i <= 0; i++) {
+    const claimClock = claims[claimCount - 1].clock;
+    const lastClaimTimeExpired = await this.timeExpired(claimClock, currentTimestamp, maxClockDuration);
+    if(!lastClaimTimeExpired) {
+      return false;
+    }
+
+    for (let i = claims.length - 1; i >= 0; i--) {
       const claimIndex = BigInt(i);
       const claimClock = claims[i].clock;
       const resolveEnabled = await this.checkResolveEnabled(claimIndex, claimClock, currentTimestamp, maxClockDuration);
       if (resolveEnabled) {
+        this.logger.debug(`Resolving claim ${claimIndex}`);
         const faultDisputeGame = this.faultDisputeGameBuilder.build();
-        await faultDisputeGame.write.resolveClaim([claimIndex]);
+        const txHash = await faultDisputeGame.write.resolveClaim([claimIndex]);
+        await this.evmPublicService.waitForTransactionReceipt(txHash);
       }
     }
 
@@ -42,10 +62,18 @@ export class ClaimResolver {
       return false;
     }
 
+    const expired = await this.timeExpired(claimClock, currentTimestamp, maxClockDuration);
+    if(!expired) {
+      return false;
+    }
+
+    return true;
+  }
+
+  private async timeExpired(claimClock: bigint, currentTimestamp: bigint, maxClockDuration: bigint) {
     const libClock = new ClaimClock(claimClock);
     const claimDuration = libClock.duration();
     const claimTimestamp = libClock.timestamp();
-
-    return claimDuration + currentTimestamp >= maxClockDuration + claimTimestamp;
+    return currentTimestamp + claimDuration > claimTimestamp + maxClockDuration + this.TIME_BUFFER;
   }
 }

@@ -3,7 +3,7 @@ import { ChallengerService } from "./challenger.service";
 import { KeyUtils } from "src/utils/utils.key";
 import { EvmModule } from "src/evm/evm.module";
 import { LibplanetModule } from "src/libplanet/libplanet.module";
-import { ChallengerPropser } from "./challenger.proposer";
+import { ChallengerProposer } from "./challenger.proposer";
 import { ProposerModule } from "src/proposer/proposer.module";
 
 @Module({
@@ -13,7 +13,7 @@ import { ProposerModule } from "src/proposer/proposer.module";
     ProposerModule,
   ],
   controllers: [],
-  providers: [KeyUtils, ChallengerService, ChallengerPropser],
+  providers: [KeyUtils, ChallengerService, ChallengerProposer],
   exports: [ChallengerService],
 })
 export class ChallengerModule {}

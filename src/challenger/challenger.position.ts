@@ -21,6 +21,15 @@ export class Position {
     return new Position(2n * (this.value + 1n));
   }
 
+  public indexAtDepth(): bigint {
+    const depth = this.depth();
+    if (depth < 0) {
+      throw new Error("depth must be at least 0.");
+    }
+
+    return this.value - ((2n ** BigInt(depth)) - 1n);
+  }
+
   public traceIndex(maxDepth: number): bigint {
     if (maxDepth < 1) {
       throw new Error("maxDepth must be at least 1.");
@@ -31,7 +40,11 @@ export class Position {
       throw new Error(`Position is too deep to trace with maxDepth ${maxDepth}.`);
     }
 
-    return (2n ** BigInt(maxDepth - depth)) * (this.value + 1n) - 1n;
+    const p1 = BigInt(maxDepth - depth);
+    const p2 = 2n ** p1;
+    const p3 = p2 * (this.value + 1n);
+    const p4 = 2n ** BigInt(maxDepth - 1);
+    return p3 - p4;
   }
 
   private log2BigInt(n: bigint): number {

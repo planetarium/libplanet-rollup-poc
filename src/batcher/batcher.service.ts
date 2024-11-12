@@ -125,7 +125,7 @@ export class BatcherService {
 
         var remainedBlockSpace = blockLimit - this.channelManager.blocks.length;
 
-        if(endBlockId.index - this.lastStoredBlock.index >= remainedBlockSpace) {
+        if(endBlockId.index - this.lastStoredBlock.index > remainedBlockSpace) {
             var endBlock = await this.libplanetGraphQlService.getBlockByIndex(this.lastStoredBlock.index + BigInt(remainedBlockSpace));
             var endBlockId = {
                 hash: endBlock.hash,

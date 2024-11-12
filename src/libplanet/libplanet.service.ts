@@ -45,7 +45,7 @@ export class LibplanetService {
   public async sendBulkTransactions() {
     for(var i = 0; i < 10; i++) {
       await this.delay(1000);
-      const res = await this.graphQlService.sendSimpleTransaction(randomBytes(8192).toString('hex'));
+      const res = await this.graphQlService.sendSimpleTransaction(randomBytes(16564).toString('hex'));
       this.logger.log(`Sent transaction ${i} with result ${res.slice(0, 3)}`);
     }
   }

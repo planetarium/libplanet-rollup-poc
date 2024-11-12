@@ -52,16 +52,6 @@ export const FaultDisputeGameAbi = [
   },
   {
     "inputs": [],
-    "name": "ClaimAlreadyResolved",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "ClockNotExpired",
-    "type": "error"
-  },
-  {
-    "inputs": [],
     "name": "ClockTimeExceeded",
     "type": "error"
   },
@@ -681,6 +671,25 @@ export const FaultDisputeGameAbi = [
       {
         "internalType": "uint256",
         "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_claimIndex",
+        "type": "uint256"
+      }
+    ],
+    "name": "subgamesLen",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "len_",
         "type": "uint256"
       }
     ],

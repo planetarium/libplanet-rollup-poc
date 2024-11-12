@@ -25,7 +25,7 @@ export class OutputRootProvider {
     return outputBlockIndex;
   }
 
-  private async honestBlockNumber(pos: Position): Promise<bigint> {
+  public async honestBlockNumber(pos: Position): Promise<bigint> {
     const outputBlockIndex = this.claimedBlockNumber(pos);
     const safeBlock = await this.libplanetGraphQlService.getRecentBlock();
     const safeBlockIndex = safeBlock.index;

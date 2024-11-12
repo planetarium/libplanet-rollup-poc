@@ -8,7 +8,7 @@ import { KeyUtils } from "src/utils/utils.key";
 import { fromHex } from "viem";
 
 @Injectable()
-export class ChallengerPropser {
+export class ChallengerProposer {
   constructor(
     private readonly configService: ConfigService,
     private readonly contractManager: EvmContractManager,
@@ -27,7 +27,7 @@ export class ChallengerPropser {
   private initialized: boolean = false;
 
   private readonly logEnabled = this.configService.get('proposer.debug', false);
-  private readonly logger = new Logger(ChallengerPropser.name);
+  private readonly logger = new Logger(ChallengerProposer.name);
 
   private log(log: any) {
     if(this.logEnabled) {

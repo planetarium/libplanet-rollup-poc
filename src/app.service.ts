@@ -29,10 +29,10 @@ export class AppService {
       await this.preoracleService.init();
     }
 
-    // this.batcherService.batchStart();
-    // this.deriverService.deriveStart();
-    // this.proposerService.proposeStart();
+    this.batcherService.batchStart();
+    this.deriverService.deriveStart();
+    this.proposerService.proposeStart();
 
-    // this.challengerService.init();
+    this.challengerService.init();
   }
 }

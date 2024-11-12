@@ -1,7 +1,7 @@
 import { LibplanetGraphQLService } from "src/libplanet/libplanet.graphql.service";
 import { ClaimData, claimDataWrap, claimId, FaultDisputeGameStatus } from "../challenger.type";
 import { EvmPublicService } from "src/evm/evm.public.service";
-import { parseAbiItem, parseEventLogs } from "viem";
+import { ExecutionRevertedError, parseAbiItem, parseEventLogs, TransactionReceipt } from "viem";
 import { Logger } from "@nestjs/common";
 import { OutputRootProvider } from "./challenger.outputroot.provider";
 import { HonestClaimTracker } from "./honest.claim.tracker";
@@ -21,7 +21,7 @@ export class ChallengerHonest {
     this.CHALLENGER_ID = disputeGameProxy.slice(2, 5);
     this.logger = new Logger(`ChallengerHonest-${this.CHALLENGER_ID}`);
 
-    this.claimResolver = new ClaimResolver(this.faultDisputeGameBuilder);
+    this.claimResolver = new ClaimResolver(this.faultDisputeGameBuilder, this.evmPublicService);
   }
 
   private readonly CHALLENGER_ID: string;
@@ -30,7 +30,7 @@ export class ChallengerHonest {
   private readonly logEnabled = this.configService.get('challenger.debug', false);
   private log(log: any) {
     if(this.logEnabled) {
-      this.logger.log(log);
+      this.logger.debug(log);
     }
   }
 
@@ -53,6 +53,8 @@ export class ChallengerHonest {
 
     this.initialized = true;
     this.log(`Initialized`);
+
+    this.setEventReader();
 
     const faultDisputeGame = this.faultDisputeGameBuilder.build();
     const prestateBlockIndex = await faultDisputeGame.read.startingBlockNumber();
@@ -89,19 +91,30 @@ export class ChallengerHonest {
         const resolvedAllClaims = await this.claimResolver.tryResolveAllClaims(claims, currentTimestamp, this.maxClockDuration);
         if(resolvedAllClaims) {
           this.log(`All claims resolved`);
-          await faultDisputeGame.write.resolve();
-          continue;
+          const txHash = await faultDisputeGame.write.resolve();
+          const res: TransactionReceipt = await this.evmPublicService.waitForTransactionReceipt(txHash);
+          const eventAbi = parseAbiItem('event Resolved(uint256 indexed l2BlockNumber, bytes32 indexed rootClaim, uint8 status)');
+          const event = parseEventLogs({
+              abi: [eventAbi],
+              logs: res.logs
+          })[0].args;
+          if(event.status !== FaultDisputeGameStatus.IN_PROGRESS) {
+            this.initialized = false;
+            this.logger.debug(`Game is resolved with status ${event.status}`);
+            continue;
+          }
         } else {
-          this.log(`Not all claims resolved yet`);
+          this.logger.log(`Not all claims resolved yet`);
         }
 
         if(claimDataLen === 1n && rootClaimAgreed) {
-          this.log(`Root claim is agreed and no other claims exist`);
+          this.logger.log(`Root claim is agreed and no other claims exist`);
           continue;
         }
 
         await this.action(
           claims,
+          claimIds,
           outputRootProvider
         );
       } else {
@@ -112,17 +125,7 @@ export class ChallengerHonest {
     }
   }
 
-  private async action(claims: ClaimData[], outputRootProvider: OutputRootProvider) {
-    const faultDisputeGame = this.faultDisputeGameBuilder.build();
-
-    var claims: ClaimData[] = [];
-    var claimIds = new Map<`0x${string}`, boolean>();
-    const claimDataLen = await faultDisputeGame.read.claimDataLen();
-    for(let i = 0n; i < claimDataLen; i++) {
-      claims.push(claimDataWrap(await faultDisputeGame.read.claimData([i])));
-      claimIds.set(claimId(claims[Number(i)]), true);
-    }
-    
+  private async action(claims: ClaimData[], claimIds: Map<`0x${string}`, boolean>, outputRootProvider: OutputRootProvider) {
     for(let i = 1; i < claims.length; i++){
       const claim = claims[i];
       const depth = claim.position.depth();
@@ -137,7 +140,7 @@ export class ChallengerHonest {
   }
 
   private async step() {
-    this.log('Honest: Step');
+    this.log('Step');
   }
 
   private async move(
@@ -154,8 +157,6 @@ export class ChallengerHonest {
       return;
     }
 
-    this.log(`Honest: need to count ${claimData.position.getValue()}`);
-
     const parentClaimPosition = claimData.position;
     const parentClaim = claimData.claim;
     const parentHonestClaim = await outputRootProvider.get(parentClaimPosition);
@@ -166,6 +167,7 @@ export class ChallengerHonest {
     if(!agreedToParentClaim){
       const claimPosition = parentClaimPosition.attack();
       const claim = await outputRootProvider.get(claimPosition);
+      const honestBlockNumber = await outputRootProvider.honestBlockNumber(claimPosition);
 
       newClaimData = {
         parentIndex: claimDataIndex,
@@ -184,7 +186,8 @@ export class ChallengerHonest {
       }
 
       txHash = await faultDisputeGame.write.attack([parentClaim, BigInt(claimDataIndex), claim as `0x${string}`]);
-      this.log(`Honest: Attack: ${parentClaimPosition.getValue()} ${claimPosition.getValue()}`);
+      this.log(`Honest block number: ${honestBlockNumber}`);
+      this.log(`Attack | parentClaimIndex: ${claimDataIndex} claimDepth: ${claimPosition.depth()} claim: ${claim}`);
     } else {
       const claimPosition = parentClaimPosition.defend();
       const claim = await outputRootProvider.get(claimPosition);
@@ -206,17 +209,11 @@ export class ChallengerHonest {
       }
 
       txHash = await faultDisputeGame.write.defend([parentClaim, BigInt(claimDataIndex), claim as `0x${string}`]);
-      this.log(`Honest: Defend: ${parentClaimPosition.getValue()} ${claimPosition.getValue()}`);
+      this.log(`Defend | parentClaimIndex: ${claimDataIndex} claimDepth: ${claimPosition.depth()} claim: ${claim}`);
     }
 
-    const res = await this.evmPublicService.waitForTransactionReceipt(txHash);
-    if(res.logs.length > 0){
-      const eventAbi = parseAbiItem('event Move(uint256 indexed parentIndex, bytes32 indexed claim, address indexed claimant)');
-      const event = parseEventLogs({
-        abi: [eventAbi],
-        logs: res.logs
-      })[0].args;
-      this.log(`Move: ${event.parentIndex} ${event.claim} ${event.claimant}`);
+    if(txHash){
+      await this.evmPublicService.waitForTransactionReceipt(txHash);
     }
 
     return newClaimData;
@@ -259,6 +256,24 @@ export class ChallengerHonest {
     const outputRoot = await outputRootProvider.get(new Position(1n));
 
     return rootClaim === outputRoot;
+  }
+
+  private setEventReader() {
+    const faultDisputeGame = this.faultDisputeGameBuilder.build();
+    faultDisputeGame.watchEvent.Move({}, {
+      onLogs: async (logs) => {
+        if(logs.length === 0) {
+          return;
+        }
+        if(!logs[0].args) {
+          return;
+        }
+        const parentIndex = logs[0].args.parentIndex;
+        const claim = logs[0].args.claim;
+        const claimant = logs[0].args.claimant;
+        this.logger.log(`Move: ${parentIndex} ${claim} ${claimant}`);
+      }
+    });
   }
 
   private async delay(ms: number) {

@@ -14,6 +14,8 @@ export class FaultDisputeGameBuilder {
 
   private privateKey: `0x${string}` = '0x0';
 
+  private publicAddress: `0x${string}` = '0x0';
+
   public async init() {
     if (this.initialized) {
       throw new Error("Already initialized");
@@ -23,6 +25,7 @@ export class FaultDisputeGameBuilder {
     const walletClient = await this.clientFactory.newWalletClient();
     await this.evmPublicService.waitForTransactionReceipt(walletClient.txHash);
     this.privateKey = walletClient.privateKey;
+    this.publicAddress = walletClient.client.account.address;
   }
 
   public build() {
@@ -31,5 +34,9 @@ export class FaultDisputeGameBuilder {
     }
 
     return this.contractManager.getFaultDisputeGame(this.disputeGameProxy, this.privateKey);
+  }
+
+  public getPublicAddress() {
+    return this.publicAddress;
   }
 }

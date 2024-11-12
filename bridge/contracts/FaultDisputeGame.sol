@@ -157,8 +157,7 @@ contract FaultDisputeGame is IFaultDisputeGame, Clone {
 
     function getNumToResolve(uint256 _claimIndex) public view returns (uint256 numRemainingChildren_) {
         ResolutionCheckpoint storage checkpoint = resolutionCheckpoints[_claimIndex];
-        uint256[] storage challengeIndices = subgames[_claimIndex];
-        uint256 challengeIndicesLen = challengeIndices.length;
+        uint256 challengeIndicesLen = subgames[_claimIndex].length;
 
         numRemainingChildren_ = challengeIndicesLen - checkpoint.subgameIndex;
     }
@@ -183,7 +182,7 @@ contract FaultDisputeGame is IFaultDisputeGame, Clone {
 
     function resolveClaim(uint256 _claimIndex) external {
         // INVARIANT: Resolution cannot occur unless the game is currently in progress.
-        if (status != GameStatus.IN_PROGRESS) revert GameNotInProgress();
+        if (status != GameStatus.IN_PROGRESS) revert ("GameNotInProgress();");
 
         ClaimData storage subgameRootClaim = claimData[_claimIndex];
         Duration challengeClockDuration = getChallengerDuration(_claimIndex);
@@ -191,10 +190,10 @@ contract FaultDisputeGame is IFaultDisputeGame, Clone {
         // INVARIANT: Cannot resolve a subgame unless the clock of its would-be counter has expired
         // INVARIANT: Assuming ordered subgame resolution, challengeClockDuration is always >= MAX_CLOCK_DURATION if all
         // descendant subgames are resolved
-        if (challengeClockDuration.raw() < MAX_CLOCK_DURATION.raw()) revert ClockNotExpired();
+        if (challengeClockDuration.raw() < MAX_CLOCK_DURATION.raw()) revert ("ClockNotExpired();");
 
         // INVARIANT: Cannot resolve a subgame twice.
-        if (resolvedSubgames[_claimIndex]) revert ClaimAlreadyResolved();
+        if (resolvedSubgames[_claimIndex]) revert ("ClaimAlreadyResolved();");
 
         uint256 numToResolve = getNumToResolve(_claimIndex);
 
@@ -234,7 +233,7 @@ contract FaultDisputeGame is IFaultDisputeGame, Clone {
             uint256 challengeIndex = challengeIndices[i];
 
             // INVARIANT: Cannot resolve a subgame containing an unresolved claim
-            if (!resolvedSubgames[challengeIndex]) revert OutOfOrderResolution();
+            if (!resolvedSubgames[challengeIndex]) revert ("OutOfOrderResolution();");
 
             ClaimData storage claim = claimData[challengeIndex];
 
@@ -347,5 +346,9 @@ contract FaultDisputeGame is IFaultDisputeGame, Clone {
 
     function claimDataLen() external view returns (uint256 len_) {
         len_ = claimData.length;
+    }
+
+    function subgamesLen(uint256 _claimIndex) external view returns (uint256 len_) {
+        len_ = subgames[_claimIndex].length;
     }
 }
