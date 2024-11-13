@@ -94,9 +94,9 @@ export class ChallengerDishonest {
     const claimIndex = Number(claimDataLen - 1n);
     const claimData = claims[claimIndex];
     const depth = claimData.position.depth();
-    if(depth >= this.splitDepth - 1) {
+    if(depth >= this.maxDepth - 1) {
       this.initialized = false;
-      this.log(`Almost reached split depth`);
+      this.log(`Almost reached max depth`);
       return;
     }
 
@@ -110,9 +110,9 @@ export class ChallengerDishonest {
     const claimIndex = Number(this.getRandomBit() ? claimDataLen - 1n : claimDataLen - 2n);
     const claimData = claims[claimIndex];
     const depth = claimData.position.depth();
-    if(depth >= this.splitDepth - 1) {
+    if(depth >= this.maxDepth - 2) {
       this.initialized = false;
-      this.log(`Almost reached split depth`);
+      this.log(`Almost reached max depth`);
       return;
     }
 

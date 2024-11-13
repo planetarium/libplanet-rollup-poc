@@ -2,6 +2,7 @@ import { Injectable, Logger } from "@nestjs/common";
 import { LibplanetGraphQLService } from "./libplanet.graphql.service";
 import { randomBytes } from "crypto";
 import { Batch, Block } from "src/batcher/batcher.types";
+import { sha256 } from "viem";
 
 @Injectable()
 export class LibplanetService {
@@ -17,6 +18,11 @@ export class LibplanetService {
     return
   }
 
+  public async getRecentBlock() {
+    const block = await this.graphQlService.getRecentBlock();
+    return block;
+  }
+
   public async getBlockTimestampByIndex(index: bigint) {
     const timestampString = await this.graphQlService.getBlockTimestampByIndex(index);
     const date = new Date(timestampString);
@@ -24,8 +30,8 @@ export class LibplanetService {
     return BigInt(timestamp);
   }
 
-  public async getBlockByIndex(index: bigint) {
-    const block = await this.graphQlService.getBlockByIndex(index);
+  public async getBlockByIndex(index: bigint, includeTxIds: boolean = false) {
+    const block = await this.graphQlService.getBlockByIndex(index, includeTxIds);
     return {
       hash: block.hash,
       index: block.index,
@@ -40,6 +46,22 @@ export class LibplanetService {
       root: outputRoot.outputRoot,
       l2BlockNumber: outputRoot.blockIndex
     }
+  }
+
+  public async getOutputRootByTransactionId(txId: string) {
+    const stateRootHashRes = await this.graphQlService.getTransactionResult(txId);
+    const storageRootHashRes = await this.graphQlService.getStorageRootHash(stateRootHashRes);
+
+    var stateRootHash = Uint8Array.from(Buffer.from(stateRootHashRes, 'hex'));
+    var storageRootHash = Uint8Array.from(Buffer.from(storageRootHashRes, 'hex'));
+    
+    var outputRootArray = new Uint8Array(64);
+    outputRootArray.set(stateRootHash, 0);
+    outputRootArray.set(storageRootHash, 32);  
+
+    var outputRoot = sha256(outputRootArray);
+
+    return outputRoot;
   }
 
   public async sendBulkTransactions() {

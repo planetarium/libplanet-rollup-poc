@@ -7,8 +7,8 @@ import { EvmClientFactory } from "src/evm/evm.client.factory";
 import { EvmPublicService } from "src/evm/evm.public.service";
 import { ChallengerHonest } from "./models/challenger.honest";
 import { ConfigService } from "@nestjs/config";
-import { LibplanetGraphQLService } from "src/libplanet/libplanet.graphql.service";
 import { ChallengerDishonest } from "./models/challenger.dishonest";
+import { LibplanetService } from "src/libplanet/libplanet.service";
 
 @Injectable()
 export class ChallengerService {
@@ -18,7 +18,7 @@ export class ChallengerService {
     private readonly evmClientFactory: EvmClientFactory,
     private readonly evmContractManager: EvmContractManager,
     private readonly evmPublicService: EvmPublicService,
-    private readonly libplanetGraphQlService: LibplanetGraphQLService,
+    private readonly libplanetService: LibplanetService,
   ) {}
 
   public async init() {
@@ -84,7 +84,7 @@ export class ChallengerService {
     const honestChallenger = new ChallengerHonest(
       this.configService,
       faultDisputeGameBuilderForHonest,
-      this.libplanetGraphQlService,
+      this.libplanetService,
       this.evmPublicService,
     )
 

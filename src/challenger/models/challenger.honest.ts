@@ -9,12 +9,13 @@ import { Position } from "../challenger.position";
 import { ConfigService } from "@nestjs/config";
 import { FaultDisputeGameBuilder } from "./faultdisputegame.builder";
 import { ClaimResolver } from "./claim.resolver";
+import { LibplanetService } from "src/libplanet/libplanet.service";
 
 export class ChallengerHonest {
   constructor(
     private readonly configService: ConfigService,
     private readonly faultDisputeGameBuilder: FaultDisputeGameBuilder,
-    private readonly libplanetGraphQlService: LibplanetGraphQLService,
+    private readonly libplanetService: LibplanetService,
     private readonly evmPublicService: EvmPublicService,
   ){
     const disputeGameProxy = this.faultDisputeGameBuilder.build().address;
@@ -62,7 +63,8 @@ export class ChallengerHonest {
     this.splitDepth = Number(await faultDisputeGame.read.splitDepth());
     this.maxDepth = Number(await faultDisputeGame.read.maxGameDepth());
     this.maxClockDuration = await faultDisputeGame.read.maxClockDuration();
-    const outputRootProvider = new OutputRootProvider(this.libplanetGraphQlService, prestateBlockIndex, poststateBlockIndex, this.splitDepth);
+    const outputRootProvider = new OutputRootProvider(
+      this.libplanetService, prestateBlockIndex, poststateBlockIndex, this.splitDepth, this.maxDepth);
 
     const rootClaimData = claimDataWrap(await faultDisputeGame.read.claimData([0n]));
     const rootClaimAgreed = await this.agreeWithRootClaim(rootClaimData, outputRootProvider);
@@ -132,15 +134,13 @@ export class ChallengerHonest {
       if(depth === this.maxDepth){
         await this.step();
       } else {
-        if(depth < this.splitDepth){
-          await this.move(outputRootProvider, i, claim, this.agreedClaims, claimIds);
-        }
+        await this.move(outputRootProvider, i, claim, this.agreedClaims, claimIds);
       }
     }
   }
 
   private async step() {
-    this.log('Step');
+    this.logger.debug('Step');
   }
 
   private async move(
@@ -167,7 +167,6 @@ export class ChallengerHonest {
     if(!agreedToParentClaim){
       const claimPosition = parentClaimPosition.attack();
       const claim = await outputRootProvider.get(claimPosition);
-      const honestBlockNumber = await outputRootProvider.honestBlockNumber(claimPosition);
 
       newClaimData = {
         parentIndex: claimDataIndex,
@@ -185,8 +184,9 @@ export class ChallengerHonest {
         return;
       }
 
+      const disputedNumber = await outputRootProvider.getDisputedNumber(claimPosition);
+      this.log(`Disputed number: ${disputedNumber.blockNumber} ${disputedNumber.transactionNumber}`);
       txHash = await faultDisputeGame.write.attack([parentClaim, BigInt(claimDataIndex), claim as `0x${string}`]);
-      this.log(`Honest block number: ${honestBlockNumber}`);
       this.log(`Attack | parentClaimIndex: ${claimDataIndex} claimDepth: ${claimPosition.depth()} claim: ${claim}`);
     } else {
       const claimPosition = parentClaimPosition.defend();
@@ -208,6 +208,8 @@ export class ChallengerHonest {
         return;
       }
 
+      const disputedNumber = await outputRootProvider.getDisputedNumber(claimPosition);
+      this.log(`Disputed number: ${disputedNumber.blockNumber} ${disputedNumber.transactionNumber}`);
       txHash = await faultDisputeGame.write.defend([parentClaim, BigInt(claimDataIndex), claim as `0x${string}`]);
       this.log(`Defend | parentClaimIndex: ${claimDataIndex} claimDepth: ${claimPosition.depth()} claim: ${claim}`);
     }

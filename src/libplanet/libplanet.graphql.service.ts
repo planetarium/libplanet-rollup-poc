@@ -29,7 +29,7 @@ export class LibplanetGraphQLService {
     };
   }
 
-  async getBlockByIndex(index: bigint) {
+  async getBlockByIndex(index: bigint, includeTxIds: boolean = false) {
     const res = await this.graphqlClient.query(gql`
       query {
         blockQuery {
@@ -38,6 +38,7 @@ export class LibplanetGraphQLService {
             index
             transactionHash
             transactions {
+              ${includeTxIds ? 'id' : ''}
               serializedPayload
             }
           }
@@ -65,6 +66,34 @@ export class LibplanetGraphQLService {
     `);
 
     return res.blockQuery.block.timestamp
+  }
+
+  async getTransactionResult(txId: string): Promise<string> {
+    const res = await this.graphqlClient.query(gql`
+      query {
+        transactionQuery {
+          transactionResult(txId: "${txId}") {
+            outputState
+          }
+        }
+      }
+    `);
+
+    return res.transactionQuery.transactionResult.outputState;
+  }
+
+  async getStorageRootHash(offsetStateRootHash: string): Promise<string> {
+    const res = await this.graphqlClient.query(gql`
+      query {
+        stateQuery {
+          withdrawalState (
+            offsetStateRootHash: "${offsetStateRootHash}"
+          )
+        }
+      }
+    `);
+
+    return res.stateQuery.withdrawalState;
   }
 
   async getOutputProposal(index?: bigint | undefined) {
