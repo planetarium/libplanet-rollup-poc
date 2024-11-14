@@ -1,7 +1,5 @@
-import { LibplanetGraphQLService } from "src/libplanet/libplanet.graphql.service";
 import { Position } from "../challenger.position";
 import { LibplanetService } from "src/libplanet/libplanet.service";
-import { Logger } from "@nestjs/common";
 
 export class OutputRootProvider {
   constructor(
@@ -19,6 +17,11 @@ export class OutputRootProvider {
       return outputRootInfo.root;
     } else {
       const transactionId = await this.honestTransactionId(pos);
+      if(transactionId === "") {
+        const disputeNumber = await this.getDisputedNumber(pos);
+        const outputRootInfo = await this.libplanetService.getOutputRootInfoByBlockIndex(disputeNumber.blockNumber - 1n);
+        return outputRootInfo.root;
+      }
       const outputRoot = await this.libplanetService.getOutputRootByTransactionId(transactionId);
       return outputRoot;
     }
@@ -95,6 +98,9 @@ export class OutputRootProvider {
     const transactions = disputeBlock.transactions as {id: string, serializedPayload: string}[];
     if(transactionIndex >= transactions.length) {
       transactionIndex = transactions.length - 1;
+    }
+    if(transactionIndex < 0) {
+      return "";
     }
     const disputeTransactionId = transactions[transactionIndex].id;
     return disputeTransactionId;

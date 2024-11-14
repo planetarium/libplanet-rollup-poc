@@ -66,8 +66,8 @@ export class Position {
     }
 
     return {
-      upperTraceIndex: this.traceIndex(maxDepth) / this.leafCountAtDepth(maxDepth - splitDepth + 1),
-      lowerTraceIndex: this.traceIndex(maxDepth) % this.leafCountAtDepth(maxDepth - splitDepth + 1),
+      upperTraceIndex: this.traceIndex(maxDepth) / this.leafCountAtDepth(maxDepth - splitDepth + 1) + 1n,
+      lowerTraceIndex: this.traceIndex(maxDepth) % this.leafCountAtDepth(maxDepth - splitDepth + 1) + 1n,
     }
   }
 
