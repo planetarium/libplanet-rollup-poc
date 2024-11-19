@@ -33,7 +33,8 @@ task('compile', async (taskArgs, hre, runSuper) => {
   const copyContractNames = [
     'FaultDisputeGame', 
     'FaultDisputeGameFactory',
-    'AnchorStateRegistry'
+    'AnchorStateRegistry',
+    'PreOracleVM'
   ];
   const nestJsAbiPath = '../../src/evm/abis';
 

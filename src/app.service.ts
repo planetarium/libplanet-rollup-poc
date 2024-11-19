@@ -22,17 +22,17 @@ export class AppService {
   }
 
   private async init() {
-    // // for testing purpose
-    // await this.evmService.init();
+    // for testing purpose
+    await this.evmService.init();
 
-    if(this.configService.get('challenger.enabled')){
-      await this.preoracleService.init();
-    }
+    // if(this.configService.get('challenger.enabled')){
+    //   await this.preoracleService.init();
+    // }
 
-    this.batcherService.batchStart();
-    this.deriverService.deriveStart();
-    this.proposerService.proposeStart();
+    // this.batcherService.batchStart();
+    // this.deriverService.deriveStart();
+    // this.proposerService.proposeStart();
 
-    this.challengerService.init();
+    // this.challengerService.init();
   }
 }

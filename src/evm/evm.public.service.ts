@@ -22,6 +22,12 @@ export class EvmPublicService {
     });
   }
 
+  public async getLatestBlock() {
+    const block = await this.client.getBlock();
+
+    return block;
+  }
+
   public async getLatestBlockTimestamp() {
     const block = await this.client.getBlock();
 
@@ -31,6 +37,13 @@ export class EvmPublicService {
   public async getBlockByNumber(blockNumber: bigint) {
     return await this.client.getBlock({
       blockNumber: blockNumber,
+      includeTransactions: true,
+    });
+  }
+
+  public async getBlockByHash(blockHash: `0x${string}`) {
+    return await this.client.getBlock({
+      blockHash: blockHash,
       includeTransactions: true,
     });
   }
@@ -56,5 +69,11 @@ export class EvmPublicService {
     }
 
     return currentBlock;
+  }
+
+  public async getTransaction(txHash: `0x${string}`) {
+    return await this.client.getTransaction({
+      hash: txHash,
+    });
   }
 }

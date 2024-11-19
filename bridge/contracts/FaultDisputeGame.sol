@@ -91,6 +91,30 @@ contract FaultDisputeGame is IFaultDisputeGame, Clone {
         // INVARIANT: A step cannot be made unless the move position is 1 below the `MAX_GAME_DEPTH`
         if (stepPos.depth() != MAX_GAME_DEPTH + 1) revert InvalidParent();
 
+        // Determine the expected pre & post states of the step.
+        Claim preStateClaim;
+        ClaimData storage postState;
+        if (_isAttack) {
+            // If the step position's index at depth is 0, the prestate is the absolute
+            // prestate.
+            // If the step is an attack at a trace index > 0, the prestate exists elsewhere in
+            // the game state.
+            // NOTE: We localize the `indexAtDepth` for the current execution trace subgame by finding
+            //       the remainder of the index at depth divided by 2 ** (MAX_GAME_DEPTH - SPLIT_DEPTH),
+            //       which is the number of leaves in each execution trace subgame. This is so that we can
+            //       determine whether or not the step position is represents the `ABSOLUTE_PRESTATE`.
+            preStateClaim = stepPos.indexAtDepth() == 0
+                ? Claim.wrap(startingRootHash().raw())
+                : _findTraceAncestor(Position.wrap(parentPos.raw() - 1), parent.parentIndex).claim;
+            // For all attacks, the poststate is the parent claim.
+            postState = parent;
+        } else {
+            // If the step is a defense, the poststate exists elsewhere in the game state,
+            // and the parent claim is the expected pre-state.
+            preStateClaim = parent.claim;
+            postState = _findTraceAncestor(Position.wrap(parentPos.raw() + 1), parent.parentIndex);
+        }
+
         parent.counteredBy = msg.sender;
     }
 
@@ -308,7 +332,7 @@ contract FaultDisputeGame is IFaultDisputeGame, Clone {
         startingBlockNumber_ = startingOutputRoot.l2BlockNumber;
     }
 
-    function startingRootHash() external view returns (Hash startingRootHash_) {
+    function startingRootHash() public view returns (Hash startingRootHash_) {
         startingRootHash_ = startingOutputRoot.root;
     }
 
@@ -350,5 +374,24 @@ contract FaultDisputeGame is IFaultDisputeGame, Clone {
 
     function subgamesLen(uint256 _claimIndex) external view returns (uint256 len_) {
         len_ = subgames[_claimIndex].length;
+    }
+
+    function _findTraceAncestor(
+        Position _pos,
+        uint256 _start
+    )
+        internal
+        view
+        returns (ClaimData storage ancestor_)
+    {
+        // Grab the trace ancestor's expected position.
+        Position traceAncestorPos = _pos.traceAncestor();
+
+        // Walk up the DAG to find a claim that commits to the same trace index as `_pos`. It is
+        // guaranteed that such a claim exists.
+        ancestor_ = claimData[_start];
+        while (ancestor_.position.raw() != traceAncestorPos.raw()) {
+            ancestor_ = claimData[ancestor_.parentIndex];
+        }
     }
 }
