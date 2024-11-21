@@ -1,8 +1,8 @@
-import { PreoracleService } from "src/preoracle/preoracle.service";
+import { PreoracleDbService } from "src/preoracle/preoracle.db.service";
 import { Batch, ChannelData, DataStatus, FrameInfo } from "../deriver.types";
 
 export class BatchReader{
-    private readonly preoracleService: PreoracleService;
+    private readonly preoracleService: PreoracleDbService;
 
     private readonly FRAME_INFO_LENGTH = 23;
 
@@ -13,7 +13,7 @@ export class BatchReader{
     private currentFrameNumber: number = 0;
     
     constructor(
-        preoracleService: PreoracleService,
+        preoracleService: PreoracleDbService,
         channelData: ChannelData,
     ){
         this.preoracleService = preoracleService;

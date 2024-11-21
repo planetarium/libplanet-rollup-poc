@@ -10,6 +10,7 @@ import { ConfigService } from "@nestjs/config";
 import { FaultDisputeGameBuilder } from "./faultdisputegame.builder";
 import { ClaimResolver } from "./claim.resolver";
 import { LibplanetService } from "src/libplanet/libplanet.service";
+import { PreoracleService } from "src/preoracle/preoracle.service";
 
 export class ChallengerHonest {
   constructor(
@@ -17,6 +18,7 @@ export class ChallengerHonest {
     private readonly faultDisputeGameBuilder: FaultDisputeGameBuilder,
     private readonly libplanetService: LibplanetService,
     private readonly evmPublicService: EvmPublicService,
+    private readonly preoracleService: PreoracleService,
   ){
     const disputeGameProxy = this.faultDisputeGameBuilder.build().address;
     this.CHALLENGER_ID = disputeGameProxy.slice(2, 5);
@@ -132,15 +134,42 @@ export class ChallengerHonest {
       const claim = claims[i];
       const depth = claim.position.depth();
       if(depth === this.maxDepth){
-        await this.step();
+        await this.step(outputRootProvider, i, claim, this.agreedClaims);
       } else {
         await this.move(outputRootProvider, i, claim, this.agreedClaims, claimIds);
       }
     }
   }
 
-  private async step() {
-    this.logger.debug('Step');
+  private async step(
+    outputRootProvider: OutputRootProvider,
+    claimDataIndex: number,
+    claimData: ClaimData,
+    agreedClaims: HonestClaimTracker
+  ) {
+    const faultDisputeGame = this.faultDisputeGameBuilder.build();
+
+    const shouldCounter = await this.shouldCounter(claimData, agreedClaims);
+    if(!shouldCounter){
+      return;
+    }
+
+    const parentClaimPosition = claimData.position;
+    const parentClaim = claimData.claim;
+    const parentHonestClaim = await outputRootProvider.get(parentClaimPosition);
+    const agreedToParentClaim = parentClaim === parentHonestClaim;
+
+    const disputedBlockNumber = (await outputRootProvider.getDisputedNumber(parentClaimPosition)).blockNumber;
+    const batchIndexData = await this.preoracleService.prepareDisputeStep(disputedBlockNumber);
+    const batchIndexDataHex = `0x${batchIndexData.toString('hex')}` as `0x${string}`;
+
+    if(agreedToParentClaim) {
+      const txHash = await faultDisputeGame.write.step([BigInt(claimDataIndex), false, batchIndexDataHex]);
+      await this.evmPublicService.waitForTransactionReceipt(txHash);
+    } else {
+      const txHash = await faultDisputeGame.write.step([BigInt(claimDataIndex), true, batchIndexDataHex]);
+      await this.evmPublicService.waitForTransactionReceipt(txHash);
+    }
   }
 
   private async move(

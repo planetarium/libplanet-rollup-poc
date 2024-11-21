@@ -13,6 +13,7 @@ function showDeployedBlockNumber() {
     'FaultDisputeGame',
     'FaultDisputeGameFactory',
     'AnchorStateRegistry',
+    'PreOracleVM',
   ];
 
   const journalPath = join(

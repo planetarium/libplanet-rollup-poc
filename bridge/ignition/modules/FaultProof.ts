@@ -10,7 +10,7 @@ const FaultProofModule = buildModule('FaultProofModule', (m) => {
         }
     ]);
 
-    const preOracleVM = m.contract('PreOracleVM', [anchorStateRegistry]);
+    const preOracleVM = m.contract('PreOracleVM');
     
     const maxGameDepth = m.getParameter('_maxGameDepth', 23n);
     const splitDepth = m.getParameter('_splitDepth', 14n);

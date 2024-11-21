@@ -31,4 +31,8 @@ export abstract class EthProofUtil {
       rlpTxProof: rlpTxProof,
     }
   }
+
+  public static encodeArray(data: Buffer[]): Buffer{
+    return encode(data);
+  }
 }

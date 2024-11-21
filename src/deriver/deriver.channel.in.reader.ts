@@ -2,13 +2,13 @@ import { Injectable } from "@nestjs/common";
 import { ChannelBank } from "./deriver.channel.bank";
 import { BatchReader } from "./models/deriver.batch.reader";
 import { Batch, ChannelData, DataStatus } from "./deriver.types";
-import { PreoracleService } from "src/preoracle/preoracle.service";
+import { PreoracleDbService } from "src/preoracle/preoracle.db.service";
 
 @Injectable()
 export class ChannelInReader {
     constructor(
         private readonly channelBank: ChannelBank,
-        private readonly preoracleService: PreoracleService,
+        private readonly preoracleService: PreoracleDbService,
     ) {}
 
     batchReader?: BatchReader

@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { PreoracleService } from "src/preoracle/preoracle.service";
+import { PreoracleDbService } from "src/preoracle/preoracle.db.service";
 import { KeyUtils } from "src/utils/utils.key";
 import { Address, Block, Transaction } from "viem";
 import { BatchTransaction } from "./deriver.types";
@@ -8,7 +8,6 @@ import { BatchTransaction } from "./deriver.types";
 export class DataSource {
     constructor(
         private readonly keyUtils: KeyUtils,
-        private readonly preoracleService: PreoracleService,
     ) {}
 
     batcherAddress: Address = this.keyUtils.getBatcherAddress();
@@ -27,10 +26,6 @@ export class DataSource {
                 datas.push({
                     transactionHash: txData.hash,
                     data: data,
-                });
-                await this.preoracleService.postBatchTransaction({
-                    transactionHash: txData.hash,
-                    data: dataString,
                 });
             }
         }

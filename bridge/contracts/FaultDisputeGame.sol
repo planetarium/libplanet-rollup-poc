@@ -3,6 +3,7 @@ pragma solidity 0.8.24;
 
 import { IFaultDisputeGame } from "./interfaces/IFaultDisputeGame.sol";
 import { IAnchorStateRegistry } from "./interfaces/IAnchorStateRegistry.sol";
+import { IPreOracleVM } from "./interfaces/IPreOracleVM.sol";
 
 import { Clone } from "./utils/Clone.sol";
 
@@ -17,6 +18,7 @@ contract FaultDisputeGame is IFaultDisputeGame, Clone {
     Duration internal immutable MAX_CLOCK_DURATION;
     Duration internal immutable CLOCK_EXTENSION;
     IAnchorStateRegistry internal immutable ANCHOR_STATE_REGISTRY;
+    IPreOracleVM internal immutable PRE_ORACLE_VM;
     Position internal immutable ROOT_POSITION = Position.wrap(1);
     Timestamp public createdAt;
     Timestamp public resolvedAt;
@@ -34,7 +36,8 @@ contract FaultDisputeGame is IFaultDisputeGame, Clone {
         uint256 _splitDepth,
         Duration _maxClockDuration,
         Duration _clockExtension,
-        IAnchorStateRegistry _anchorStateRegistry
+        IAnchorStateRegistry _anchorStateRegistry,
+        IPreOracleVM _preOracleVM
     ) {
         if (_splitDepth >= _maxGameDepth) revert InvalidSplitDepth();
         if (_clockExtension.raw() >= _maxClockDuration.raw()) revert InvalidClockExtension();
@@ -44,6 +47,7 @@ contract FaultDisputeGame is IFaultDisputeGame, Clone {
         MAX_CLOCK_DURATION = _maxClockDuration;
         CLOCK_EXTENSION = _clockExtension;
         ANCHOR_STATE_REGISTRY = IAnchorStateRegistry(_anchorStateRegistry);
+        PRE_ORACLE_VM = IPreOracleVM(_preOracleVM);
     }    
 
     function initialize() external {
@@ -76,7 +80,8 @@ contract FaultDisputeGame is IFaultDisputeGame, Clone {
 
     function step(
         uint256 _claimIndex,
-        bool _isAttack
+        bool _isAttack,
+        bytes memory _batchIndexData
     ) public {
         if (status != GameStatus.IN_PROGRESS) revert GameNotInProgress();
 
@@ -114,6 +119,10 @@ contract FaultDisputeGame is IFaultDisputeGame, Clone {
             preStateClaim = parent.claim;
             postState = _findTraceAncestor(Position.wrap(parentPos.raw() + 1), parent.parentIndex);
         }
+
+        bool validStep = PRE_ORACLE_VM.step(preStateClaim, _batchIndexData).raw() == postState.claim.raw();
+        bool parentPostAgree = (parentPos.depth() - postState.position.depth()) % 2 == 0;
+        if (parentPostAgree == validStep) revert ("ValidStep();");
 
         parent.counteredBy = msg.sender;
     }

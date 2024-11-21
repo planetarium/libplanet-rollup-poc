@@ -89,6 +89,14 @@ const localGeth = (configure: ConfigService) => {
           'evm.local_geth.contracts.anchor_state_registry.block_created',
         ),
       },
+      preOracleVM: {
+        address: configure.get(
+          'evm.local_geth.contracts.pre_oracle_vm.address'
+        ),
+        blockCreated: configure.get(
+          'evm.local_geth.contracts.pre_oracle_vm.block_created',
+        ),
+      },
     },
   });
 };
