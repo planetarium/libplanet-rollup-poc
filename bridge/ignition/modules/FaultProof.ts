@@ -9,7 +9,6 @@ const FaultProofModule = buildModule('FaultProofModule', (m) => {
             l2BlockNumber: 0n
         }
     ]);
-
     const preOracleVM = m.contract('PreOracleVM');
     
     const maxGameDepth = m.getParameter('_maxGameDepth', 23n);
@@ -18,7 +17,7 @@ const FaultProofModule = buildModule('FaultProofModule', (m) => {
     const clockExtension = m.getParameter('_clockExtension', 40n);
     
     const faultDisputeGame = m.contract("FaultDisputeGame", [
-        maxGameDepth, splitDepth, maxClockDuration, clockExtension, anchorStateRegistry
+        maxGameDepth, splitDepth, maxClockDuration, clockExtension, anchorStateRegistry, preOracleVM
     ]);
 
     m.call(faultDisputeGameFactory, 'setImplementation', [faultDisputeGame]);

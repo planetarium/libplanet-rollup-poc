@@ -70,6 +70,12 @@ export class PreoracleDbService {
     return true;
   }
 
+  public async deleteBlockIndexLowerThanByL2BlockNumber(l2BlockNumber: number) {
+    this.db.data.block_indices = this.db.data.block_indices.filter((index) => index.l2BlockNumber >= l2BlockNumber);
+    await this.db.write();
+    return true
+  }
+
   // for testing purpose
   private async dbSanityCheck() {
     const blockIndicesNumber = this.countBlockIndices();

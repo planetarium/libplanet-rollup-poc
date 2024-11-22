@@ -9,6 +9,7 @@ import { getProof, sendTransaction } from "viem/actions";
 import { BaseTrie as Trie } from "merkle-patricia-tree";
 import { EthProofUtil } from "./utils/utils.eth.proof";
 import { TimeUtils } from "src/utils/utils.time";
+import { FaultDisputeGameStatus } from "src/challenger/challenger.type";
 
 @Injectable()
 export class EvmService {
@@ -57,6 +58,24 @@ export class EvmService {
   public async findBlockIndexByTimestamp(timestamp: bigint) {
     const block = await this.publicService.findBlockByTimestamp(timestamp);
     return block.number;
+  }
+
+  public async getDisputingStartingBlockNumbers(): Promise<bigint[]> {
+    const faultDisputeGameFactoryReader = this.contractManager.getFaultDisputeGameFactoryReader();
+    const gameCount = await faultDisputeGameFactoryReader.read.gameCount();
+    const blockNumbers: bigint[] = [];
+    for(let i = 0; i < gameCount; i++) {
+      const gameAtIndex = await faultDisputeGameFactoryReader.read.gameAtIndex([BigInt(i)]);
+      const proxy = gameAtIndex[1];
+      const faultDisputeGameReader = this.contractManager.getFaultDisputeGameReader(proxy);
+      const disputeStatus = await faultDisputeGameReader.read.status() as FaultDisputeGameStatus;
+      if(disputeStatus === FaultDisputeGameStatus.IN_PROGRESS) {
+        const blockNumber = await faultDisputeGameReader.read.startingBlockNumber();
+        blockNumbers.push(blockNumber);
+      }
+    }
+
+    return blockNumbers;
   }
   
   private async sendTransactionsContinuosly() {

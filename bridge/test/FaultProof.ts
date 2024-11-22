@@ -25,7 +25,14 @@ describe("FaultProof", function () {
     return anchorStateRegistry;
   }
 
-  async function deployFaultDisputeGame(anchorStateRegistry: any) {
+  async function deployPreOracleVM() {
+    const PreOracleVM = await hre.ethers.getContractFactory("PreOracleVM");
+    const preOracleVM = await PreOracleVM.deploy();
+
+    return preOracleVM;
+  }
+
+  async function deployFaultDisputeGame(anchorStateRegistry: any, preOracleVM: any) {
     const FaultDisputeGame = await hre.ethers.getContractFactory("FaultDisputeGame");
 
     const maxGameDepth = 8n;
@@ -38,7 +45,8 @@ describe("FaultProof", function () {
       splitDepth,
       maxClockDuration,
       clockExtension,
-      anchorStateRegistry
+      anchorStateRegistry,
+      preOracleVM
     );
 
     return { maxClockDuration, faultDisputeGame };
@@ -47,7 +55,8 @@ describe("FaultProof", function () {
   async function deployFaultProofFixture() {
     const faultDisputeGameFactory = await deployFaultDisputeGameFactory();
     const anchorStateRegistry = await deployAnchorStateRegistry(faultDisputeGameFactory);
-    const { maxClockDuration, faultDisputeGame } = await deployFaultDisputeGame(anchorStateRegistry);
+    const preOracleVM = await deployPreOracleVM();
+    const { maxClockDuration, faultDisputeGame } = await deployFaultDisputeGame(anchorStateRegistry, preOracleVM);
 
     await faultDisputeGameFactory.setImplementation(faultDisputeGame.getAddress());
 

@@ -9,6 +9,7 @@ import { ChallengerHonest } from "./models/challenger.honest";
 import { ConfigService } from "@nestjs/config";
 import { ChallengerDishonest } from "./models/challenger.dishonest";
 import { LibplanetService } from "src/libplanet/libplanet.service";
+import { PreoracleService } from "src/preoracle/preoracle.service";
 
 @Injectable()
 export class ChallengerService {
@@ -19,6 +20,7 @@ export class ChallengerService {
     private readonly evmContractManager: EvmContractManager,
     private readonly evmPublicService: EvmPublicService,
     private readonly libplanetService: LibplanetService,
+    private readonly preoracleService: PreoracleService,
   ) {}
 
   public async init() {
@@ -26,7 +28,7 @@ export class ChallengerService {
 
     const faultDisputeGameFactoryReader = this.evmContractManager.getFaultDisputeGameFactoryReader();
 
-    var dishonestAttached = false;
+    var dishonestAttached = true;
 
     faultDisputeGameFactoryReader.watchEvent.FaultDisputeGameCreated({
       onLogs: async (logs) => {
@@ -86,6 +88,7 @@ export class ChallengerService {
       faultDisputeGameBuilderForHonest,
       this.libplanetService,
       this.evmPublicService,
+      this.preoracleService,
     )
 
     honestChallenger.init();

@@ -7,6 +7,7 @@ import { ConfigService } from '@nestjs/config';
 import { EvmService } from './evm/evm.service';
 import { ChallengerService } from './challenger/challenger.service';
 import { PreoracleContractService } from './preoracle/preoracle.contract.service';
+import { PreoracleService } from './preoracle/preoracle.service';
 
 @Injectable()
 export class AppService {
@@ -17,8 +18,7 @@ export class AppService {
     private readonly deriverService: DeriverService,
     private readonly proposerService: ProposerService,
     private readonly challengerService: ChallengerService,
-    private readonly preoracleDbService: PreoracleDbService,
-    private readonly preoracleContractService: PreoracleContractService,
+    private readonly preoracleService: PreoracleService,
   ) {
     this.init();
   }
@@ -28,8 +28,7 @@ export class AppService {
     // await this.evmService.init();
 
     if(this.configService.get('challenger.enabled')){
-      await this.preoracleDbService.init();
-      this.preoracleContractService.init();
+      await this.preoracleService.init();
     }
 
     this.batcherService.batchStart();
