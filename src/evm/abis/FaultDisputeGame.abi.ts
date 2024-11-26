@@ -82,11 +82,6 @@ export const FaultDisputeGameAbi = [
   },
   {
     "inputs": [],
-    "name": "InvalidParent",
-    "type": "error"
-  },
-  {
-    "inputs": [],
     "name": "InvalidSplitDepth",
     "type": "error"
   },

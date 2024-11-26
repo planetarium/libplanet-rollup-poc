@@ -10,7 +10,7 @@ export class Position {
   }
 
   public depth(): number {
-    return this.log2BigInt(this.value) + 1;
+    return this.log2BigInt(this.value);
   }
 
   public attack(): Position {

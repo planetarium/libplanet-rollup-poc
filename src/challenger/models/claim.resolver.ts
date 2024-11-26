@@ -34,8 +34,13 @@ export class ClaimResolver {
       if (resolveEnabled) {
         this.logger.debug(`Resolving claim ${claimIndex}`);
         const faultDisputeGame = this.faultDisputeGameBuilder.build();
-        const txHash = await faultDisputeGame.write.resolveClaim([claimIndex]);
-        await this.evmPublicService.waitForTransactionReceipt(txHash);
+        try {
+          const txHash = await faultDisputeGame.write.resolveClaim([claimIndex]);
+          await this.evmPublicService.waitForTransactionReceipt(txHash);
+        } catch(e) {
+          this.logger.error(`Failed to resolve claim ${claimIndex}`);
+          return false;
+        }
       }
     }
 

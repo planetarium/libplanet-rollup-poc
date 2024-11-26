@@ -24,8 +24,16 @@ export class EvmService {
   private readonly logger = new Logger(EvmService.name);
 
   // for testing purpose
-  public async init() {
-    
+  public async test() {
+    const privateKey = this.keyUtils.getMainPrivateKey();
+    const walletClient = this.clientFactory.getWalletClient(privateKey);
+    const preoracleVM = this.contractManager.getPreOracleVM(privateKey);
+    const publicClient = this.clientFactory.newPublicClient();
+  }
+
+  public async getBalanceByPrivateKey(privateKey: `0x${string}`) {
+    const walletClient = this.clientFactory.getWalletClient(privateKey);
+    return await this.publicService.getBalance(walletClient.account.address);
   }
 
   public async getBatchProof(targetTxHash: `0x${string}`) {

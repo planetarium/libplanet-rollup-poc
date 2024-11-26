@@ -1,8 +1,10 @@
-import { time, loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers";
+import { time, loadFixture, mine } from "@nomicfoundation/hardhat-toolbox/network-helpers";
 import { FaultDisputeGame } from "bridge/typechain-types";
 import { expect } from "chai";
 import { EventLog } from "ethers";
 import hre from "hardhat";
+import { ClaimData, claimDataWrap } from "./utils/type";
+import { Position } from "./utils/position";
 
 describe("FaultProof", function () {
   async function deployFaultDisputeGameFactory() {
@@ -17,8 +19,8 @@ describe("FaultProof", function () {
     const anchorStateRegistry = await AnchorStateRegistry.deploy(
       faultDisputeGameFactory.getAddress(),
       {
-        root: "0x0000000000000000000000000000000000000000000000000000000000000001",
-        l2BlockNumber: 0n
+        root: "0xb725841ac078ee2a313cee3d9dede3492cc61e3a5439f2bcb289fc5b89d71d99",
+        l2BlockNumber: 10n
       }
     );
 
@@ -35,11 +37,11 @@ describe("FaultProof", function () {
   async function deployFaultDisputeGame(anchorStateRegistry: any, preOracleVM: any) {
     const FaultDisputeGame = await hre.ethers.getContractFactory("FaultDisputeGame");
 
-    const maxGameDepth = 8n;
-    const splitDepth = 4n;
-    const maxClockDuration = 3600n;
-    const clockExtension = 300n;
-    const anchorStateRegistryAddress = anchorStateRegistry.getAddress();
+    const maxGameDepth = 20n;
+    const splitDepth = 14n;
+    const maxClockDuration = 120n;
+    const clockExtension = 40n;
+
     const faultDisputeGame = await FaultDisputeGame.deploy(
       maxGameDepth,
       splitDepth,
@@ -82,17 +84,17 @@ describe("FaultProof", function () {
       );
 
       const anchor = await anchorStateRegistry.anchor();
-      expect(anchor.root).to.equal("0x0000000000000000000000000000000000000000000000000000000000000001");
-      expect(anchor.l2BlockNumber).to.equal(0n);
+      expect(anchor.root).to.equal("0xb725841ac078ee2a313cee3d9dede3492cc61e3a5439f2bcb289fc5b89d71d99");
+      expect(anchor.l2BlockNumber).to.equal(10n);
     });
 
     it("FaultDisputeGame", async function(){
       const { faultDisputeGame, anchorStateRegistry } = await loadFixture(deployFaultProofFixture);
 
-      expect(await faultDisputeGame.maxGameDepth()).to.equal(8n);
-      expect(await faultDisputeGame.splitDepth()).to.equal(4n);
-      expect(await faultDisputeGame.maxClockDuration()).to.equal(3600n);
-      expect(await faultDisputeGame.clockExtension()).to.equal(300n);
+      expect(await faultDisputeGame.maxGameDepth()).to.equal(20n);
+      expect(await faultDisputeGame.splitDepth()).to.equal(14n);
+      expect(await faultDisputeGame.maxClockDuration()).to.equal(120n);
+      expect(await faultDisputeGame.clockExtension()).to.equal(40n);
       expect(await faultDisputeGame.anchorStateRegistry()).to.equal(
         await anchorStateRegistry.getAddress()
       );
@@ -104,7 +106,7 @@ describe("FaultProof", function () {
       const { faultDisputeGameFactory, owner, otherAccount, maxClockDuration } = await loadFixture(deployFaultProofFixture);
 
       const rootClaim = "0x0000000000000000000000000000000000000000000000000000000000000002";
-      const l2BlockNumber = 1n;
+      const l2BlockNumber = 15n;
       const tx = await faultDisputeGameFactory.create(rootClaim, l2BlockNumber);
       const receipt = await tx.wait();
       const eventLog = receipt?.logs[0] as EventLog;
@@ -158,7 +160,7 @@ describe("FaultProof", function () {
 
       for (let i = claimDataLen - 1n; i >= 0n; i--) {
         await expect(faultDisputeGame.resolveClaim(i))
-          .to.be.revertedWithCustomError(faultDisputeGame, "ClockNotExpired");
+          .to.be.revertedWith("ClockNotExpired();");
       }
 
       await time.increase(maxClockDuration + 1n);
@@ -169,6 +171,45 @@ describe("FaultProof", function () {
       await faultDisputeGame.resolve();
 
       expect(await faultDisputeGame.status()).to.equal(2);
+    });
+
+    it("game controle2", async function(){
+      const { faultDisputeGameFactory, owner, otherAccount, maxClockDuration } = await loadFixture(deployFaultProofFixture);
+
+      await mine(1000);
+
+      const rootClaim = "0x0000000000000000000000000000000000000000000000000000000000000001";
+      const l2BlockNumber = 200n;
+      const tx = await faultDisputeGameFactory.create(rootClaim, l2BlockNumber);
+      const receipt = await tx.wait();
+      const eventLog = receipt?.logs[0] as EventLog;
+      const proxy = eventLog.args[0] as string;
+      const faultDisputeGame = await hre.ethers.getContractAt("FaultDisputeGame", proxy);
+
+      expect(await faultDisputeGame.rootClaim()).to.equal(rootClaim);
+      expect(await faultDisputeGame.l2BlockNumber()).to.equal(l2BlockNumber);
+      expect(await faultDisputeGame.status()).to.equal(0);
+      var rootClaimData = await faultDisputeGame.claimData(0);
+      expect(rootClaimData.claim).to.equal(rootClaim);
+      expect(rootClaimData.position).to.equal(1);
+      expect(rootClaimData.claimant).to.equal(owner.address);
+
+      for(let i = 0; i < 20; i++) {
+        await faultDisputeGame.connect(owner).attack(rootClaim, BigInt(i), rootClaim);
+      }
+
+      const claimDataLen = await faultDisputeGame.claimDataLen();
+      expect(claimDataLen).to.equal(21);
+
+      const claimData = await faultDisputeGame.claimData(claimDataLen - 1n);
+      const claimDataPosition = new Position(claimData.position);
+      expect(claimDataPosition.depth()).to.equal(20);
+
+      const batchIndexDataHex = '111';
+      const batchIndexData = Buffer.from(batchIndexDataHex, 'hex');
+
+      expect(await faultDisputeGame.maxGameDepth()).to.equal(20n);
+      const res = await faultDisputeGame.step(claimDataLen - 1n, true, batchIndexData);
     });
   });
 });

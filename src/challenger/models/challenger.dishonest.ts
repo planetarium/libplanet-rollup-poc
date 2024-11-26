@@ -2,7 +2,7 @@ import { ClaimData, claimDataWrap, claimId, FaultDisputeGameStatus } from "../ch
 import { EvmPublicService } from "src/evm/evm.public.service";
 import { sha256, toHex } from "viem";
 import { Logger } from "@nestjs/common";
-import { Position } from "../challenger.position";
+import { Position } from "../utils/challenger.position";
 import { ConfigService } from "@nestjs/config";
 import { FaultDisputeGameBuilder } from "./faultdisputegame.builder";
 
@@ -54,14 +54,6 @@ export class ChallengerDishonest {
 
       const status = await faultDisputeGame.read.status() as FaultDisputeGameStatus;
       if(status === FaultDisputeGameStatus.IN_PROGRESS){
-        const currentTimestamp = await this.evmPublicService.getLatestBlockTimestamp();
-        const isCounterable = currentTimestamp - createdTimestamp < this.maxClockDuration;
-        if(!isCounterable){
-          this.initialized = false;
-          this.log(`Game is not counterable`);
-          return;
-        }
-
         const claimDataLen = await faultDisputeGame.read.claimDataLen();
         var claims: ClaimData[] = [];
         var claimIds = new Map<`0x${string}`, boolean>();
@@ -94,9 +86,9 @@ export class ChallengerDishonest {
     const claimIndex = Number(claimDataLen - 1n);
     const claimData = claims[claimIndex];
     const depth = claimData.position.depth();
-    if(depth >= this.maxDepth - 1) {
+    if(depth == this.maxDepth) {
       this.initialized = false;
-      this.log(`Almost reached max depth`);
+      this.log(`Already reached max depth`);
       return;
     }
 

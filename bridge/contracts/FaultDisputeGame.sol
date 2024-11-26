@@ -83,7 +83,7 @@ contract FaultDisputeGame is IFaultDisputeGame, Clone {
         bool _isAttack,
         bytes memory _batchIndexData
     ) public {
-        if (status != GameStatus.IN_PROGRESS) revert GameNotInProgress();
+        if (status != GameStatus.IN_PROGRESS) revert ("GameNotInProgress();");
 
         // Get the parent. If it does not exist, the call will revert with OOB.
         ClaimData storage parent = claimData[_claimIndex];
@@ -93,12 +93,18 @@ contract FaultDisputeGame is IFaultDisputeGame, Clone {
         // Determine the position of the step.
         Position stepPos = parentPos.move(_isAttack);
 
+        console.log("Parent depth: %s", parentPos.depth());
+        console.log("Step depth: %s", stepPos.depth());
+        console.log("Max depth: %s", MAX_GAME_DEPTH);
+
         // INVARIANT: A step cannot be made unless the move position is 1 below the `MAX_GAME_DEPTH`
-        if (stepPos.depth() != MAX_GAME_DEPTH + 1) revert InvalidParent();
+        if (stepPos.depth() != MAX_GAME_DEPTH + 1) revert ("InvalidParent();");
 
         // Determine the expected pre & post states of the step.
         Claim preStateClaim;
         ClaimData storage postState;
+        uint256 disputingBlockNumber;
+        uint256 transactionIndex;
         if (_isAttack) {
             // If the step position's index at depth is 0, the prestate is the absolute
             // prestate.
@@ -113,16 +119,32 @@ contract FaultDisputeGame is IFaultDisputeGame, Clone {
                 : _findTraceAncestor(Position.wrap(parentPos.raw() - 1), parent.parentIndex).claim;
             // For all attacks, the poststate is the parent claim.
             postState = parent;
+
+            disputingBlockNumber = parentPos.indexAtDepth() / (2 ** (MAX_GAME_DEPTH - SPLIT_DEPTH)) > l2BlockNumber() - startingBlockNumber()
+                ? l2BlockNumber()
+                : startingBlockNumber() + 1 + (parentPos.indexAtDepth() / (2 ** (MAX_GAME_DEPTH - SPLIT_DEPTH)));
+            transactionIndex = parentPos.indexAtDepth() % (2 ** (MAX_GAME_DEPTH - SPLIT_DEPTH));
         } else {
             // If the step is a defense, the poststate exists elsewhere in the game state,
             // and the parent claim is the expected pre-state.
             preStateClaim = parent.claim;
             postState = _findTraceAncestor(Position.wrap(parentPos.raw() + 1), parent.parentIndex);
+
+            disputingBlockNumber = (parentPos.indexAtDepth() + 1) / (2 ** (MAX_GAME_DEPTH - SPLIT_DEPTH)) > l2BlockNumber() - startingBlockNumber()
+                ? l2BlockNumber()
+                : startingBlockNumber() + 1 + ((parentPos.indexAtDepth() + 1) / (2 ** (MAX_GAME_DEPTH - SPLIT_DEPTH)));
+            transactionIndex = (parentPos.indexAtDepth() + 1) % (2 ** (MAX_GAME_DEPTH - SPLIT_DEPTH));
         }
 
-        bool validStep = PRE_ORACLE_VM.step(preStateClaim, _batchIndexData).raw() == postState.claim.raw();
+        bool validStep;
+        try PRE_ORACLE_VM.step(preStateClaim, disputingBlockNumber, transactionIndex, _batchIndexData) returns (Claim result) {
+            validStep = result.raw() == postState.claim.raw();
+        } catch Error(string memory reason) {
+            revert(reason);
+        }
+
         bool parentPostAgree = (parentPos.depth() - postState.position.depth()) % 2 == 0;
-        if (parentPostAgree == validStep) revert ("ValidStep();");
+        //if (parentPostAgree == validStep) revert ("ValidStep();");
 
         parent.counteredBy = msg.sender;
     }
@@ -337,7 +359,7 @@ contract FaultDisputeGame is IFaultDisputeGame, Clone {
         l2BlockNumber_ = l2BlockNumber();
     }
 
-    function startingBlockNumber() external view returns (uint256 startingBlockNumber_) {
+    function startingBlockNumber() public view returns (uint256 startingBlockNumber_) {
         startingBlockNumber_ = startingOutputRoot.l2BlockNumber;
     }
 

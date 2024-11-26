@@ -1,4 +1,5 @@
-import { Position } from "../challenger.position";
+import { Logger } from "@nestjs/common";
+import { Position } from "../utils/challenger.position";
 import { LibplanetService } from "src/libplanet/libplanet.service";
 
 export class OutputRootProvider {
@@ -9,6 +10,8 @@ export class OutputRootProvider {
     private readonly splitDepth: number,
     private readonly maxDepth: number,
   ) {}
+
+  private readonly logger = new Logger(OutputRootProvider.name);
 
   public async get(pos: Position): Promise<string> {
     if (pos.depth() <= this.splitDepth) {
@@ -62,6 +65,7 @@ export class OutputRootProvider {
 
   private claimedBlockNumber(pos: Position): bigint {
     const traceIndex = pos.traceIndex(this.splitDepth);
+    // this.logger.debug(`depth: ${pos.depth()} traceIndex: ${traceIndex}`);
     const outputBlockIndex = this.prestateBlockIndex + traceIndex;
     if (outputBlockIndex > this.poststateBlockIndex) {
       return this.poststateBlockIndex;
@@ -84,6 +88,8 @@ export class OutputRootProvider {
     const traceIndex = pos.traceIndexFromSplitDepth(this.splitDepth, this.maxDepth);
     const upperTraceIndex = traceIndex.upperTraceIndex;
     const lowerTraceIndex = traceIndex.lowerTraceIndex;
+    // this.logger.debug(`depth: ${pos.depth()} upperTraceIndex: ${upperTraceIndex} lowerTraceIndex: ${lowerTraceIndex}`);
+
     var transactionIndex = Number(lowerTraceIndex - 1n);
     const outputBlockIndex = this.prestateBlockIndex + upperTraceIndex;
     var safeBlockIndex = outputBlockIndex;

@@ -10,6 +10,10 @@ export class EvmPublicService {
 
   private readonly client = this.clientFactory.newPublicClient();
 
+  public async getClient() {
+    return this.client;
+  }
+
   public async getBalance(address: Address) {
     return await this.client.getBalance({
       address: address,

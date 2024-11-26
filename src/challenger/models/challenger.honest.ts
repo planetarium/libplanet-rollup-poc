@@ -5,7 +5,7 @@ import { ExecutionRevertedError, parseAbiItem, parseEventLogs, TransactionReceip
 import { Logger } from "@nestjs/common";
 import { OutputRootProvider } from "./challenger.outputroot.provider";
 import { HonestClaimTracker } from "./honest.claim.tracker";
-import { Position } from "../challenger.position";
+import { Position } from "../utils/challenger.position";
 import { ConfigService } from "@nestjs/config";
 import { FaultDisputeGameBuilder } from "./faultdisputegame.builder";
 import { ClaimResolver } from "./claim.resolver";
@@ -149,6 +149,12 @@ export class ChallengerHonest {
   ) {
     const faultDisputeGame = this.faultDisputeGameBuilder.build();
 
+    const counteredBy = Buffer.from(claimData.counteredBy.slice(2), 'hex');
+    const isCountered = counteredBy.readBigInt64BE() !== 0n;
+    if(isCountered){
+      return;
+    }
+
     const shouldCounter = await this.shouldCounter(claimData, agreedClaims);
     if(!shouldCounter){
       return;
@@ -160,15 +166,27 @@ export class ChallengerHonest {
     const agreedToParentClaim = parentClaim === parentHonestClaim;
 
     const disputedBlockNumber = (await outputRootProvider.getDisputedNumber(parentClaimPosition)).blockNumber;
+    this.logger.debug(`Start step | disputedBlockNumber: ${disputedBlockNumber}`);
     const batchIndexData = await this.preoracleService.prepareDisputeStep(disputedBlockNumber);
+    this.logger.debug('Step prepare done');
     const batchIndexDataHex = `0x${batchIndexData.toString('hex')}` as `0x${string}`;
 
-    if(agreedToParentClaim) {
-      const txHash = await faultDisputeGame.write.step([BigInt(claimDataIndex), false, batchIndexDataHex]);
-      await this.evmPublicService.waitForTransactionReceipt(txHash);
-    } else {
-      const txHash = await faultDisputeGame.write.step([BigInt(claimDataIndex), true, batchIndexDataHex]);
-      await this.evmPublicService.waitForTransactionReceipt(txHash);
+    try {
+      if(agreedToParentClaim) {
+        const txHash = await faultDisputeGame.write.step([BigInt(claimDataIndex), false, batchIndexDataHex], {
+          gas: 1000000000n,
+        });
+        await this.evmPublicService.waitForTransactionReceipt(txHash);
+      } else {
+        const txHash = await faultDisputeGame.write.step([BigInt(claimDataIndex), true, batchIndexDataHex], {
+          gas: 1000000000n,
+        });
+        await this.evmPublicService.waitForTransactionReceipt(txHash);
+      }
+
+      this.logger.debug(`Step | done`);
+    } catch(e) {
+      this.logger.error(e);
     }
   }
 

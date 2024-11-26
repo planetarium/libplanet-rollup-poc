@@ -32,6 +32,32 @@ export const PreOracleVMAbi = [
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "FRAME_POST_INFO_SIZE",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "FRAME_PRE_INFO_SIZE",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "bytes32",
@@ -129,6 +155,16 @@ export const PreOracleVMAbi = [
         "type": "bytes32"
       },
       {
+        "internalType": "uint256",
+        "name": "_blockNumber",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_transactionIndex",
+        "type": "uint256"
+      },
+      {
         "internalType": "bytes",
         "name": "_batchIndexData",
         "type": "bytes"
@@ -142,7 +178,7 @@ export const PreOracleVMAbi = [
         "type": "bytes32"
       }
     ],
-    "stateMutability": "pure",
+    "stateMutability": "view",
     "type": "function"
   },
   {

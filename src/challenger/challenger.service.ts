@@ -10,6 +10,8 @@ import { ConfigService } from "@nestjs/config";
 import { ChallengerDishonest } from "./models/challenger.dishonest";
 import { LibplanetService } from "src/libplanet/libplanet.service";
 import { PreoracleService } from "src/preoracle/preoracle.service";
+import { OutputRootProvider } from "./models/challenger.outputroot.provider";
+import { Position } from "./utils/challenger.position";
 
 @Injectable()
 export class ChallengerService {
@@ -28,7 +30,7 @@ export class ChallengerService {
 
     const faultDisputeGameFactoryReader = this.evmContractManager.getFaultDisputeGameFactoryReader();
 
-    var dishonestAttached = true;
+    var dishonestAttached = false;
 
     faultDisputeGameFactoryReader.watchEvent.FaultDisputeGameCreated({
       onLogs: async (logs) => {
@@ -61,6 +63,22 @@ export class ChallengerService {
       if(disputeStatus === FaultDisputeGameStatus.IN_PROGRESS) {
         await this.attachChallenger(proxy);
       }
+    }
+  }
+
+  public async test() {
+    const outputRootProvider = new OutputRootProvider(
+      this.libplanetService,
+      5000n,
+      10000n,
+      15,
+      21,
+    );
+
+    var pos = new Position(1n);
+    for(var i = 0; i <= 21; i++) {
+      const outputRoot = await outputRootProvider.get(pos);
+      pos = pos.attack();
     }
   }
 

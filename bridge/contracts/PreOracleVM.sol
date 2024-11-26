@@ -20,6 +20,8 @@ contract PreOracleVM is IPreOracleVM {
   mapping(bytes32 => bool) public batchDataSubmitted;
 
   uint32 public constant BLOCKHASH_LIMIT = 200;
+  uint256 public constant FRAME_PRE_INFO_SIZE = 22;
+  uint256 public constant FRAME_POST_INFO_SIZE = 1;
 
   event BlockHashesFilled(uint256 indexed firstBlockNumber, uint256 indexed lastBlockNumber);
 
@@ -73,8 +75,26 @@ contract PreOracleVM is IPreOracleVM {
 
   function step(
     Claim _preStateClaim,
+    uint256 _blockNumber,
+    uint256 _transactionIndex,
     bytes memory _batchIndexData
-  ) external pure returns (Claim) {
+  ) external view returns (Claim) {
+    RLPReader.RLPItem[] memory batchIndexDataItems = _batchIndexData.toRlpItem().toList();
+    uint256 blockNumber = batchIndexDataItems[0].toUint();
+    require(blockNumber == _blockNumber, "Invalid block number");
+
+    bytes32 startingTransactionHash = bytesToBytes32(batchIndexDataItems[1].toBytes());
+    uint256 startingDataIndex = batchIndexDataItems[2].toUint();
+    bytes32 endingTransactionHash = bytesToBytes32(batchIndexDataItems[3].toBytes());
+    uint256 endingDataIndex = batchIndexDataItems[4].toUint();
+
+    bytes memory startingBatchData = batchDatas[startingTransactionHash];
+    require(startingBatchData.length > 0, "Starting batch data not found");
+    if(endingTransactionHash != startingTransactionHash) {
+      bytes memory endingBatchData = batchDatas[endingTransactionHash];
+      require(endingBatchData.length > 0, "Ending batch data not found");
+    }
+
     return _preStateClaim;
   }
 

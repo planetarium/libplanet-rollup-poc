@@ -8,13 +8,13 @@ import { sha256 } from "viem";
 export class LibplanetService {
   constructor(
     private readonly graphQlService: LibplanetGraphQLService,
-  ) {
-    //this.init();
-  }
+  ) {}
 
   private readonly logger = new Logger(LibplanetService.name); 
 
-  private async init() {
+  // for testing
+  public async init() {
+    const outputRoot = await this.getOutputRootInfoByBlockIndex(10n);
     return
   }
 
