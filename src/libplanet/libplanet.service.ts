@@ -13,7 +13,7 @@ export class LibplanetService {
   private readonly logger = new Logger(LibplanetService.name); 
 
   // for testing
-  public async init() {
+  public async test() {
     const outputRoot = await this.getOutputRootInfoByBlockIndex(10n);
     return
   }

@@ -5,7 +5,7 @@ const FaultProofModule = buildModule('FaultProofModule', (m) => {
     const anchorStateRegistry = m.contract('AnchorStateRegistry', [
         faultDisputeGameFactory,
         {
-            root: "0xb725841ac078ee2a313cee3d9dede3492cc61e3a5439f2bcb289fc5b89d71d99",
+            root: "0xe3a161fc21b41f5fef06c09b3613cd69e7f9fe229e7d2b2b1f99ba9f06fb0974",
             l2BlockNumber: 10n
         }
     ]);

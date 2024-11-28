@@ -1,15 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { BatcherService } from './batcher/batcher.service';
 import { DeriverService } from './deriver/deriver.service';
-import { PreoracleDbService } from './preoracle/preoracle.db.service';
 import { ProposerService } from './proposer/proposer.service';
 import { ConfigService } from '@nestjs/config';
 import { EvmService } from './evm/evm.service';
 import { ChallengerService } from './challenger/challenger.service';
-import { PreoracleContractService } from './preoracle/preoracle.contract.service';
 import { PreoracleService } from './preoracle/preoracle.service';
-import { EvmPublicService } from './evm/evm.public.service';
 import { LibplanetService } from './libplanet/libplanet.service';
+import { TimeUtils } from './utils/utils.time';
 
 @Injectable()
 export class AppService {
@@ -27,12 +25,8 @@ export class AppService {
   }
 
   private async init() {
-    // for testing purpose
-    // await this.evmService.test();
-
-    // for testing purpose
-    // this.libplanetService.init();
-
+    await TimeUtils.delay(10000);
+    
     if(this.configService.get('challenger.enabled')){
       await this.preoracleService.init();
     }
@@ -42,6 +36,10 @@ export class AppService {
     this.proposerService.proposeStart();
 
     this.challengerService.init();
+
+    // await this.evmService.test();
+
+    // this.libplanetService.test();
 
     // await this.preoracleService.test()
 
