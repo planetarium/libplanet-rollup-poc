@@ -1,0 +1,29 @@
+services:
+  libplanet-console:
+    image: kangseokhun43/libplanet-console:202411281148
+    hostname: libplanet-console
+    volumes:
+      - libplanet-console-data:/app/.data
+    ports:
+      - 5001:5001
+  op-geth:
+    image: kangseokhun43/op-geth-server:202411281259
+    hostname: op-geth
+    volumes:
+      - op-geth-data:/geth-private/blockchainData
+    ports:
+      - 8545:8545
+  nestjs:
+    depends_on:
+      - libplanet-console
+      - op-geth
+    build:
+      context: .
+    environment:
+      NODE_ENV: production
+    ports:
+      - 3000:3000
+
+volumes:
+  libplanet-console-data:
+  op-geth-data:

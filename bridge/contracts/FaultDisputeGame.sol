@@ -3,6 +3,7 @@ pragma solidity 0.8.24;
 
 import { IFaultDisputeGame } from "./interfaces/IFaultDisputeGame.sol";
 import { IAnchorStateRegistry } from "./interfaces/IAnchorStateRegistry.sol";
+import { IPreOracleVM } from "./interfaces/IPreOracleVM.sol";
 
 import { Clone } from "./utils/Clone.sol";
 
@@ -17,6 +18,7 @@ contract FaultDisputeGame is IFaultDisputeGame, Clone {
     Duration internal immutable MAX_CLOCK_DURATION;
     Duration internal immutable CLOCK_EXTENSION;
     IAnchorStateRegistry internal immutable ANCHOR_STATE_REGISTRY;
+    IPreOracleVM internal immutable PRE_ORACLE_VM;
     Position internal immutable ROOT_POSITION = Position.wrap(1);
     Timestamp public createdAt;
     Timestamp public resolvedAt;
@@ -34,7 +36,8 @@ contract FaultDisputeGame is IFaultDisputeGame, Clone {
         uint256 _splitDepth,
         Duration _maxClockDuration,
         Duration _clockExtension,
-        IAnchorStateRegistry _anchorStateRegistry
+        IAnchorStateRegistry _anchorStateRegistry,
+        IPreOracleVM _preOracleVM
     ) {
         if (_splitDepth >= _maxGameDepth) revert InvalidSplitDepth();
         if (_clockExtension.raw() >= _maxClockDuration.raw()) revert InvalidClockExtension();
@@ -44,6 +47,7 @@ contract FaultDisputeGame is IFaultDisputeGame, Clone {
         MAX_CLOCK_DURATION = _maxClockDuration;
         CLOCK_EXTENSION = _clockExtension;
         ANCHOR_STATE_REGISTRY = IAnchorStateRegistry(_anchorStateRegistry);
+        PRE_ORACLE_VM = IPreOracleVM(_preOracleVM);
     }    
 
     function initialize() external {
@@ -76,9 +80,10 @@ contract FaultDisputeGame is IFaultDisputeGame, Clone {
 
     function step(
         uint256 _claimIndex,
-        bool _isAttack
+        bool _isAttack,
+        bytes memory _batchIndexData
     ) public {
-        if (status != GameStatus.IN_PROGRESS) revert GameNotInProgress();
+        if (status != GameStatus.IN_PROGRESS) revert ("GameNotInProgress();");
 
         // Get the parent. If it does not exist, the call will revert with OOB.
         ClaimData storage parent = claimData[_claimIndex];
@@ -88,8 +93,58 @@ contract FaultDisputeGame is IFaultDisputeGame, Clone {
         // Determine the position of the step.
         Position stepPos = parentPos.move(_isAttack);
 
+        console.log("Parent depth: %s", parentPos.depth());
+        console.log("Step depth: %s", stepPos.depth());
+        console.log("Max depth: %s", MAX_GAME_DEPTH);
+
         // INVARIANT: A step cannot be made unless the move position is 1 below the `MAX_GAME_DEPTH`
-        if (stepPos.depth() != MAX_GAME_DEPTH + 1) revert InvalidParent();
+        if (stepPos.depth() != MAX_GAME_DEPTH + 1) revert ("InvalidParent();");
+
+        // Determine the expected pre & post states of the step.
+        Claim preStateClaim;
+        ClaimData storage postState;
+        uint256 disputingBlockNumber;
+        uint256 transactionIndex;
+        if (_isAttack) {
+            // If the step position's index at depth is 0, the prestate is the absolute
+            // prestate.
+            // If the step is an attack at a trace index > 0, the prestate exists elsewhere in
+            // the game state.
+            // NOTE: We localize the `indexAtDepth` for the current execution trace subgame by finding
+            //       the remainder of the index at depth divided by 2 ** (MAX_GAME_DEPTH - SPLIT_DEPTH),
+            //       which is the number of leaves in each execution trace subgame. This is so that we can
+            //       determine whether or not the step position is represents the `ABSOLUTE_PRESTATE`.
+            preStateClaim = stepPos.indexAtDepth() == 0
+                ? Claim.wrap(startingRootHash().raw())
+                : _findTraceAncestor(Position.wrap(parentPos.raw() - 1), parent.parentIndex).claim;
+            // For all attacks, the poststate is the parent claim.
+            postState = parent;
+
+            disputingBlockNumber = parentPos.indexAtDepth() / (2 ** (MAX_GAME_DEPTH - SPLIT_DEPTH)) > l2BlockNumber() - startingBlockNumber()
+                ? l2BlockNumber()
+                : startingBlockNumber() + 1 + (parentPos.indexAtDepth() / (2 ** (MAX_GAME_DEPTH - SPLIT_DEPTH)));
+            transactionIndex = parentPos.indexAtDepth() % (2 ** (MAX_GAME_DEPTH - SPLIT_DEPTH));
+        } else {
+            // If the step is a defense, the poststate exists elsewhere in the game state,
+            // and the parent claim is the expected pre-state.
+            preStateClaim = parent.claim;
+            postState = _findTraceAncestor(Position.wrap(parentPos.raw() + 1), parent.parentIndex);
+
+            disputingBlockNumber = (parentPos.indexAtDepth() + 1) / (2 ** (MAX_GAME_DEPTH - SPLIT_DEPTH)) > l2BlockNumber() - startingBlockNumber()
+                ? l2BlockNumber()
+                : startingBlockNumber() + 1 + ((parentPos.indexAtDepth() + 1) / (2 ** (MAX_GAME_DEPTH - SPLIT_DEPTH)));
+            transactionIndex = (parentPos.indexAtDepth() + 1) % (2 ** (MAX_GAME_DEPTH - SPLIT_DEPTH));
+        }
+
+        bool validStep;
+        try PRE_ORACLE_VM.step(preStateClaim, disputingBlockNumber, transactionIndex, _batchIndexData) returns (Claim result) {
+            validStep = result.raw() == postState.claim.raw();
+        } catch Error(string memory reason) {
+            revert(reason);
+        }
+
+        bool parentPostAgree = (parentPos.depth() - postState.position.depth()) % 2 == 0;
+        //if (parentPostAgree == validStep) revert ("ValidStep();");
 
         parent.counteredBy = msg.sender;
     }
@@ -157,8 +212,7 @@ contract FaultDisputeGame is IFaultDisputeGame, Clone {
 
     function getNumToResolve(uint256 _claimIndex) public view returns (uint256 numRemainingChildren_) {
         ResolutionCheckpoint storage checkpoint = resolutionCheckpoints[_claimIndex];
-        uint256[] storage challengeIndices = subgames[_claimIndex];
-        uint256 challengeIndicesLen = challengeIndices.length;
+        uint256 challengeIndicesLen = subgames[_claimIndex].length;
 
         numRemainingChildren_ = challengeIndicesLen - checkpoint.subgameIndex;
     }
@@ -183,7 +237,7 @@ contract FaultDisputeGame is IFaultDisputeGame, Clone {
 
     function resolveClaim(uint256 _claimIndex) external {
         // INVARIANT: Resolution cannot occur unless the game is currently in progress.
-        if (status != GameStatus.IN_PROGRESS) revert GameNotInProgress();
+        if (status != GameStatus.IN_PROGRESS) revert ("GameNotInProgress();");
 
         ClaimData storage subgameRootClaim = claimData[_claimIndex];
         Duration challengeClockDuration = getChallengerDuration(_claimIndex);
@@ -191,10 +245,10 @@ contract FaultDisputeGame is IFaultDisputeGame, Clone {
         // INVARIANT: Cannot resolve a subgame unless the clock of its would-be counter has expired
         // INVARIANT: Assuming ordered subgame resolution, challengeClockDuration is always >= MAX_CLOCK_DURATION if all
         // descendant subgames are resolved
-        if (challengeClockDuration.raw() < MAX_CLOCK_DURATION.raw()) revert ClockNotExpired();
+        if (challengeClockDuration.raw() < MAX_CLOCK_DURATION.raw()) revert ("ClockNotExpired();");
 
         // INVARIANT: Cannot resolve a subgame twice.
-        if (resolvedSubgames[_claimIndex]) revert ClaimAlreadyResolved();
+        if (resolvedSubgames[_claimIndex]) revert ("ClaimAlreadyResolved();");
 
         uint256 numToResolve = getNumToResolve(_claimIndex);
 
@@ -234,7 +288,7 @@ contract FaultDisputeGame is IFaultDisputeGame, Clone {
             uint256 challengeIndex = challengeIndices[i];
 
             // INVARIANT: Cannot resolve a subgame containing an unresolved claim
-            if (!resolvedSubgames[challengeIndex]) revert OutOfOrderResolution();
+            if (!resolvedSubgames[challengeIndex]) revert ("OutOfOrderResolution();");
 
             ClaimData storage claim = claimData[challengeIndex];
 
@@ -305,11 +359,11 @@ contract FaultDisputeGame is IFaultDisputeGame, Clone {
         l2BlockNumber_ = l2BlockNumber();
     }
 
-    function startingBlockNumber() external view returns (uint256 startingBlockNumber_) {
+    function startingBlockNumber() public view returns (uint256 startingBlockNumber_) {
         startingBlockNumber_ = startingOutputRoot.l2BlockNumber;
     }
 
-    function startingRootHash() external view returns (Hash startingRootHash_) {
+    function startingRootHash() public view returns (Hash startingRootHash_) {
         startingRootHash_ = startingOutputRoot.root;
     }
 
@@ -347,5 +401,28 @@ contract FaultDisputeGame is IFaultDisputeGame, Clone {
 
     function claimDataLen() external view returns (uint256 len_) {
         len_ = claimData.length;
+    }
+
+    function subgamesLen(uint256 _claimIndex) external view returns (uint256 len_) {
+        len_ = subgames[_claimIndex].length;
+    }
+
+    function _findTraceAncestor(
+        Position _pos,
+        uint256 _start
+    )
+        internal
+        view
+        returns (ClaimData storage ancestor_)
+    {
+        // Grab the trace ancestor's expected position.
+        Position traceAncestorPos = _pos.traceAncestor();
+
+        // Walk up the DAG to find a claim that commits to the same trace index as `_pos`. It is
+        // guaranteed that such a claim exists.
+        ancestor_ = claimData[_start];
+        while (ancestor_.position.raw() != traceAncestorPos.raw()) {
+            ancestor_ = claimData[ancestor_.parentIndex];
+        }
     }
 }

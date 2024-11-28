@@ -62,3 +62,6 @@ bridge/artifacts
 bridge/cache
 bridge/ignition/deployments
 bridge/typechain-types
+
+db.json
+.db.json.tmp

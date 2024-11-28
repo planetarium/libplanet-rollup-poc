@@ -7,6 +7,9 @@ import { EvmModule } from './evm/evm.module';
 import { LibplanetModule } from './libplanet/libplanet.module';
 import { ChallengerModule } from './challenger/challenger.module';
 import { BatcherModule } from './batcher/batcher.module';
+import { DeriverModule } from './deriver/deriver.module';
+import { PreoracleModule } from './preoracle/preoracle.module';
+import { ProposerModule } from './proposer/proposer.module';
 
 @Module({
   imports: [
@@ -18,6 +21,9 @@ import { BatcherModule } from './batcher/batcher.module';
     LibplanetModule,
     ChallengerModule,
     BatcherModule,
+    DeriverModule,
+    ProposerModule,
+    PreoracleModule,
   ],
   controllers: [AppController],
   providers: [AppService],

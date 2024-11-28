@@ -25,6 +25,11 @@ export const FaultDisputeGameAbi = [
         "internalType": "contract IAnchorStateRegistry",
         "name": "_anchorStateRegistry",
         "type": "address"
+      },
+      {
+        "internalType": "contract IPreOracleVM",
+        "name": "_preOracleVM",
+        "type": "address"
       }
     ],
     "stateMutability": "nonpayable",
@@ -52,16 +57,6 @@ export const FaultDisputeGameAbi = [
   },
   {
     "inputs": [],
-    "name": "ClaimAlreadyResolved",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "ClockNotExpired",
-    "type": "error"
-  },
-  {
-    "inputs": [],
     "name": "ClockTimeExceeded",
     "type": "error"
   },
@@ -83,11 +78,6 @@ export const FaultDisputeGameAbi = [
   {
     "inputs": [],
     "name": "InvalidDisputedClaimIndex",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "InvalidParent",
     "type": "error"
   },
   {
@@ -656,6 +646,11 @@ export const FaultDisputeGameAbi = [
         "internalType": "bool",
         "name": "_isAttack",
         "type": "bool"
+      },
+      {
+        "internalType": "bytes",
+        "name": "_batchIndexData",
+        "type": "bytes"
       }
     ],
     "name": "step",
@@ -681,6 +676,25 @@ export const FaultDisputeGameAbi = [
       {
         "internalType": "uint256",
         "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_claimIndex",
+        "type": "uint256"
+      }
+    ],
+    "name": "subgamesLen",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "len_",
         "type": "uint256"
       }
     ],

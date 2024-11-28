@@ -5,23 +5,24 @@ const FaultProofModule = buildModule('FaultProofModule', (m) => {
     const anchorStateRegistry = m.contract('AnchorStateRegistry', [
         faultDisputeGameFactory,
         {
-            root: "0x0000000000000000000000000000000000000000000000000000000000000001",
-            l2BlockNumber: 0n
+            root: "0xe3a161fc21b41f5fef06c09b3613cd69e7f9fe229e7d2b2b1f99ba9f06fb0974",
+            l2BlockNumber: 10n
         }
     ]);
+    const preOracleVM = m.contract('PreOracleVM');
     
-    const maxGameDepth = m.getParameter('_maxGameDepth', 10n);
-    const splitDepth = m.getParameter('_splitDepth', 5n);
-    const maxClockDuration = m.getParameter('_maxClockDuration', 3600n);
-    const clockExtension = m.getParameter('_clockExtension', 300n);
+    const maxGameDepth = m.getParameter('_maxGameDepth', 21n);
+    const splitDepth = m.getParameter('_splitDepth', 15n);
+    const maxClockDuration = m.getParameter('_maxClockDuration', 120n);
+    const clockExtension = m.getParameter('_clockExtension', 40n);
     
     const faultDisputeGame = m.contract("FaultDisputeGame", [
-        maxGameDepth, splitDepth, maxClockDuration, clockExtension, anchorStateRegistry
+        maxGameDepth, splitDepth, maxClockDuration, clockExtension, anchorStateRegistry, preOracleVM
     ]);
 
     m.call(faultDisputeGameFactory, 'setImplementation', [faultDisputeGame]);
 
-    return { faultDisputeGameFactory, anchorStateRegistry, faultDisputeGame };
+    return { faultDisputeGameFactory, anchorStateRegistry, preOracleVM, faultDisputeGame };
 });
 
 export default FaultProofModule;

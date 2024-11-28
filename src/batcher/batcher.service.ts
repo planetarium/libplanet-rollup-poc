@@ -5,9 +5,8 @@ import { fromBytes, hexToBytes } from "viem";
 import { MaxBlocksPerChannelManager, MaxFrameSize } from "./batcher.constants";
 import { ConfigService } from "@nestjs/config";
 import { LibplanetGraphQLService } from "src/libplanet/libplanet.graphql.service";
-import { EvmContractManager } from "src/evm/evm.contracts";
-import { EvmClientFactory } from "src/evm/evm.client.factory";
 import { KeyUtils } from "src/utils/utils.key";
+import { EvmService } from "src/evm/evm.service";
 
 @Injectable()
 export class BatcherService {
@@ -15,17 +14,17 @@ export class BatcherService {
         private readonly configService: ConfigService,
         private readonly channelManager: ChannelManager,
         private readonly libplanetGraphQlService: LibplanetGraphQLService,
-        private readonly contractManager: EvmContractManager,
-        private readonly clientFactory: EvmClientFactory,
+        private readonly evmService: EvmService,
         private readonly keyUtils: KeyUtils,
-    ) {
-        //this.batchStart();
-    }
+    ) {}
 
+    private readonly logEnabled = this.configService.get('batcher.debug', false);
     private readonly logger = new Logger(BatcherService.name);
 
     private log(log: any) {
-        this.logger.log(log);
+        if(this.logEnabled) {
+            this.logger.log(log);
+        }
     }
 
     private readonly TIME_INTERVAL = this.configService.get('batcher.time_interval', 10000);
@@ -98,7 +97,7 @@ export class BatcherService {
     }
 
     private async loadBlockIntoState(index: bigint): Promise<BlockID> {
-        var block = await this.libplanetGraphQlService.getBlockWithIndex(index);
+        var block = await this.libplanetGraphQlService.getBlockByIndex(index);
 
         if (!block) {
             throw new Error('block not found');
@@ -126,8 +125,8 @@ export class BatcherService {
 
         var remainedBlockSpace = blockLimit - this.channelManager.blocks.length;
 
-        if(endBlockId.index - this.lastStoredBlock.index >= remainedBlockSpace) {
-            var endBlock = await this.libplanetGraphQlService.getBlockWithIndex(this.lastStoredBlock.index + BigInt(remainedBlockSpace));
+        if(endBlockId.index - this.lastStoredBlock.index > remainedBlockSpace) {
+            var endBlock = await this.libplanetGraphQlService.getBlockByIndex(this.lastStoredBlock.index + BigInt(remainedBlockSpace));
             var endBlockId = {
                 hash: endBlock.hash,
                 index: endBlock.index
@@ -141,13 +140,12 @@ export class BatcherService {
     }
 
     private async initBlock() {
-        const anchorStateRegistryReader = this.contractManager.getAnchorStateRegistryReader();
-        var outputRoot = await anchorStateRegistryReader.read.getAnchor();
+        var outputRoot = await this.evmService.getAnchor();
         if (!outputRoot) {
             throw new Error("Failed to get latest output root");
         }
 
-        var block = await this.libplanetGraphQlService.getBlockWithIndex(outputRoot.l2BlockNumber);
+        var block = await this.libplanetGraphQlService.getBlockByIndex(outputRoot.l2BlockNumber);
         if (!block) {
             throw new Error("Failed to get block");
         }
@@ -182,9 +180,8 @@ export class BatcherService {
     }
 
     private async batchTransaction(payload: `0x${string}`) {
-        const batcherPrivateKey = this.keyUtils.getBatcherPrivateKey();
-        const batchWallet = this.clientFactory.getWalletClient(batcherPrivateKey);
-        return await batchWallet.sendTransaction({
+        const batcherWallet = this.evmService.getBatcherWallet();
+        return await batcherWallet.sendTransaction({
             to: this.keyUtils.getBatchInboxAddress(),
             data: payload,
         });

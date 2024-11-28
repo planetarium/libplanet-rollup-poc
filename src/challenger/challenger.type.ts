@@ -1,5 +1,5 @@
 import { sha256, toHex } from "viem"
-import { Position } from "./challenger.position"
+import { Position } from "./utils/challenger.position"
 
 export enum FaultDisputeGameStatus {
   // The game is currently in progress, and has not been resolved.

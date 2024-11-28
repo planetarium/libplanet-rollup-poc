@@ -34,4 +34,16 @@ export class KeyUtils {
     const config_key = `evm.${chain}.addresses.batch_inbox`;
     return this.config.get(config_key) ?? "0x";
   }
+
+  public getProposerPrivateKey(): `0x${string}` {
+    const chain = this.config.get("evm.chain") ?? "local_geth";
+    const config_key = `evm.${chain}.private_key.proposer`;
+    return this.config.get(config_key) ?? "0x";
+  }
+
+  public getPreOracleUserPrivateKey(): `0x${string}` {
+    const chain = this.config.get("evm.chain") ?? "local_geth";
+    const config_key = `evm.${chain}.private_key.pre_oracle_user`;
+    return this.config.get(config_key) ?? "0x";
+  }
 }

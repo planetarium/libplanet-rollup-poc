@@ -1,84 +1,181 @@
-import { EvmClientFactory } from "src/evm/evm.client.factory";
-import { EvmContractManager } from "src/evm/evm.contracts";
-import { LibplanetGraphQLService } from "src/libplanet/libplanet.graphql.service";
-import { ClaimData, claimDataWrap, FaultDisputeGameStatus } from "../challenger.type";
+import { ClaimData, claimDataWrap, claimId, FaultDisputeGameStatus } from "../challenger.type";
 import { EvmPublicService } from "src/evm/evm.public.service";
-import { parseAbiItem, parseEventLogs } from "viem";
+import { sha256, toHex } from "viem";
 import { Logger } from "@nestjs/common";
+import { Position } from "../utils/challenger.position";
+import { ConfigService } from "@nestjs/config";
+import { FaultDisputeGameBuilder } from "./faultdisputegame.builder";
 
 export class ChallengerDishonest {
   constructor(
-    private readonly clientFactory: EvmClientFactory,
-    private readonly contractManager: EvmContractManager,
-    private readonly libplanetGraphQlService: LibplanetGraphQLService,
+    private readonly configService: ConfigService,
+    private readonly faultDisputeGameBuilder: FaultDisputeGameBuilder,
     private readonly evmPublicService: EvmPublicService,
-  ){ }
+  ){
+    const disputeGameProxy = this.faultDisputeGameBuilder.build().address;
+    this.CHALLENGER_ID = disputeGameProxy.slice(2, 5);
+    this.logger = new Logger(`ChallengerDishonest-${this.CHALLENGER_ID}`);
+  }
+
+  private readonly CHALLENGER_ID: string;
+  private readonly logger: Logger;
+
+  private readonly logEnabled = this.configService.get('challenger.debug', false);
+  private log(log: any) {
+    if(this.logEnabled) {
+      this.logger.debug(log);
+    }
+  }
+
+  private readonly TIME_INTERVAL = this.configService.get('challenger.time_interval', 3000);
 
   private initialized: boolean = false;
 
-  private readonly logger = new Logger(ChallengerDishonest.name);
+  private splitDepth: number = 0;
+  private maxDepth: number = 0;
+  private maxClockDuration: bigint = 0n;
 
   public async init() {
     if (this.initialized) {
       throw new Error("Already initialized");
     }
 
-    const walletClient = await this.clientFactory.newWalletClient();
-    var res = this.evmPublicService.waitForTransactionReceipt(walletClient.txHash);
-    const privateKey = walletClient.privateKey;
-
-    const faultDisputeGameFactory = this.contractManager.getFaultDisputeGameFactory(privateKey);
-
     this.initialized = true;
+    this.log(`Initialized`);
+
+    const faultDisputeGame = this.faultDisputeGameBuilder.build();
+    this.splitDepth = Number(await faultDisputeGame.read.splitDepth());
+    this.maxDepth = Number(await faultDisputeGame.read.maxGameDepth());
+    this.maxClockDuration = await faultDisputeGame.read.maxClockDuration();
+    const createdTimestamp = await faultDisputeGame.read.createdAt();
 
     while(this.initialized) {
-      await this.delay(3000);
+      await this.delay(this.TIME_INTERVAL);
 
-      const gameCount = await faultDisputeGameFactory.read.gameCount();
-      if(gameCount === 0n){
-        continue;
-      }
-      const gameIndex = gameCount - 1n;
-      const gameAtIndex = await faultDisputeGameFactory.read.gameAtIndex([gameIndex]);
-      const proxy = gameAtIndex[1];
-      const faultDisputeGame = this.contractManager.getFaultDisputeGame(proxy, privateKey);
       const status = await faultDisputeGame.read.status() as FaultDisputeGameStatus;
       if(status === FaultDisputeGameStatus.IN_PROGRESS){
         const claimDataLen = await faultDisputeGame.read.claimDataLen();
-        const claimDataIndex = claimDataLen - 1n;
-        const claimDataAtIndex = await faultDisputeGame.read.claimData([claimDataIndex]);
-        const claimData = claimDataWrap(claimDataAtIndex);
+        var claims: ClaimData[] = [];
+        var claimIds = new Map<`0x${string}`, boolean>();
+        for(let i = 0n; i < claimDataLen; i++) {
+          claims.push(claimDataWrap(await faultDisputeGame.read.claimData([i])));
+          claimIds.set(claimId(claims[Number(i)]), true);
+        }
 
-        const maxDepth = await faultDisputeGame.read.maxGameDepth();
-        if(claimData.position.depth() == Number(maxDepth)){
-          this.logger.log(`Dishonest: Step`);
+        if(claimDataLen === 1n) {
+          const txHash = await this.attackToClaim(claims, claimIds, 0);
+          if(txHash){
+            await this.evmPublicService.waitForTransactionReceipt(txHash);
+          }
           continue;
         }
-        
-        if(claimData.claimant !== walletClient.client.account.address){
-          const claim = "0x0000000000000000000000000000000000000000000000000000000000000001";
-          try {
-            var isAttack = Math.random() < 0.5;
-            if(claimDataIndex === 0n){
-              isAttack = true;
-            }
-            const txHash = await faultDisputeGame.write.move([claimData.claim, claimDataIndex, claim, isAttack]);
-            this.logger.log(`Dishonest: ${isAttack ? 'Attack' : 'Defend'}: ${claimData.position.getValue()}`);
-            const res = await this.evmPublicService.waitForTransactionReceipt(txHash);
-            if(res.logs.length > 0){
-              const eventAbi = parseAbiItem('event Move(uint256 indexed parentIndex, bytes32 indexed claim, address indexed claimant)');
-              const event = parseEventLogs({
-                abi: [eventAbi],
-                logs: res.logs
-              })[0].args;
-              //this.logger.log(`Move: ${event.parentIndex} ${event.claim} ${event.claimant}`);
-            } 
-          } catch (error) {
-            this.logger.error(`Dishonest: Error: ${error}`);
-          }
+
+        if(claimDataLen > 2n) {
+          await this.onlyAttack(claimDataLen, claims, claimIds);
+          // await this.randomClaim(claimDataLen, claims, claimIds);
         }
+      } else {
+        this.initialized = false;
+        this.log(`Game is already resolved`);
+        return;
       }
     }
+  }
+
+  private async onlyAttack(claimDataLen: bigint, claims: ClaimData[], claimIds: Map<`0x${string}`, boolean>) {
+    const claimIndex = Number(claimDataLen - 1n);
+    const claimData = claims[claimIndex];
+    const depth = claimData.position.depth();
+    if(depth == this.maxDepth) {
+      this.initialized = false;
+      this.log(`Already reached max depth`);
+      return;
+    }
+
+    const txHash = await this.attackToClaim(claims, claimIds, claimIndex);
+    if(txHash){
+      await this.evmPublicService.waitForTransactionReceipt(txHash);
+    }
+  }
+
+  private async randomClaim(claimDataLen: bigint, claims: ClaimData[], claimIds: Map<`0x${string}`, boolean>) {
+    const claimIndex = Number(this.getRandomBit() ? claimDataLen - 1n : claimDataLen - 2n);
+    const claimData = claims[claimIndex];
+    const depth = claimData.position.depth();
+    if(depth >= this.maxDepth - 2) {
+      this.initialized = false;
+      this.log(`Almost reached max depth`);
+      return;
+    }
+
+    if(this.getRandomBit()){
+      const txHash = await this.attackToClaim(claims, claimIds, claimIndex);
+      if(txHash){
+        await this.evmPublicService.waitForTransactionReceipt(txHash);
+      }
+    } else {
+      const txHash = await this.defendToClaim(claims, claimIds, claimIndex);
+      if(txHash){
+        await this.evmPublicService.waitForTransactionReceipt(txHash);
+      }
+    }
+  }
+
+  private async attackToClaim(claims: ClaimData[], claimIds: Map<`0x${string}`, boolean>, parentClaimIndex: number){
+    const publicAddress = this.faultDisputeGameBuilder.getPublicAddress();
+    const parentClaimData = claims[parentClaimIndex];
+    if(parentClaimData.claimant === publicAddress){
+      return;
+    }
+    const parentClaim = parentClaimData.claim;
+    const claimPosition = parentClaimData.position.attack();
+    const claim = this.getClaimFromPosition(claimPosition);
+
+    const claimId = this.getClaimId(parentClaimIndex, claimPosition, claim);
+    if(claimIds.has(claimId)){
+      return;
+    }
+
+    const faultDisputeGame = this.faultDisputeGameBuilder.build();
+    const txHash = await faultDisputeGame.write.attack([parentClaim, BigInt(parentClaimIndex), claim as `0x${string}`]);
+    this.log(`Attack | parentClaimIndex: ${parentClaimIndex} claimDepth: ${claimPosition.depth()} claim: ${claim}`);
+
+    return txHash;
+  }
+
+  private async defendToClaim(claims: ClaimData[], claimIds: Map<`0x${string}`, boolean>, parentClaimIndex: number){
+    const parentClaimData = claims[parentClaimIndex];
+    const parentClaim = parentClaimData.claim;
+    const claimPosition = parentClaimData.position.defend();
+    const claim = this.getClaimFromPosition(claimPosition);
+
+    const claimId = this.getClaimId(parentClaimIndex, claimPosition, claim);
+    if(claimIds.has(claimId)){
+      return;
+    }
+
+    const faultDisputeGame = this.faultDisputeGameBuilder.build();
+    const txHash = await faultDisputeGame.write.defend([parentClaim, BigInt(parentClaimIndex), claim as `0x${string}`]);
+    this.log(`Defend | parentClaimIndex: ${parentClaimIndex} claimDepth: ${claimPosition.depth()} claim: ${claim}`);
+
+    return txHash;
+  }
+
+  private getClaimFromPosition(pos: Position) {
+    const positionNumber = pos.getValue();
+    const positionHex = positionNumber.toString(16);
+    const hexLength = positionHex.length;
+    const claim = `0x${'0'.repeat(64 - hexLength)}${positionHex}`;
+    return claim as `0x${string}`;
+  }
+
+  private getClaimId(parentIndex: number, position: Position, claim: `0x${string}`) {
+    const identifier = toHex(`${parentIndex}:${position.getValue()}:${claim}`);
+    return sha256(identifier); 
+  }
+
+  private getRandomBit() {
+    return Math.random() > 0.5;
   }
 
   private async delay(ms: number) {
