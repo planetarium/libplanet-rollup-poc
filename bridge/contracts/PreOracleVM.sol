@@ -8,6 +8,8 @@ import "./utils/ProvethVerifier.sol";
 
 import "./utils/Types.sol";
 
+import "hardhat/console.sol";
+
 contract PreOracleVM is IPreOracleVM {
   using RLPReader for RLPReader.RLPItem;
   using RLPReader for bytes;
@@ -29,7 +31,7 @@ contract PreOracleVM is IPreOracleVM {
     uint256 currentBlockNumber = block.number - 1;
 
     uint256 firstBlockNumber = recentBlockNumber + 1;
-    if(currentBlockNumber - BLOCKHASH_LIMIT > firstBlockNumber) {
+    if(currentBlockNumber > BLOCKHASH_LIMIT && currentBlockNumber - BLOCKHASH_LIMIT > firstBlockNumber) {
       firstBlockNumber = currentBlockNumber - BLOCKHASH_LIMIT;
     }
 
@@ -79,8 +81,12 @@ contract PreOracleVM is IPreOracleVM {
     uint256 _transactionIndex,
     bytes memory _batchIndexData
   ) external view returns (Claim) {
+    console.logBytes(_batchIndexData);
     RLPReader.RLPItem[] memory batchIndexDataItems = _batchIndexData.toRlpItem().toList();
     uint256 blockNumber = batchIndexDataItems[0].toUint();
+    console.log("blockNumber", blockNumber);
+    bytes memory blockNumberBytes = batchIndexDataItems[0].toBytes();
+    console.logBytes(blockNumberBytes);
     require(blockNumber == _blockNumber, "Invalid block number");
 
     bytes32 startingTransactionHash = bytesToBytes32(batchIndexDataItems[1].toBytes());

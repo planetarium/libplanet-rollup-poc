@@ -25,7 +25,7 @@ export class AppService {
   }
 
   private async init() {
-    await TimeUtils.delay(10000);
+    await TimeUtils.delay(5000);
     
     if(this.configService.get('challenger.enabled')){
       await this.preoracleService.init();
@@ -34,15 +34,12 @@ export class AppService {
     this.batcherService.batchStart();
     this.deriverService.deriveStart();
     this.proposerService.proposeStart();
-
     this.challengerService.init();
 
+    // for testing purpose
     // await this.evmService.test();
-
     // this.libplanetService.test();
-
     // await this.preoracleService.test()
-
     // this.challengerService.test();
   }
 }

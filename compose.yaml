@@ -7,7 +7,7 @@ services:
     ports:
       - 5001:5001
   op-geth:
-    image: kangseokhun43/op-geth-server:202411281259
+    image: kangseokhun43/op-geth:202411291126
     hostname: op-geth
     volumes:
       - op-geth-data:/geth-private/blockchainData
@@ -21,9 +21,12 @@ services:
       context: .
     environment:
       NODE_ENV: production
+    volumes:
+      - nestjs-data:/usr/src/app/data
     ports:
       - 3000:3000
 
 volumes:
   libplanet-console-data:
   op-geth-data:
+  nestjs-data:
