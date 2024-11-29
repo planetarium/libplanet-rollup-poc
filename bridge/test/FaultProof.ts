@@ -64,7 +64,7 @@ describe("FaultProof", function () {
 
     const [owner, otherAccount] = await hre.ethers.getSigners();
 
-    return { faultDisputeGameFactory, anchorStateRegistry, faultDisputeGame, owner, otherAccount, maxClockDuration };
+    return { faultDisputeGameFactory, anchorStateRegistry, faultDisputeGame, preOracleVM, owner, otherAccount, maxClockDuration };
   }
 
   describe("Deployment", function () {
@@ -102,6 +102,19 @@ describe("FaultProof", function () {
   });
 
   describe("game controle", function () {
+    it("preoracle", async function(){
+      const { preOracleVM } = await loadFixture(deployFaultProofFixture);
+
+      const res = await preOracleVM.step(
+        "0x000000000000000000000000000000000000000000000000000000000000000b",
+        11n,
+        0n,
+        "0xf84580a03cea38f5e30b2fa5745dd0eb2151c4ef65ddf4d7547a4bcf118cb18294f0368780a03cea38f5e30b2fa5745dd0eb2151c4ef65ddf4d7547a4bcf118cb18294f0368745"
+      )
+
+      console.log(res);
+    });
+
     it("game controle", async function(){
       const { faultDisputeGameFactory, owner, otherAccount, maxClockDuration } = await loadFixture(deployFaultProofFixture);
 

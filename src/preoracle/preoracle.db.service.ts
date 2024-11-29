@@ -4,6 +4,9 @@ import { Batch, Block, compareBlock } from "src/deriver/deriver.types";
 import { LibplanetService } from "src/libplanet/libplanet.service";
 import { ConfigService } from "@nestjs/config";
 
+import * as fs from 'fs';
+import * as path from 'path';
+
 type Data = {
   batch_transactions: BatchTransaction[];
   block_indices: BlockIndex[];
@@ -23,7 +26,17 @@ export class PreoracleDbService {
 
   public async init() {
     const { JSONFilePreset } = await import("lowdb/node");
-    this.db = await JSONFilePreset<Data>('db.json', { batch_transactions: [], block_indices: [] });
+    const { Low } = await import('lowdb');
+    const { JSONFile } = await import('lowdb/node');
+
+    const dbPath = path.join(__dirname, '..', '..', '..', 'data');
+    if (!fs.existsSync(dbPath)) {
+      fs.mkdirSync(dbPath);
+    }
+
+    const dbFilePath = path.join(dbPath, 'db.json');
+    this.db = await JSONFilePreset<Data>(dbFilePath, { batch_transactions: [], block_indices: [] });
+    //this.db = new Low<Data>(new JSONFile(dbFilePath), { batch_transactions: [], block_indices: [] });
 
     // // for testing purpose
     // await this.dbSanityCheck();

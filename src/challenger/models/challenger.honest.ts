@@ -166,22 +166,21 @@ export class ChallengerHonest {
     const agreedToParentClaim = parentClaim === parentHonestClaim;
 
     const disputedBlockNumber = (await outputRootProvider.getDisputedNumber(parentClaimPosition)).blockNumber;
-    this.logger.debug(`Start step | disputedBlockNumber: ${disputedBlockNumber}`);
+    this.logger.debug(`Step | Start | disputedBlockNumber: ${disputedBlockNumber}`);
     const batchIndexData = await this.preoracleService.prepareDisputeStep(disputedBlockNumber);
-    this.logger.debug('Step prepare done');
+    this.logger.debug('Step | prepare done');
     const batchIndexDataHex = `0x${batchIndexData.toString('hex')}` as `0x${string}`;
 
     try {
+      this.logger.debug('Step | call step');
       if(agreedToParentClaim) {
-        const txHash = await faultDisputeGame.write.step([BigInt(claimDataIndex), false, batchIndexDataHex], {
-          gas: 1000000000n,
-        });
-        await this.evmPublicService.waitForTransactionReceipt(txHash);
+        const txHash = await faultDisputeGame.write.step([BigInt(claimDataIndex), false, batchIndexDataHex]);
+        const txReceipt = await this.evmPublicService.waitForTransactionReceipt(txHash);
+        this.logger.debug(`Step | txReceipt: ${txReceipt.status}`);
       } else {
-        const txHash = await faultDisputeGame.write.step([BigInt(claimDataIndex), true, batchIndexDataHex], {
-          gas: 1000000000n,
-        });
-        await this.evmPublicService.waitForTransactionReceipt(txHash);
+        const txHash = await faultDisputeGame.write.step([BigInt(claimDataIndex), true, batchIndexDataHex]);
+        const txReceipt = await this.evmPublicService.waitForTransactionReceipt(txHash);
+        this.logger.debug(`Step | txReceipt: ${txReceipt.status}`);
       }
 
       this.logger.debug(`Step | done`);

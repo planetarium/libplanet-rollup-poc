@@ -66,9 +66,6 @@ export class PreoracleContractService {
       return;
     }
 
-    const balance = await this.evmService.getBalanceByPrivateKey(privateKey);
-    this.logger.debug(`balance: ${balance}`);
-
     const batchProof = await this.evmService.getBatchProof(targetTxHash);
     this.logger.debug(`sendBatchData`);
     try {
@@ -82,7 +79,7 @@ export class PreoracleContractService {
         gas: 1000000000n,
       });
       const txReceipt = await this.evmPublicService.waitForTransactionReceipt(txHash);
-      this.logger.debug(txReceipt);
+      this.logger.debug(`sendBatchData: txReceipt: ${txReceipt.status}`);
     } catch(e) {
       this.logger.error(e);
     }
