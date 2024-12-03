@@ -1,16 +1,25 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { LibplanetGraphQLService } from "./libplanet.graphql.service";
 import { randomBytes } from "crypto";
-import { Batch, Block } from "src/batcher/batcher.types";
 import { sha256 } from "viem";
+import { ConfigService } from "@nestjs/config";
 
 @Injectable()
 export class LibplanetService {
   constructor(
     private readonly graphQlService: LibplanetGraphQLService,
+    private readonly configService: ConfigService
   ) {}
 
-  private readonly logger = new Logger(LibplanetService.name); 
+  private readonly logger = new Logger(LibplanetService.name);
+  private readonly useDebug = this.configService.get('libplanet.debug', false);
+  private log(log: any) {
+    if(this.useDebug) {
+      this.logger.debug(log);
+    } else {
+      this.logger.log(log);
+    }
+  }
 
   // for testing
   public async test() {
@@ -68,7 +77,7 @@ export class LibplanetService {
     for(var i = 0; i < 10; i++) {
       await this.delay(1000);
       const res = await this.graphQlService.sendSimpleTransaction(randomBytes(16564).toString('hex'));
-      this.logger.log(`Sent transaction ${i} with result ${res.slice(0, 3)}`);
+      this.log(`Sent transaction ${i} with result ${res.slice(0, 3)}`);
     }
   }
 

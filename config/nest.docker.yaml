@@ -35,6 +35,7 @@ evm:
       pre_oracle_user: '0x14c5d59f634df8222426f563e163604fb645fbe1eaad2e860bae22a37fda5149' #0xCBAe6d8ba83F3bb0011Bacda57Df7009E2181ED5
 
 libplanet:
+  debug: false
   console:
     graphql:
       url: 'http://libplanet-console:5001/graphql'
@@ -42,16 +43,17 @@ libplanet:
       withdrawal_account: '0x96dAEf9D516CAf23A75e30CFaA7af1c968CC1658'
 
 batcher:
-  debug: true
+  debug: false
   time_interval: 10000
 deriver:
-  debug: true
+  debug: false
   time_interval: 10000
 proposer:
-  debug: true
+  debug: false
   time_interval: 10000
   invalid_sanity_count: 5000
 challenger:
   debug: true
   time_interval: 3000
-  enabled: true
+preoracle:
+  debug: false

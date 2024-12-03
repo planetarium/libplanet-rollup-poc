@@ -18,11 +18,12 @@ export class BatcherService {
         private readonly keyUtils: KeyUtils,
     ) {}
 
-    private readonly logEnabled = this.configService.get('batcher.debug', false);
     private readonly logger = new Logger(BatcherService.name);
-
+    private readonly useDebug = this.configService.get('batcher.debug', false);
     private log(log: any) {
-        if(this.logEnabled) {
+        if(this.useDebug) {
+            this.logger.debug(log);
+        } else {
             this.logger.log(log);
         }
     }

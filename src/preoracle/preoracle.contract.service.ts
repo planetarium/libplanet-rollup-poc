@@ -4,7 +4,7 @@ import { EvmPublicService } from "src/evm/evm.public.service";
 import { EvmService } from "src/evm/evm.service";
 import { KeyUtils } from "src/utils/utils.key";
 import { TimeUtils } from "src/utils/utils.time";
-import { EthProofUtil } from "../evm/utils/utils.eth.proof";
+import { ConfigService } from "@nestjs/config";
 
 @Injectable()
 export class PreoracleContractService {
@@ -13,9 +13,21 @@ export class PreoracleContractService {
     private readonly evmPublicService: EvmPublicService,
     private readonly evmContractManager: EvmContractManager,
     private readonly keyUtils: KeyUtils,
+    private readonly configService: ConfigService,
   ) {}
 
   private readonly logger = new Logger(PreoracleContractService.name);
+  private readonly useDebug = this.configService.get('preoracle.debug', false);
+  private log(log: any) {
+    if(this.useDebug) {
+      this.logger.debug(log);
+    } else {
+      this.logger.log(log);
+    }
+  }
+  private error(log: any) {
+    this.logger.error(log);
+  }
 
   public async init() {
     this.fillBlockHashesContinuosly();
@@ -67,7 +79,7 @@ export class PreoracleContractService {
     }
 
     const batchProof = await this.evmService.getBatchProof(targetTxHash);
-    this.logger.debug(`sendBatchData`);
+    this.log(`sendBatchData`);
     try {
       const txHash = await preOracleVM.write.submitBatchData([
         batchProof.blockNumber,
@@ -79,9 +91,9 @@ export class PreoracleContractService {
         gas: 1000000000n,
       });
       const txReceipt = await this.evmPublicService.waitForTransactionReceipt(txHash);
-      this.logger.debug(`sendBatchData: txReceipt: ${txReceipt.status}`);
+      this.log(`sendBatchData: txReceipt: ${txReceipt.status}`);
     } catch(e) {
-      this.logger.error(e);
+      this.error(e);
     }
 
     return;

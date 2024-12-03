@@ -65,7 +65,6 @@ export class OutputRootProvider {
 
   private claimedBlockNumber(pos: Position): bigint {
     const traceIndex = pos.traceIndex(this.splitDepth);
-    // this.logger.debug(`depth: ${pos.depth()} traceIndex: ${traceIndex}`);
     const outputBlockIndex = this.prestateBlockIndex + traceIndex;
     if (outputBlockIndex > this.poststateBlockIndex) {
       return this.poststateBlockIndex;
@@ -88,7 +87,6 @@ export class OutputRootProvider {
     const traceIndex = pos.traceIndexFromSplitDepth(this.splitDepth, this.maxDepth);
     const upperTraceIndex = traceIndex.upperTraceIndex;
     const lowerTraceIndex = traceIndex.lowerTraceIndex;
-    // this.logger.debug(`depth: ${pos.depth()} upperTraceIndex: ${upperTraceIndex} lowerTraceIndex: ${lowerTraceIndex}`);
 
     var transactionIndex = Number(lowerTraceIndex - 1n);
     const outputBlockIndex = this.prestateBlockIndex + upperTraceIndex;

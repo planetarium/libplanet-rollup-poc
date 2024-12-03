@@ -27,10 +27,8 @@ export class AppService {
   private async init() {
     await TimeUtils.delay(5000);
     
-    if(this.configService.get('challenger.enabled')){
-      await this.preoracleService.init();
-    }
-
+    await this.preoracleService.init();
+    
     this.batcherService.batchStart();
     this.deriverService.deriveStart();
     this.proposerService.proposeStart();

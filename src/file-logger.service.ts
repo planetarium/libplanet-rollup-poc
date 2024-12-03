@@ -4,7 +4,7 @@ import * as path from 'path';
 
 @Injectable()
 export class FileLogger extends ConsoleLogger {
-  private logFilePath = path.join(__dirname, '..', 'logs', 'application.log');
+  private logFilePath = path.join(__dirname, '..', '..', 'data', 'logs', 'application.log');
 
   constructor(context: string = 'App') {
     super(context);

@@ -50,10 +50,6 @@ export class PreoracleDbService {
   }
 
   public async postBatchTransaction(batchTransacion: BatchTransaction) {
-    if(!this.configService.get('challenger.enabled')) {
-      return false;
-    }
-
     if(this.getBatchTransactionByHash(batchTransacion.transactionHash)) {
       return false;
     }
@@ -72,10 +68,6 @@ export class PreoracleDbService {
   }
 
   public async postBlockIndex(blockIndex: BlockIndex) {
-    if(!this.configService.get('challenger.enabled')) {
-      return false;
-    }
-
     if(this.getBlockIndexByL2BlockNumber(blockIndex.l2BlockNumber)) {
       return false;
     }
