@@ -25,12 +25,12 @@ export class ChallengerService {
     private readonly preoracleService: PreoracleService,
   ) {}
 
+  private dishonestAttached: boolean = false;
+
   public async init() {
     this.challengerProposer.init();
 
     const faultDisputeGameFactoryReader = this.evmContractManager.getFaultDisputeGameFactoryReader();
-
-    var dishonestAttached = false;
 
     faultDisputeGameFactoryReader.watchEvent.FaultDisputeGameCreated({
       onLogs: async (logs) => {
@@ -47,8 +47,8 @@ export class ChallengerService {
         const faultDisputeGameReader = this.evmContractManager.getFaultDisputeGameReader(proxy);
         const disputeStatus = await faultDisputeGameReader.read.status() as FaultDisputeGameStatus;
         if(disputeStatus === FaultDisputeGameStatus.IN_PROGRESS) {
-          await this.attachChallenger(proxy, !dishonestAttached);
-          dishonestAttached = true;
+          await this.attachChallenger(proxy, !this.dishonestAttached);
+          this.dishonestAttached = true;
         }
       }
     });
@@ -120,5 +120,9 @@ export class ChallengerService {
 
       dishonestChallenger.init();
     }
+  }
+
+  public attachDishonestChallengerNext() {
+    this.dishonestAttached = false;
   }
 }

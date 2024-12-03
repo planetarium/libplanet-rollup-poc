@@ -6,6 +6,7 @@ import { LibplanetModule } from "src/libplanet/libplanet.module";
 import { ChallengerProposer } from "./challenger.proposer";
 import { ProposerModule } from "src/proposer/proposer.module";
 import { PreoracleModule } from "src/preoracle/preoracle.module";
+import { ChallengerController } from "./challenger.controller";
 
 @Module({
   imports: [
@@ -14,7 +15,7 @@ import { PreoracleModule } from "src/preoracle/preoracle.module";
     ProposerModule,
     PreoracleModule,
   ],
-  controllers: [],
+  controllers: [ChallengerController],
   providers: [KeyUtils, ChallengerService, ChallengerProposer],
   exports: [ChallengerService],
 })
