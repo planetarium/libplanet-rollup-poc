@@ -15,11 +15,12 @@ export class ProposerService {
         private readonly deriverService: DeriverService,
     ) {}
 
-    private readonly logEnabled = this.configService.get('proposer.debug', false);
     private readonly logger = new Logger(ProposerService.name);
-    
+    private readonly useDebug = this.configService.get('proposer.debug', false);    
     private log(log: any) {
-        if(this.logEnabled) {
+        if(this.useDebug) {
+            this.logger.debug(log);
+        } else {
             this.logger.log(log);
         }
     }

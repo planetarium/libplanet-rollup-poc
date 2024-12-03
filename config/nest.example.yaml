@@ -10,26 +10,50 @@ evm:
         address: '0xb7cb9748041c2Bca28F4FD138202c56F90DB27d5'
         block_created: 0
     private_key:
-      main: '0x00'
+      main: '0xd0e75dfba50305d01e7214d2277da32ea231ddae1ef6f177513e0cac297a8c8b'
   local_geth:
     chain_id: 12345
     url:
-      rpc: 'http://localhost:8000'
-      explorer: 'http://localhost:5001/graphql'
+      rpc: 'http://localhost:8545'
+      explorer: 'http://localhost:8545'
     contracts:
       fault_dispute_game_factory:
-        address: '0x1Cc8F75491A3fcd6722f5f39876D4264A36E8D31'
-        block_created: 0
+        address: '0x4f28a296a79f2Cc2800B47c7e7307C25f7F5DE71'
+        block_created: 17
+      pre_oracle_vm:
+        address: '0x2b09ba378C9CB2E8B88d65078F029b2dd851c981'
+        block_created: 17
       anchor_state_registry:
-        address: '0xe1E6679E0f0D1177a75a46293e4af0a9ACbD3A5B'
-        block_created: 0
+        address: '0x0b7C3E752470cCbFFe639a07C13aD70EC2C1C823'
+        block_created: 22
     addresses:
       batch_inbox: '0xfF00000000000000000000000000000000000011'
     private_key:
-      main: '0x00'
-      batcher: '0x00'
+      main: '0xf4023cf709f9ab8a59f6b9866b476ee9e3cb4c6c7a5e7fba296cb5ab832b4c1a' #0xCE70F2e49927D431234BFc8D439412eef3a6276b
+      batcher: '0x8e048d8f623aed058afdd4a90e9dedb99932e1c30a1e26809ca3917af5bce15d' #0xaA2337b6FC4EDcc99FBDc9dee5973c94849dCEce
+      proposer: '0x66f9bb16a5f84cf58ccfba6890bc8b1d3df068cad53d66aa4b2aff27439d38c2' #0xf9655cd05FcF0C37F88f2C8f70d1609B58c0C58D
+      pre_oracle_user: '0x14c5d59f634df8222426f563e163604fb645fbe1eaad2e860bae22a37fda5149' #0xCBAe6d8ba83F3bb0011Bacda57Df7009E2181ED5
 
 libplanet:
+  debug: false
   console:
     graphql:
       url: 'http://127.0.0.1:5001/graphql'
+    addresses:
+      withdrawal_account: '0x96dAEf9D516CAf23A75e30CFaA7af1c968CC1658'
+
+batcher:
+  debug: false
+  time_interval: 10000
+deriver:
+  debug: false
+  time_interval: 10000
+proposer:
+  debug: false
+  time_interval: 10000
+  invalid_sanity_count: 5000
+challenger:
+  debug: false
+  time_interval: 3000
+preoracle:
+  debug: false

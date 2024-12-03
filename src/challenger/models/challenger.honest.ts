@@ -24,17 +24,22 @@ export class ChallengerHonest {
     this.CHALLENGER_ID = disputeGameProxy.slice(2, 5);
     this.logger = new Logger(`ChallengerHonest-${this.CHALLENGER_ID}`);
 
-    this.claimResolver = new ClaimResolver(this.faultDisputeGameBuilder, this.evmPublicService);
+    this.claimResolver = new ClaimResolver(this.faultDisputeGameBuilder, this.evmPublicService, this.configService);
   }
 
   private readonly CHALLENGER_ID: string;
   private readonly logger: Logger;
 
-  private readonly logEnabled = this.configService.get('challenger.debug', false);
+  private readonly useDebug = this.configService.get('challenger.debug', false);
   private log(log: any) {
-    if(this.logEnabled) {
+    if(this.useDebug) {
       this.logger.debug(log);
+    } else {
+      this.logger.log(log);
     }
+  }
+  private error(log: any) {
+    this.logger.error(log);
   }
 
   private readonly TIME_INTERVAL = this.configService.get('challenger.time_interval', 3000);
@@ -104,15 +109,15 @@ export class ChallengerHonest {
           })[0].args;
           if(event.status !== FaultDisputeGameStatus.IN_PROGRESS) {
             this.initialized = false;
-            this.logger.debug(`Game is resolved with status ${event.status}`);
+            this.log(`Game is resolved with status ${event.status}`);
             continue;
           }
         } else {
-          this.logger.log(`Not all claims resolved yet`);
+          this.log(`Not all claims resolved yet`);
         }
 
         if(claimDataLen === 1n && rootClaimAgreed) {
-          this.logger.log(`Root claim is agreed and no other claims exist`);
+          this.log(`Root claim is agreed and no other claims exist`);
           continue;
         }
 
@@ -166,26 +171,26 @@ export class ChallengerHonest {
     const agreedToParentClaim = parentClaim === parentHonestClaim;
 
     const disputedBlockNumber = (await outputRootProvider.getDisputedNumber(parentClaimPosition)).blockNumber;
-    this.logger.debug(`Step | Start | disputedBlockNumber: ${disputedBlockNumber}`);
+    this.log(`Step | Start | disputedBlockNumber: ${disputedBlockNumber}`);
     const batchIndexData = await this.preoracleService.prepareDisputeStep(disputedBlockNumber);
-    this.logger.debug('Step | prepare done');
+    this.log('Step | prepare done');
     const batchIndexDataHex = `0x${batchIndexData.toString('hex')}` as `0x${string}`;
 
     try {
-      this.logger.debug('Step | call step');
+      this.log('Step | call step');
       if(agreedToParentClaim) {
         const txHash = await faultDisputeGame.write.step([BigInt(claimDataIndex), false, batchIndexDataHex]);
         const txReceipt = await this.evmPublicService.waitForTransactionReceipt(txHash);
-        this.logger.debug(`Step | txReceipt: ${txReceipt.status}`);
+        this.log(`Step | txReceipt: ${txReceipt.status}`);
       } else {
         const txHash = await faultDisputeGame.write.step([BigInt(claimDataIndex), true, batchIndexDataHex]);
         const txReceipt = await this.evmPublicService.waitForTransactionReceipt(txHash);
-        this.logger.debug(`Step | txReceipt: ${txReceipt.status}`);
+        this.log(`Step | txReceipt: ${txReceipt.status}`);
       }
 
-      this.logger.debug(`Step | done`);
+      this.log(`Step | done`);
     } catch(e) {
-      this.logger.error(e);
+      this.error(e);
     }
   }
 
@@ -319,7 +324,7 @@ export class ChallengerHonest {
         const parentIndex = logs[0].args.parentIndex;
         const claim = logs[0].args.claim;
         const claimant = logs[0].args.claimant;
-        this.logger.log(`Move: ${parentIndex} ${claim} ${claimant}`);
+        this.log(`Move: ${parentIndex} ${claim} ${claimant}`);
       }
     });
   }

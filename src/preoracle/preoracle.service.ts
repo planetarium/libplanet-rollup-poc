@@ -7,6 +7,7 @@ import { TimeUtils } from "src/utils/utils.time";
 import { EvmContractManager } from "src/evm/evm.contracts";
 import { EvmService } from "src/evm/evm.service";
 import { EvmPublicService } from "src/evm/evm.public.service";
+import { ConfigService } from "@nestjs/config";
 
 @Injectable()
 export class PreoracleService {
@@ -15,24 +16,24 @@ export class PreoracleService {
     private readonly preoracleContractService: PreoracleContractService,
     private readonly evmService: EvmService,
     private readonly evmPublicService: EvmPublicService,
+    private readonly configService: ConfigService,
   ) {}
 
   private readonly logger = new Logger(PreoracleService.name);
+  private readonly useDebug = this.configService.get('preoracle.debug', false);
+  private log(log: any) {
+    if(this.useDebug) {
+      this.logger.debug(log);
+    } else {
+      this.logger.log(log);
+    }
+  }
 
   public async init() {
     this.preoracleContractService.init();
     await this.preoracleDbService.init();
 
     this.deleteUnnecessaryBlockIndexContinuously();
-
-    // for testing purpose
-    // const batchIndexData = await this.prepareDisputeStep(4373n);
-    // const res = await this.preoracleContractService.step(
-    //   4373n,
-    //   0n,
-    //   `0x${batchIndexData.toString('hex')}`,
-    // )
-    // console.log(res);
   }
 
   public async test() {
@@ -83,7 +84,7 @@ export class PreoracleService {
       }
       if(canDelete) {
         await this.preoracleDbService.deleteBlockIndexLowerThanByL2BlockNumber(Number(anchor.l2BlockNumber));
-        this.logger.log(`Deleted block index lower than ${anchor.l2BlockNumber}`);
+        this.log(`Deleted block index lower than ${anchor.l2BlockNumber}`);
       }
 
       await TimeUtils.delay(60000);

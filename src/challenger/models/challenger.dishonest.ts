@@ -20,10 +20,12 @@ export class ChallengerDishonest {
   private readonly CHALLENGER_ID: string;
   private readonly logger: Logger;
 
-  private readonly logEnabled = this.configService.get('challenger.debug', false);
+  private readonly useDebug = this.configService.get('challenger.debug', false);
   private log(log: any) {
-    if(this.logEnabled) {
+    if(this.useDebug) {
       this.logger.debug(log);
+    } else {
+      this.logger.log(log);
     }
   }
 
