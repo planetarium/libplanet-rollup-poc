@@ -113,7 +113,7 @@ export class ChallengerHonest {
             continue;
           }
         } else {
-          this.log(`Not all claims resolved yet`);
+          // this.log(`Not all claims resolved yet`);
         }
 
         if(claimDataLen === 1n && rootClaimAgreed) {
@@ -324,7 +324,7 @@ export class ChallengerHonest {
         const parentIndex = logs[0].args.parentIndex;
         const claim = logs[0].args.claim;
         const claimant = logs[0].args.claimant;
-        this.log(`Move: ${parentIndex} ${claim} ${claimant}`);
+        // this.log(`Move: ${parentIndex} ${claim} ${claimant}`);
       }
     });
   }
