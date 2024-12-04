@@ -37,38 +37,39 @@ export class PreoracleService {
   }
 
   public async test() {
-    const testingL2BlockNumber = 11;
+    const testingL2BlockNumber = 36;
 
     // for testing purpose: test sendBatchData
-    // const blockIndex = this.preoracleDbService.getBlockIndexByL2BlockNumber(testingL2BlockNumber);
-    // if(!blockIndex) {
-    //   throw new Error(`Block index not found for L2 block number ${testingL2BlockNumber}`);
-    // }
+    const blockIndex = this.preoracleDbService.getBlockIndexByL2BlockNumber(testingL2BlockNumber);
+    if(!blockIndex) {
+      throw new Error(`Block index not found for L2 block number ${testingL2BlockNumber}`);
+    }
 
-    // if(blockIndex.startingTransactionHash !== blockIndex.endingTransactionHash) {
-    //   throw new Error(`Starting and ending transaction hash are different for L2 block number ${testingL2BlockNumber}`);
-    // }
+    if(blockIndex.startingTransactionHash !== blockIndex.endingTransactionHash) {
+      throw new Error(`Starting and ending transaction hash are different for L2 block number ${testingL2BlockNumber}`);
+    }
 
-    // const targetTxHash = blockIndex.startingTransactionHash as `0x${string}`;
-    // const txData = await this.evmPublicService.getTransaction(targetTxHash);
-    // const testingL1BlockNumber = txData.blockNumber;
+    const targetTxHash = blockIndex.startingTransactionHash as `0x${string}`;
+    const txData = await this.evmPublicService.getTransaction(targetTxHash);
+    const testingL1BlockNumber = txData.blockNumber;
 
-    // await this.preoracleContractService.fillBlockHashes();
-    // const blockHash = await this.preoracleContractService.checkBlockHashExist(testingL1BlockNumber)
-    // if(blockHash !== txData.blockHash) {
-    //   throw new Error(`Block hash mismatch for L1 block number ${testingL1BlockNumber}`);
-    // }
+    await this.preoracleContractService.fillBlockHashes();
+    const blockHash = await this.preoracleContractService.checkBlockHashExist(testingL1BlockNumber)
+    if(blockHash !== txData.blockHash) {
+      throw new Error(`Block hash mismatch for L1 block number ${testingL1BlockNumber}`);
+    }
 
-    // await this.preoracleContractService.sendBatchData(targetTxHash);
+    await this.preoracleContractService.estimateGasSendBatchData(targetTxHash);
+    await this.preoracleContractService.sendBatchData(targetTxHash);
 
     // for testing purpose: test step
-    const batchIndexData = await this.prepareDisputeStep(BigInt(testingL2BlockNumber));
-    const res = await this.preoracleContractService.step(
-      BigInt(testingL2BlockNumber),
-      0n,
-      `0x${batchIndexData.toString('hex')}`,
-    )
-    console.log(res);
+    // const batchIndexData = await this.prepareDisputeStep(BigInt(testingL2BlockNumber));
+    // const res = await this.preoracleContractService.step(
+    //   BigInt(testingL2BlockNumber),
+    //   0n,
+    //   `0x${batchIndexData.toString('hex')}`,
+    // )
+    // console.log(res);
   }
 
   public async deleteUnnecessaryBlockIndexContinuously() {

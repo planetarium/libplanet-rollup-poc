@@ -1,5 +1,21 @@
 export const PreOracleVMAbi = [
   {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_framePreInfoSize",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_framePostInfoSize",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
     "anonymous": false,
     "inputs": [
       {
@@ -17,45 +33,6 @@ export const PreOracleVMAbi = [
     ],
     "name": "BlockHashesFilled",
     "type": "event"
-  },
-  {
-    "inputs": [],
-    "name": "BLOCKHASH_LIMIT",
-    "outputs": [
-      {
-        "internalType": "uint32",
-        "name": "",
-        "type": "uint32"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "FRAME_POST_INFO_SIZE",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "FRAME_PRE_INFO_SIZE",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
   },
   {
     "inputs": [

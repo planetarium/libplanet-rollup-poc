@@ -19,13 +19,13 @@ evm:
     contracts:
       fault_dispute_game_factory:
         address: '0x4f28a296a79f2Cc2800B47c7e7307C25f7F5DE71'
-        block_created: 17
+        block_created: 8
       pre_oracle_vm:
         address: '0x2b09ba378C9CB2E8B88d65078F029b2dd851c981'
-        block_created: 17
+        block_created: 8
       anchor_state_registry:
         address: '0x0b7C3E752470cCbFFe639a07C13aD70EC2C1C823'
-        block_created: 22
+        block_created: 13
     addresses:
       batch_inbox: '0xfF00000000000000000000000000000000000011'
     private_key:
@@ -56,4 +56,4 @@ challenger:
   debug: true
   time_interval: 3000
 preoracle:
-  debug: false
+  debug: true
