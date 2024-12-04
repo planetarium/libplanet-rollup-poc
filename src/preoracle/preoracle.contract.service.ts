@@ -69,6 +69,33 @@ export class PreoracleContractService {
     }
   }
 
+  public async estimateGasSendBatchData(targetTxHash: `0x${string}`) {
+    const privateKey = this.keyUtils.getPreOracleUserPrivateKey();
+    const preOracleVM = this.evmContractManager.getPreOracleVM(privateKey);
+
+    const batchExist = await preOracleVM.read.batchDataSubmitted([targetTxHash]);
+    if(batchExist) {
+      return;
+    }
+
+    const batchProof = await this.evmService.getBatchProof(targetTxHash);
+    this.log(`sendBatchData`);
+    try {
+      const gas = await preOracleVM.estimateGas.submitBatchData([
+        batchProof.blockNumber,
+        batchProof.rlpBlockHeader,
+        batchProof.txHash,
+        batchProof.rlpTxIndex,
+        batchProof.rlpTxProof
+      ]);
+      this.log(`sendBatchData: gas: ${gas}`);
+    } catch(e) {
+      this.error(e);
+    }
+
+    return;
+  }
+
   public async sendBatchData(targetTxHash: `0x${string}`) {
     const privateKey = this.keyUtils.getPreOracleUserPrivateKey();
     const preOracleVM = this.evmContractManager.getPreOracleVM(privateKey);
@@ -87,9 +114,7 @@ export class PreoracleContractService {
         batchProof.txHash,
         batchProof.rlpTxIndex,
         batchProof.rlpTxProof
-      ], {
-        gas: 1000000000n,
-      });
+      ]);
       const txReceipt = await this.evmPublicService.waitForTransactionReceipt(txHash);
       this.log(`sendBatchData: txReceipt: ${txReceipt.status}`);
     } catch(e) {

@@ -7,7 +7,7 @@ services:
     ports:
       - 5001:5001
   op-geth:
-    image: kangseokhun43/op-geth:202411291126
+    image: kangseokhun43/op-geth:202412041323
     hostname: op-geth
     volumes:
       - op-geth-data:/geth-private/blockchainData

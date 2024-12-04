@@ -29,7 +29,13 @@ describe("FaultProof", function () {
 
   async function deployPreOracleVM() {
     const PreOracleVM = await hre.ethers.getContractFactory("PreOracleVM");
-    const preOracleVM = await PreOracleVM.deploy();
+    const framePreInfoSize = 22n;
+    const framePostInfoSize = 1n;
+
+    const preOracleVM = await PreOracleVM.deploy(
+      framePreInfoSize,
+      framePostInfoSize
+    );
 
     return preOracleVM;
   }

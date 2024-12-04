@@ -20,3 +20,10 @@ struct OutputRoot {
     Hash root;
     uint256 l2BlockNumber;
 }
+
+struct Batch {
+    bytes hash;
+    uint256 index;
+    bytes txHash;
+    bytes[] transactions;
+}

@@ -25,7 +25,7 @@ export class ChallengerService {
     private readonly preoracleService: PreoracleService,
   ) {}
 
-  private dishonestAttached: boolean = false;
+  private dishonestAttached: boolean = true;
 
   public async init() {
     this.challengerProposer.init();
