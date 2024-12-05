@@ -20,6 +20,37 @@ export type ClaimData = {
   clock: bigint,
 }
 
+export type DisputeGameInfo = {
+  address: `0x${string}`,
+  outputRoot: `0x${string}`,
+  l3BlockNumber: number,
+  status: string,
+  claimCount: number,
+  createdAt: string,
+  resolvedAt?: string,
+}
+
+export type DisputeGameDetailInfo = {
+  address: `0x${string}`,
+  outputRoot: `0x${string}`,
+  l3BlockNumber: number,
+  status: string,
+  claimCount: number,
+  createdAt: string,
+  resolvedAt?: string,
+  claimDatas: ClaimDataInfo[],
+}
+
+export type ClaimDataInfo = {
+  index: number,
+  parentIndex: number,
+  claimant: `0x${string}`,
+  claim: `0x${string}`,
+  position: string,
+  depth: number,
+  createdAt: string,
+}
+
 export function claimId(claimData: ClaimData): `0x${string}` {
   const identifier = toHex(`${claimData.parentIndex}:${claimData.position.getValue()}:${claimData.claim}`);
   return sha256(identifier); 
