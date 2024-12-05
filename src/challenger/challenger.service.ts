@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { ChallengerProposer } from "./challenger.proposer";
 import { EvmContractManager } from "src/evm/evm.contracts";
-import { FaultDisputeGameStatus } from "./challenger.type";
+import { ClaimDataInfo, claimDataWrap, DisputeGameDetailInfo, DisputeGameInfo, FaultDisputeGameStatus } from "./challenger.type";
 import { FaultDisputeGameBuilder } from "./models/faultdisputegame.builder";
 import { EvmClientFactory } from "src/evm/evm.client.factory";
 import { EvmPublicService } from "src/evm/evm.public.service";
@@ -12,6 +12,7 @@ import { LibplanetService } from "src/libplanet/libplanet.service";
 import { PreoracleService } from "src/preoracle/preoracle.service";
 import { OutputRootProvider } from "./models/challenger.outputroot.provider";
 import { Position } from "./utils/challenger.position";
+import { ClaimClock } from "./utils/claim.clock";
 
 @Injectable()
 export class ChallengerService {
@@ -66,6 +67,7 @@ export class ChallengerService {
     }
   }
 
+  // for testing purpose
   public async test() {
     const outputRootProvider = new OutputRootProvider(
       this.libplanetService,
@@ -124,5 +126,76 @@ export class ChallengerService {
 
   public attachDishonestChallengerNext() {
     this.dishonestAttached = false;
+  }
+
+  public async getDisputeInfo() {
+    const faultDisputeGameFactoryReader = this.evmContractManager.getFaultDisputeGameFactoryReader();
+    const gameCount = await faultDisputeGameFactoryReader.read.gameCount();
+    const games: DisputeGameInfo[] = [];
+    for(let i = Number(gameCount) - 1; i >= 0; i--) {
+      const gameAtIndex = await faultDisputeGameFactoryReader.read.gameAtIndex([BigInt(i)]);
+      const proxy = gameAtIndex[1];
+
+      const disputeGameInfo = await this.getDisputeGameInfo(proxy);
+      games.push(disputeGameInfo);
+    }
+
+    const anchorStateRegistry = this.evmContractManager.getAnchorStateRegistryReader();
+    const anchor = await anchorStateRegistry.read.anchor();
+    const currentOutputRoot = anchor[0];
+    const currentL3BlockNumber = anchor[1];
+
+    return {
+      currentOutputRoot: currentOutputRoot,
+      currentL3BlockNumber: Number(currentL3BlockNumber),
+      games: games,
+    }
+  }
+
+  public async getDisputeGameDetailInfo(address: `0x${string}`): Promise<DisputeGameDetailInfo> {
+    const disputeGameInfo: DisputeGameInfo = await this.getDisputeGameInfo(address);
+    const faultDisputeGameReader = this.evmContractManager.getFaultDisputeGameReader(address);
+    const claimDatas: ClaimDataInfo[] = [];
+    for(let i = 0; i < disputeGameInfo.claimCount; i++) {
+      const claimDataRaw = await faultDisputeGameReader.read.claimData([BigInt(i)]);
+      const claimData = claimDataWrap(claimDataRaw);
+      const claimClock = new ClaimClock(claimData.clock);
+      const claimDataInfo: ClaimDataInfo = {
+        index: i,
+        parentIndex: claimData.parentIndex,
+        claimant: claimData.claimant,
+        claim: claimData.claim,
+        position: claimData.position.getValue().toString(),
+        depth: claimData.position.depth(),
+        createdAt: new Date(Number(claimClock.timestamp()) * 1000).toISOString(),
+      }
+      claimDatas.push(claimDataInfo);
+    }
+
+    return {
+      ...disputeGameInfo,
+      claimDatas: claimDatas,
+    }
+  }
+
+  private async getDisputeGameInfo(address: `0x${string}`): Promise<DisputeGameInfo> {
+    const faultDisputeGameReader = this.evmContractManager.getFaultDisputeGameReader(address);
+    const disputeStatus = await faultDisputeGameReader.read.status() as FaultDisputeGameStatus;
+    const outputRoot = await faultDisputeGameReader.read.rootClaim();
+    const l3BlockNumber = await faultDisputeGameReader.read.l2BlockNumber();
+    const claimCount = await faultDisputeGameReader.read.claimDataLen();
+    const createdAtTimestamp = await faultDisputeGameReader.read.createdAt();
+    const createdAt = new Date(Number(createdAtTimestamp) * 1000).toISOString();
+    const resolvedAtTimestamp = await faultDisputeGameReader.read.resolvedAt();
+    const resolvedAt = resolvedAtTimestamp ? new Date(Number(resolvedAtTimestamp) * 1000).toISOString() : undefined;
+    return {
+      address: address,
+      outputRoot: outputRoot,
+      l3BlockNumber: Number(l3BlockNumber),
+      status: FaultDisputeGameStatus[disputeStatus],
+      claimCount: Number(claimCount),
+      createdAt: createdAt,
+      resolvedAt: resolvedAt,
+    }
   }
 }
