@@ -164,6 +164,7 @@ export class ChallengerService {
         index: i,
         parentIndex: claimData.parentIndex,
         claimant: claimData.claimant,
+        counteredBy: claimData.counteredBy,
         claim: claimData.claim,
         position: claimData.position.getValue().toString(),
         depth: claimData.position.depth(),
