@@ -7,12 +7,14 @@ services:
     ports:
       - 5001:5001
   op-geth:
-    image: kangseokhun43/op-geth:202412041323
+    image: kangseokhun43/op-geth:202412051310
     hostname: op-geth
     volumes:
       - op-geth-data:/geth-private/blockchainData
     ports:
       - 8545:8545
+      - 8546:8546
+      - 30303:30303
   nestjs:
     depends_on:
       - libplanet-console
