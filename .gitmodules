@@ -1,0 +1,4 @@
+[submodule "blockscout"]
+	path = blockscout
+	url = https://github.com/sircoon4/blockscout.git
+	branch = v6.7.2-beta-modified
