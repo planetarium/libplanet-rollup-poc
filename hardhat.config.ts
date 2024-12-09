@@ -34,7 +34,9 @@ task('compile', async (taskArgs, hre, runSuper) => {
     'FaultDisputeGame', 
     'FaultDisputeGameFactory',
     'AnchorStateRegistry',
-    'PreOracleVM'
+    'PreOracleVM',
+    'LibplanetBridge',
+    'LibplanetPortal',
   ];
   const nestJsAbiPath = '../../src/evm/abis';
 

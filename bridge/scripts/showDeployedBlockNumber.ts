@@ -14,6 +14,8 @@ function showDeployedBlockNumber() {
     'FaultDisputeGameFactory',
     'AnchorStateRegistry',
     'PreOracleVM',
+    'LibplanetBridge',
+    'LibplanetPortal',
   ];
 
   const journalPath = join(

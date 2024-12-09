@@ -27,3 +27,15 @@ struct Batch {
     bytes txHash;
     bytes[] transactions;
 }
+
+struct OutputRootProof {
+    bytes32 stateRoot;
+    bytes32 storageRoot;
+}
+
+struct WithdrawalTransaction {
+    uint256 nonce;
+    address from;
+    address to;
+    uint256 amount;
+}
