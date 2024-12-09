@@ -10,7 +10,7 @@ evm:
         address: '0xb7cb9748041c2Bca28F4FD138202c56F90DB27d5'
         block_created: 0
     private_key:
-      main: '0xd0e75dfba50305d01e7214d2277da32ea231ddae1ef6f177513e0cac297a8c8b'
+      main: '0xd0e75dfba50305d01e7214d2277da32ea231ddae1ef6f177513e0cac297a8c8b' #Use only for testing purposes
   local_geth:
     chain_id: 12345
     url:
@@ -19,28 +19,37 @@ evm:
     contracts:
       fault_dispute_game_factory:
         address: '0x4f28a296a79f2Cc2800B47c7e7307C25f7F5DE71'
-        block_created: 17
+        block_created: 38
       pre_oracle_vm:
         address: '0x2b09ba378C9CB2E8B88d65078F029b2dd851c981'
-        block_created: 17
+        block_created: 38
       anchor_state_registry:
         address: '0x0b7C3E752470cCbFFe639a07C13aD70EC2C1C823'
-        block_created: 22
+        block_created: 43
+      libplanet_portal:
+        address: '0x491680b980b04F07E49d449e64C7CE428789620a'
+        block_created: 43
+      libplanet_bridge:
+        address: '0xd26c3f754373CfE7c14A1792d2e80b49B2A5e128'
+        block_created: 48
     addresses:
       batch_inbox: '0xfF00000000000000000000000000000000000011'
     private_key:
-      main: '0xf4023cf709f9ab8a59f6b9866b476ee9e3cb4c6c7a5e7fba296cb5ab832b4c1a' #0xCE70F2e49927D431234BFc8D439412eef3a6276b
-      batcher: '0x8e048d8f623aed058afdd4a90e9dedb99932e1c30a1e26809ca3917af5bce15d' #0xaA2337b6FC4EDcc99FBDc9dee5973c94849dCEce
-      proposer: '0x66f9bb16a5f84cf58ccfba6890bc8b1d3df068cad53d66aa4b2aff27439d38c2' #0xf9655cd05FcF0C37F88f2C8f70d1609B58c0C58D
-      pre_oracle_user: '0x14c5d59f634df8222426f563e163604fb645fbe1eaad2e860bae22a37fda5149' #0xCBAe6d8ba83F3bb0011Bacda57Df7009E2181ED5
+      main: '0xf4023cf709f9ab8a59f6b9866b476ee9e3cb4c6c7a5e7fba296cb5ab832b4c1a' #0xCE70F2e49927D431234BFc8D439412eef3a6276b #Use only for testing purposes
+      batcher: '0x8e048d8f623aed058afdd4a90e9dedb99932e1c30a1e26809ca3917af5bce15d' #0xaA2337b6FC4EDcc99FBDc9dee5973c94849dCEce #Use only for testing purposes
+      proposer: '0x66f9bb16a5f84cf58ccfba6890bc8b1d3df068cad53d66aa4b2aff27439d38c2' #0xf9655cd05FcF0C37F88f2C8f70d1609B58c0C58D #Use only for testing purposes
+      pre_oracle_user: '0x14c5d59f634df8222426f563e163604fb645fbe1eaad2e860bae22a37fda5149' #0xCBAe6d8ba83F3bb0011Bacda57Df7009E2181ED5 #Use only for testing purposes
 
 libplanet:
   debug: false
   console:
     graphql:
-      url: 'http://127.0.0.1:5001/graphql'
+      url: 'http://localhost:5001/graphql'
     addresses:
       withdrawal_account: '0x96dAEf9D516CAf23A75e30CFaA7af1c968CC1658'
+      weth_minter: '0xCE70F2e49927D431234BFc8D439412eef3a6276b' #Use only for testing purposes
+    private_key:
+      weth_minter: '0xf4023cf709f9ab8a59f6b9866b476ee9e3cb4c6c7a5e7fba296cb5ab832b4c1a' #Use only for testing purposes
 
 batcher:
   debug: false

@@ -6,6 +6,8 @@ import { FaultDisputeGameAbi } from "./abis/FaultDisputeGame.abi";
 import { EvmClientFactory } from "./evm.client.factory";
 import { AnchorStateRegistryAbi } from "./abis/AnchorStateRegistry.abi";
 import { PreOracleVMAbi } from "./abis/PreOracleVM.abi";
+import { LibplanetPortalAbi } from "./abis/LibplanetPortal.abi";
+import { LibplanetBridgeAbi } from "./abis/LibplanetBridge.abi";
 
 @Injectable()
 export class EvmContractManager {
@@ -95,6 +97,50 @@ export class EvmContractManager {
     return getContract({
       address: (this.chainMangager.getChain().contracts?.preOracleVM as ChainContract).address,
       abi: PreOracleVMAbi,
+      client: {
+        public: publicClient,
+        wallet: walletClient,
+      }
+    })
+  }
+
+  public getLibplanetPortalReader() {
+    const publicClient = this.clientFactory.newPublicClient();
+    return getContract({
+      address: (this.chainMangager.getChain().contracts?.libplanetPortal as ChainContract).address,
+      abi: LibplanetPortalAbi,
+      client: publicClient
+    })
+  }
+
+  public getLibplanetPortal(privateKey: `0x${string}`) {
+    const publicClient = this.clientFactory.newPublicClient();
+    const walletClient = this.clientFactory.getWalletClient(privateKey);
+    return getContract({
+      address: (this.chainMangager.getChain().contracts?.libplanetPortal as ChainContract).address,
+      abi: LibplanetPortalAbi,
+      client: {
+        public: publicClient,
+        wallet: walletClient,
+      }
+    })
+  }
+
+  public getLibplanetBridgeReader() {
+    const publicClient = this.clientFactory.newPublicClient();
+    return getContract({
+      address: (this.chainMangager.getChain().contracts?.libplanetBridge as ChainContract).address,
+      abi: LibplanetBridgeAbi,
+      client: publicClient
+    })
+  }
+
+  public getLibplanetBridge(privateKey: `0x${string}`) {
+    const publicClient = this.clientFactory.newPublicClient();
+    const walletClient = this.clientFactory.getWalletClient(privateKey);
+    return getContract({
+      address: (this.chainMangager.getChain().contracts?.libplanetBridge as ChainContract).address,
+      abi: LibplanetBridgeAbi,
       client: {
         public: publicClient,
         wallet: walletClient,

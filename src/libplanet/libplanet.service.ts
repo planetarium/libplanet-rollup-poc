@@ -3,6 +3,7 @@ import { LibplanetGraphQLService } from "./libplanet.graphql.service";
 import { randomBytes } from "crypto";
 import { sha256 } from "viem";
 import { ConfigService } from "@nestjs/config";
+import { TimeUtils } from "src/utils/utils.time";
 
 @Injectable()
 export class LibplanetService {
@@ -25,6 +26,11 @@ export class LibplanetService {
   public async test() {
     const outputRoot = await this.getOutputRootInfoByBlockIndex(10n);
     return
+  }
+
+  public async getWethBalance(address: `0x${string}`) {
+    const balance = await this.graphQlService.getWethBalance(address);
+    return balance;
   }
 
   public async getRecentBlock() {
@@ -75,13 +81,16 @@ export class LibplanetService {
 
   public async sendBulkTransactions() {
     for(var i = 0; i < 10; i++) {
-      await this.delay(1000);
+      await TimeUtils.delay(1000);
       const res = await this.graphQlService.sendSimpleTransaction(randomBytes(16564).toString('hex'));
       this.log(`Sent transaction ${i} with result ${res.slice(0, 3)}`);
     }
   }
 
-  private async delay(ms: number) {
-    return new Promise( resolve => setTimeout(resolve, ms) );
+  public async mintWeth(
+    receipient: `0x${string}`,
+    amount: bigint
+  ) {
+    return await this.graphQlService.mintWeth(receipient, amount);
   }
 }

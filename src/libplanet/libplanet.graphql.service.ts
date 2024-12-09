@@ -2,10 +2,12 @@ import { Injectable } from "@nestjs/common";
 import { GraphQLClientManager } from "./libplanet.graphql.client.manager";
 import { gql } from "graphql-request";
 import { sha256 } from "ethers";
+import { ConfigService } from "@nestjs/config";
 
 @Injectable()
 export class LibplanetGraphQLService {
   constructor(
+    private readonly configService: ConfigService,
     private readonly graphqlClient: GraphQLClientManager,
   ) {}
 
@@ -145,5 +147,57 @@ export class LibplanetGraphQLService {
     `);
 
     return res.transactionMutation.simpleStringStage;
+  }
+
+  async mintWeth(recipient: `0x${string}`, amount: bigint): Promise<boolean> {
+    const minterPrivateKey = this.configService.get<string>('libplanet.console.private_key.weth_minter');
+    const res = await this.graphqlClient.query(gql`
+      mutation {
+        transactionMutation {
+          mintWETH(
+            privateKey: "${minterPrivateKey?.slice(2)}",
+            recipient: "${recipient.slice(2)}",
+            amount: ${amount}
+          )
+        }
+      }
+    `);
+
+    if(res.transactionMutation.mintWETH === "success") {
+      return true;
+    }
+
+    return false;
+  }
+
+  async getWethBalance(address: `0x${string}`): Promise<bigint> {
+    const minterAddress = this.configService.get<string>('libplanet.console.addresses.weth_minter');
+    const decimalPlaces = 18;
+    var recentBlockInfo = await this.getRecentBlock();
+    const res = await this.graphqlClient.query(gql`
+      query {
+        stateQuery {
+          balance(
+            offsetBlockHash: "${recentBlockInfo.hash}",
+            owner: "${address.slice(2)}",
+            currency: {
+              ticker: "WETH",
+              decimalPlaces: ${decimalPlaces},
+              minters: [
+                "${minterAddress?.slice(2)}"
+              ],
+              totalSupplyTrackable: true
+            }
+          ) {
+            majorUnit
+            minorUnit
+          }
+        }
+      }
+    `);
+
+    var majorUnit = BigInt(res.stateQuery.balance.majorUnit) * (BigInt(10) ** BigInt(decimalPlaces));
+    var minorUnit = BigInt(res.stateQuery.balance.minorUnit);
+    return majorUnit + minorUnit;
   }
 }

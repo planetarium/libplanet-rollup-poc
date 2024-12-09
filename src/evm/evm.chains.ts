@@ -81,6 +81,14 @@ const localGeth = (configure: ConfigService) => {
           'evm.local_geth.contracts.fault_dispute_game_factory.block_created',
         ),
       },
+      preOracleVM: {
+        address: configure.get(
+          'evm.local_geth.contracts.pre_oracle_vm.address'
+        ),
+        blockCreated: configure.get(
+          'evm.local_geth.contracts.pre_oracle_vm.block_created',
+        ),
+      },
       anchorStateRegistry: {
         address: configure.get(
           'evm.local_geth.contracts.anchor_state_registry.address',
@@ -89,12 +97,20 @@ const localGeth = (configure: ConfigService) => {
           'evm.local_geth.contracts.anchor_state_registry.block_created',
         ),
       },
-      preOracleVM: {
+      libplanetPortal: {
         address: configure.get(
-          'evm.local_geth.contracts.pre_oracle_vm.address'
+          'evm.local_geth.contracts.libplanet_portal.address',
         ),
         blockCreated: configure.get(
-          'evm.local_geth.contracts.pre_oracle_vm.block_created',
+          'evm.local_geth.contracts.libplanet_portal.block_created',
+        ),
+      },
+      libplanetBridge: {
+        address: configure.get(
+          'evm.local_geth.contracts.libplanet_bridge.address',
+        ),
+        blockCreated: configure.get(
+          'evm.local_geth.contracts.libplanet_bridge.block_created',
         ),
       },
     },
