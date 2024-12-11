@@ -26,10 +26,7 @@ const FaultProofModule = buildModule('FaultProofModule', (m) => {
 
     m.call(faultDisputeGameFactory, 'setImplementation', [faultDisputeGame]);
 
-    const libplanetPortal = m.contract('LibplanetPortal', [faultDisputeGameFactory]);
-    const libplanetBridge = m.contract('LibplanetBridge', [libplanetPortal]);
-
-    return { faultDisputeGameFactory, anchorStateRegistry, preOracleVM, faultDisputeGame, libplanetPortal, libplanetBridge };
+    return { faultDisputeGameFactory, anchorStateRegistry, preOracleVM, faultDisputeGame };
 });
 
 export default FaultProofModule;

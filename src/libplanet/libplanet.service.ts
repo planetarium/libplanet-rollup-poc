@@ -55,6 +55,19 @@ export class LibplanetService {
     };
   }
 
+  public async getOutputRootProof(blockIndex: bigint) {
+    const outputRootProof = await this.graphQlService.getOutputRootProof(blockIndex);
+    return outputRootProof;
+  }
+
+  public async getWithdrawalProof(
+    storageRootHash: string,
+    txId: string
+  ) {
+    const withdrawalProof = await this.graphQlService.getWithdrawalProof(storageRootHash, txId);
+    return withdrawalProof;
+  }
+
   public async getOutputRootInfoByBlockIndex(index: bigint) {
     const outputRoot = await this.graphQlService.getOutputProposal(index);
     return {
@@ -63,8 +76,14 @@ export class LibplanetService {
     }
   }
 
+  public async getTransactionResult(txId: string) {
+    const transactionResult = await this.graphQlService.waitForTrasactionResult(txId);
+    return transactionResult;
+  }
+
   public async getOutputRootByTransactionId(txId: string) {
-    const stateRootHashRes = await this.graphQlService.getTransactionResult(txId);
+    const transactionResult = await this.graphQlService.waitForTrasactionResult(txId);
+    const stateRootHashRes = transactionResult.outputState;
     const storageRootHashRes = await this.graphQlService.getStorageRootHash(stateRootHashRes);
 
     var stateRootHash = Uint8Array.from(Buffer.from(stateRootHashRes, 'hex'));
@@ -92,5 +111,13 @@ export class LibplanetService {
     amount: bigint
   ) {
     return await this.graphQlService.mintWeth(receipient, amount);
+  }
+
+  public async withdrawEth(
+    privateKey: `0x${string}`,
+    receipient: `0x${string}`,
+    amount: bigint
+  ) {
+    return await this.graphQlService.withdrawEth(privateKey, receipient, amount);
   }
 }

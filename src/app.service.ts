@@ -25,14 +25,14 @@ export class AppService {
   }
 
   private async init() {
-    // await TimeUtils.delay(5000);
+    await TimeUtils.delay(5000);
     
-    // await this.preoracleService.init();
+    await this.preoracleService.init();
     
-    // this.batcherService.batchStart();
-    // this.deriverService.deriveStart();
-    // this.proposerService.proposeStart();
-    // this.challengerService.init();
+    this.batcherService.batchStart();
+    this.deriverService.deriveStart();
+    this.proposerService.proposeStart();
+    this.challengerService.init();
 
     // for testing purpose
     // await this.evmService.test();

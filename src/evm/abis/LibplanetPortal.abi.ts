@@ -70,6 +70,12 @@ export const LibplanetPortalAbi = [
         "type": "address"
       },
       {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "gameIndex",
+        "type": "uint256"
+      },
+      {
         "indexed": true,
         "internalType": "address",
         "name": "from",

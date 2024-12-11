@@ -25,6 +25,7 @@ contract LibplanetPortal {
     event WithdrawalProven(
         bytes20 indexed withdrawalHash,
         address proofSubmitter,
+        uint256 gameIndex,
         address indexed from,
         address indexed to,
         uint256 amount
@@ -56,11 +57,20 @@ contract LibplanetPortal {
         OutputRootProof memory _proof,
         bytes memory _withdrawalProof
     ) external {
-        (, IFaultDisputeGame gameProxy) = FAULT_DISPUTE_GAME_FACTORY.gameAtIndex(_disputeGameIndex);
+        IFaultDisputeGame gameProxy;
+        try FAULT_DISPUTE_GAME_FACTORY.gameAtIndex(_disputeGameIndex) returns (Timestamp timestamp_, IFaultDisputeGame proxy_) {
+            gameProxy = proxy_;
+        } catch Error(string memory reason) {
+            revert(reason);
+        }
+        require(gameProxy != IFaultDisputeGame(address(0)), "Invalid dispute game index");
         Claim outputRoot = gameProxy.rootClaim();
+        require(outputRoot.raw() != bytes32(0), "Invalid output root");
         require(hashOutputRootProof(_proof) == outputRoot.raw(), "Invalid output root proof");
         
         bytes20 withdrawalHash = _callLibplanetWithdrawalTransactionHashing(_tx);
+        require(withdrawalHash != bytes20(0), "Invalid withdrawal transaction");
+        require(gameProxy != provenWithdrawals[withdrawalHash][msg.sender].disputeGameProxy, "Already proven");
 
         require(gameProxy.status() != GameStatus.CHALLENGER_WINS, "cannot prove against invalid dispute games");
 
@@ -75,7 +85,7 @@ contract LibplanetPortal {
         
         provenWithdrawals[withdrawalHash][msg.sender] = ProvenWithdrawal(gameProxy, uint64(block.timestamp));
 
-        emit WithdrawalProven(withdrawalHash, msg.sender, _tx.from, _tx.to, _tx.amount);
+        emit WithdrawalProven(withdrawalHash, msg.sender, _disputeGameIndex, _tx.from, _tx.to, _tx.amount);
     }
 
     function finalizeWithdrawalTransaction(
@@ -101,6 +111,8 @@ contract LibplanetPortal {
     function hashOutputRootProof(
         OutputRootProof memory _proof
     ) internal pure returns (bytes32) {
+        require(_proof.stateRoot != bytes32(0), "Invalid state root");
+        require(_proof.storageRoot != bytes32(0), "Invalid storage root");
         return sha256(abi.encodePacked(_proof.stateRoot, _proof.storageRoot));
     }
 
@@ -123,7 +135,8 @@ contract LibplanetPortal {
             _tx.amount
         ));
         require(ok, "withdrawal transaction hashing failed");
-        return abi.decode(out, (bytes20));
+        address res = abi.decode(out, (address));
+        return bytes20(res);
     }
 
     function _callLibplanetVerifyProof(

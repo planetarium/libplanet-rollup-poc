@@ -128,6 +128,33 @@ export class ChallengerService {
     this.dishonestAttached = false;
   }
 
+  public async getRecentHonestDisputeGame() {
+    const faultDisputeGameFactoryReader = this.evmContractManager.getFaultDisputeGameFactoryReader();
+    const gameCount = await faultDisputeGameFactoryReader.read.gameCount();
+    for(let i = Number(gameCount) - 1; i >= 0; i--) {
+      const gameAtIndex = await faultDisputeGameFactoryReader.read.gameAtIndex([BigInt(i)]);
+      const proxy = gameAtIndex[1];
+
+      const faultDisputeGameReader = this.evmContractManager.getFaultDisputeGameReader(proxy);
+      const disputeStatus = await faultDisputeGameReader.read.status() as FaultDisputeGameStatus;
+      if(disputeStatus !== FaultDisputeGameStatus.CHALLENGER_WINS) {
+        const rootClaim = await faultDisputeGameReader.read.rootClaim();
+        const l2BlockNumber = await faultDisputeGameReader.read.l2BlockNumber();
+        const l2HonestOutputRoot = await this.libplanetService.getOutputRootInfoByBlockIndex(l2BlockNumber);
+        if(rootClaim === l2HonestOutputRoot.root) {
+          return {
+            index: i,
+            address: proxy,
+            outputRoot: rootClaim,
+            l2BlockNumber: l2BlockNumber,
+          }
+        }
+      }
+    }
+
+    throw new Error('No honest dispute game found');
+  }
+
   public async getDisputeInfo() {
     const faultDisputeGameFactoryReader = this.evmContractManager.getFaultDisputeGameFactoryReader();
     const gameCount = await faultDisputeGameFactoryReader.read.gameCount();
