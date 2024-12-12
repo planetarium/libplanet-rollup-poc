@@ -24,7 +24,18 @@ export class LibplanetService {
 
   // for testing
   public async test() {
-    const outputRoot = await this.getOutputRootInfoByBlockIndex(10n);
+    const resData = {
+      stateRootHash: 'cce80fa0c91b0ad40a3bfdee2d8d35d4beecc18484a652c5905736aa95537f7b',
+      storageRootHash: '1b16b1df538ba12dc3f97edbb85caa7050d46c148134290feba80f8236c83db9'
+    }
+    var stateRootHash = Uint8Array.from(Buffer.from(resData.stateRootHash, 'hex'));
+    var storageRootHash = Uint8Array.from(Buffer.from(resData.storageRootHash, 'hex'));
+    
+    var outputRootArray = new Uint8Array(64);
+    outputRootArray.set(stateRootHash, 0);
+    outputRootArray.set(storageRootHash, 32);  
+
+    var outputRoot = sha256(outputRootArray);
     return
   }
 
