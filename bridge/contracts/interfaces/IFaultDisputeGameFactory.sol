@@ -7,4 +7,6 @@ import '../utils/Types.sol';
 
 interface IFaultDisputeGameFactory {
   function games(Claim _rootClaim, uint256 _l2BlockNumber) external view returns (IFaultDisputeGame proxy_, Timestamp timestamp_);
+
+  function gameAtIndex(uint256 _index) external view returns (Timestamp timestamp_, IFaultDisputeGame proxy_);
 }

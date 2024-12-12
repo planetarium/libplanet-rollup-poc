@@ -1,5 +1,6 @@
-import { Controller, Get, Query } from "@nestjs/common";
+import { Body, Controller, Get, Headers, Post, Query } from "@nestjs/common";
 import { ChallengerService } from "./challenger.service";
+import { MakeNewGameDto } from "./challenger.dto";
 
 @Controller("challenger")
 export class ChallengerController {
@@ -23,5 +24,17 @@ export class ChallengerController {
     @Query("address") address: `0x${string}`,
   ) {
     return await this.challengerService.getDisputeGameDetailInfo(address);
+  }
+
+  @Post("make-new-game")
+  async makeNewGame(
+    @Headers('private-key') privateKey: `0x${string}`,
+    @Body() makeNewGameDto: MakeNewGameDto
+  ) {
+    return await this.challengerService.makeNewGame(
+      privateKey,
+      makeNewGameDto.l3OutputRoot,
+      BigInt(makeNewGameDto.l3BlockNumber)
+    )
   }
 }

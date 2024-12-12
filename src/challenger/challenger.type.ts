@@ -45,6 +45,7 @@ export type ClaimDataInfo = {
   index: number,
   parentIndex: number,
   claimant: `0x${string}`,
+  counteredBy: `0x${string}`,
   claim: `0x${string}`,
   position: string,
   depth: number,

@@ -3,6 +3,7 @@ import { LibplanetGraphQLService } from "./libplanet.graphql.service";
 import { randomBytes } from "crypto";
 import { sha256 } from "viem";
 import { ConfigService } from "@nestjs/config";
+import { TimeUtils } from "src/utils/utils.time";
 
 @Injectable()
 export class LibplanetService {
@@ -23,8 +24,24 @@ export class LibplanetService {
 
   // for testing
   public async test() {
-    const outputRoot = await this.getOutputRootInfoByBlockIndex(10n);
+    const resData = {
+      stateRootHash: 'cce80fa0c91b0ad40a3bfdee2d8d35d4beecc18484a652c5905736aa95537f7b',
+      storageRootHash: '1b16b1df538ba12dc3f97edbb85caa7050d46c148134290feba80f8236c83db9'
+    }
+    var stateRootHash = Uint8Array.from(Buffer.from(resData.stateRootHash, 'hex'));
+    var storageRootHash = Uint8Array.from(Buffer.from(resData.storageRootHash, 'hex'));
+    
+    var outputRootArray = new Uint8Array(64);
+    outputRootArray.set(stateRootHash, 0);
+    outputRootArray.set(storageRootHash, 32);  
+
+    var outputRoot = sha256(outputRootArray);
     return
+  }
+
+  public async getWethBalance(address: `0x${string}`) {
+    const balance = await this.graphQlService.getWethBalance(address);
+    return balance;
   }
 
   public async getRecentBlock() {
@@ -49,6 +66,19 @@ export class LibplanetService {
     };
   }
 
+  public async getOutputRootProof(blockIndex: bigint) {
+    const outputRootProof = await this.graphQlService.getOutputRootProof(blockIndex);
+    return outputRootProof;
+  }
+
+  public async getWithdrawalProof(
+    storageRootHash: string,
+    txId: string
+  ) {
+    const withdrawalProof = await this.graphQlService.getWithdrawalProof(storageRootHash, txId);
+    return withdrawalProof;
+  }
+
   public async getOutputRootInfoByBlockIndex(index: bigint) {
     const outputRoot = await this.graphQlService.getOutputProposal(index);
     return {
@@ -57,8 +87,14 @@ export class LibplanetService {
     }
   }
 
+  public async getTransactionResult(txId: string) {
+    const transactionResult = await this.graphQlService.waitForTrasactionResult(txId);
+    return transactionResult;
+  }
+
   public async getOutputRootByTransactionId(txId: string) {
-    const stateRootHashRes = await this.graphQlService.getTransactionResult(txId);
+    const transactionResult = await this.graphQlService.waitForTrasactionResult(txId);
+    const stateRootHashRes = transactionResult.outputState;
     const storageRootHashRes = await this.graphQlService.getStorageRootHash(stateRootHashRes);
 
     var stateRootHash = Uint8Array.from(Buffer.from(stateRootHashRes, 'hex'));
@@ -75,13 +111,24 @@ export class LibplanetService {
 
   public async sendBulkTransactions() {
     for(var i = 0; i < 10; i++) {
-      await this.delay(1000);
+      await TimeUtils.delay(1000);
       const res = await this.graphQlService.sendSimpleTransaction(randomBytes(16564).toString('hex'));
       this.log(`Sent transaction ${i} with result ${res.slice(0, 3)}`);
     }
   }
 
-  private async delay(ms: number) {
-    return new Promise( resolve => setTimeout(resolve, ms) );
+  public async mintWeth(
+    receipient: `0x${string}`,
+    amount: bigint
+  ) {
+    return await this.graphQlService.mintWeth(receipient, amount);
+  }
+
+  public async withdrawEth(
+    privateKey: `0x${string}`,
+    receipient: `0x${string}`,
+    amount: bigint
+  ) {
+    return await this.graphQlService.withdrawEth(privateKey, receipient, amount);
   }
 }

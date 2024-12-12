@@ -13,6 +13,8 @@ import { PreoracleService } from "src/preoracle/preoracle.service";
 import { OutputRootProvider } from "./models/challenger.outputroot.provider";
 import { Position } from "./utils/challenger.position";
 import { ClaimClock } from "./utils/claim.clock";
+import { parseEventLogs, TransactionExecutionError } from "viem";
+import { FaultDisputeGameFactoryAbi } from "src/evm/abis/FaultDisputeGameFactory.abi";
 
 @Injectable()
 export class ChallengerService {
@@ -128,6 +130,33 @@ export class ChallengerService {
     this.dishonestAttached = false;
   }
 
+  public async getRecentHonestDisputeGame() {
+    const faultDisputeGameFactoryReader = this.evmContractManager.getFaultDisputeGameFactoryReader();
+    const gameCount = await faultDisputeGameFactoryReader.read.gameCount();
+    for(let i = Number(gameCount) - 1; i >= 0; i--) {
+      const gameAtIndex = await faultDisputeGameFactoryReader.read.gameAtIndex([BigInt(i)]);
+      const proxy = gameAtIndex[1];
+
+      const faultDisputeGameReader = this.evmContractManager.getFaultDisputeGameReader(proxy);
+      const disputeStatus = await faultDisputeGameReader.read.status() as FaultDisputeGameStatus;
+      if(disputeStatus !== FaultDisputeGameStatus.CHALLENGER_WINS) {
+        const rootClaim = await faultDisputeGameReader.read.rootClaim();
+        const l2BlockNumber = await faultDisputeGameReader.read.l2BlockNumber();
+        const l2HonestOutputRoot = await this.libplanetService.getOutputRootInfoByBlockIndex(l2BlockNumber);
+        if(rootClaim === l2HonestOutputRoot.root) {
+          return {
+            index: i,
+            address: proxy,
+            outputRoot: rootClaim,
+            l2BlockNumber: l2BlockNumber,
+          }
+        }
+      }
+    }
+
+    throw new Error('No honest dispute game found');
+  }
+
   public async getDisputeInfo() {
     const faultDisputeGameFactoryReader = this.evmContractManager.getFaultDisputeGameFactoryReader();
     const gameCount = await faultDisputeGameFactoryReader.read.gameCount();
@@ -164,6 +193,7 @@ export class ChallengerService {
         index: i,
         parentIndex: claimData.parentIndex,
         claimant: claimData.claimant,
+        counteredBy: claimData.counteredBy,
         claim: claimData.claim,
         position: claimData.position.getValue().toString(),
         depth: claimData.position.depth(),
@@ -197,5 +227,31 @@ export class ChallengerService {
       createdAt: createdAt,
       resolvedAt: resolvedAt,
     }
+  }
+
+  public async makeNewGame(
+    privateKey: `0x${string}`,
+    l2OutputRoot: `0x${string}`,
+    l2BlockNumber: bigint,
+  ) {
+    const faultDisputeGameFactory = this.evmContractManager.getFaultDisputeGameFactory(privateKey);
+    var txHash: `0x${string}`;
+    try {
+      txHash = await faultDisputeGameFactory.write.create([
+        l2OutputRoot,
+        l2BlockNumber,
+      ])
+    } catch(e) {
+      const error = e as TransactionExecutionError;
+      return error.shortMessage;
+    }
+    
+    const receipt = await this.evmPublicService.waitForTransactionReceipt(txHash);
+    const event = parseEventLogs({
+        abi: FaultDisputeGameFactoryAbi,
+        eventName: 'FaultDisputeGameCreated',
+        logs: receipt.logs
+    })[0].args;
+    return event;
   }
 }

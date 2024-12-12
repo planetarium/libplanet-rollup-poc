@@ -10,6 +10,7 @@ import { BatcherModule } from './batcher/batcher.module';
 import { DeriverModule } from './deriver/deriver.module';
 import { PreoracleModule } from './preoracle/preoracle.module';
 import { ProposerModule } from './proposer/proposer.module';
+import { BridgeModule } from './bridge/bridge.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { ProposerModule } from './proposer/proposer.module';
     DeriverModule,
     ProposerModule,
     PreoracleModule,
+    BridgeModule,
   ],
   controllers: [AppController],
   providers: [AppService],
