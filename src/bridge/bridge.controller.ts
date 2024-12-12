@@ -30,12 +30,12 @@ export class BridgeController {
   @Post("withdraw-eth")
   public async withdrawEth(
     @Headers('private-key') privateKey: `0x${string}`,
-    @Body() withdrawEth: WithdrawEthDto
+    @Body() withdrawEthDto: WithdrawEthDto
   ) {
     return await this.bridgeService.withdrawEth(
       privateKey,
-      withdrawEth.receipient,
-      BigInt(withdrawEth.amount),
+      withdrawEthDto.receipient,
+      BigInt(withdrawEthDto.amount),
     );
   }
 

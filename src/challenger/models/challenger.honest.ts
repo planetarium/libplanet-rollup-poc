@@ -135,7 +135,7 @@ export class ChallengerHonest {
   }
 
   private async action(claims: ClaimData[], claimIds: Map<`0x${string}`, boolean>, outputRootProvider: OutputRootProvider) {
-    for(let i = 1; i < claims.length; i++){
+    for(let i = 0; i < claims.length; i++){
       const claim = claims[i];
       const depth = claim.position.depth();
       if(depth === this.maxDepth){
@@ -283,7 +283,12 @@ export class ChallengerHonest {
     }
 
     if(claim.position.isRoot()){
-      return true;
+      const counter = agreedClaims.honestCounter(claim);
+      if(counter === undefined){
+        return true;
+      } else {
+        return false;
+      }
     }
 
     const parentIndex = BigInt(claim.parentIndex);

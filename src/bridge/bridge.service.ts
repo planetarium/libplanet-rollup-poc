@@ -82,9 +82,10 @@ export class BridgeService {
     txId: string,
   ) {
     const libplanetPortal = this.evmContractManager.getLibplanetPortal(privateKey);
-    const withdrawalProofInfos = await this.getWithdrawalTransactionProofInfos(txId);
+    
     var txHash: `0x${string}`;
     try {
+      const withdrawalProofInfos = await this.getWithdrawalTransactionProofInfos(txId);
       txHash = await libplanetPortal.write.proveWithdrawalTransaction([
         withdrawalProofInfos.tx,
         withdrawalProofInfos.disputeGameIndex,
@@ -92,8 +93,12 @@ export class BridgeService {
         withdrawalProofInfos.withdrawalProof
       ]);
     } catch (e) {
-      const error = e as TransactionExecutionError;
-      return error.shortMessage;
+      if(e instanceof TransactionExecutionError) {
+        return e.shortMessage;
+      } else {
+        const error = e as Error;
+        return error.toString();
+      }
     }
     const receipt = await this.evmPublicService.waitForTransactionReceipt(txHash);
     const event = parseEventLogs({

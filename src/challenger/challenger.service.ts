@@ -13,6 +13,8 @@ import { PreoracleService } from "src/preoracle/preoracle.service";
 import { OutputRootProvider } from "./models/challenger.outputroot.provider";
 import { Position } from "./utils/challenger.position";
 import { ClaimClock } from "./utils/claim.clock";
+import { parseEventLogs, TransactionExecutionError } from "viem";
+import { FaultDisputeGameFactoryAbi } from "src/evm/abis/FaultDisputeGameFactory.abi";
 
 @Injectable()
 export class ChallengerService {
@@ -225,5 +227,31 @@ export class ChallengerService {
       createdAt: createdAt,
       resolvedAt: resolvedAt,
     }
+  }
+
+  public async makeNewGame(
+    privateKey: `0x${string}`,
+    l2OutputRoot: `0x${string}`,
+    l2BlockNumber: bigint,
+  ) {
+    const faultDisputeGameFactory = this.evmContractManager.getFaultDisputeGameFactory(privateKey);
+    var txHash: `0x${string}`;
+    try {
+      txHash = await faultDisputeGameFactory.write.create([
+        l2OutputRoot,
+        l2BlockNumber,
+      ])
+    } catch(e) {
+      const error = e as TransactionExecutionError;
+      return error.shortMessage;
+    }
+    
+    const receipt = await this.evmPublicService.waitForTransactionReceipt(txHash);
+    const event = parseEventLogs({
+        abi: FaultDisputeGameFactoryAbi,
+        eventName: 'FaultDisputeGameCreated',
+        logs: receipt.logs
+    })[0].args;
+    return event;
   }
 }

@@ -103,4 +103,16 @@ export class EvmService {
       await TimeUtils.delay(100);
     }
   }
+
+  public async makeNewWallet() {
+    const walletClient = await this.clientFactory.newWalletClient();
+    await this.publicService.waitForTransactionReceipt(walletClient.txHash);
+    const balance = await this.publicService.getBalance(walletClient.client.account.address);
+    return {
+      account: walletClient.client.account,
+      balance: balance.toString(),
+      privateKey: walletClient.privateKey,
+      txHash: walletClient.txHash,
+    }
+  }
 }
