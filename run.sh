@@ -1,4 +1,4 @@
 #!/bin/bash
 
 docker compose up -d
-bash init_blockscout.sh
+bash run_blockscout.sh
